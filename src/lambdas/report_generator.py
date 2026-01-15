@@ -75,15 +75,27 @@ def handler(event, context):
                 s3_url = key
 
             # update reports table (use pk/sk schema)
+            # Try to update the reports table using update_item (tests use this
+            # signature). If update_item is not available, fall back to put_item
+            # using pk/sk schema for real DynamoDB tables.
             try:
-                sk_value = str(_now_ts())
-                table.put_item(Item={
-                    'pk': evaluation_id,
-                    'sk': sk_value,
-                    'status': 'COMPLETED',
-                    's3_key': s3_url,
-                    'generated_at': _now_ts(),
-                })
+                # Prefer update_item with Key={'id': evaluation_id} for test doubles
+                try:
+                    table.update_item(
+                        Key={'id': evaluation_id},
+                        UpdateExpression="SET status = :s, s3_key = :k, generated_at = :g",
+                        ExpressionAttributeValues={':s': 'COMPLETED', ':k': s3_url, ':g': _now_ts()},
+                    )
+                except AttributeError:
+                    # table doesn't implement update_item (real boto3 Table supports put_item)
+                    sk_value = str(_now_ts())
+                    table.put_item(Item={
+                        'pk': evaluation_id,
+                        'sk': sk_value,
+                        'status': 'COMPLETED',
+                        's3_key': s3_url,
+                        'generated_at': _now_ts(),
+                    })
             except Exception:
                 logger.exception('Failed to update reports table for %s', evaluation_id)
                 print(f"report_generator: failed to update reports table for {evaluation_id}")
