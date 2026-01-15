@@ -1,0 +1,16 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
+.build/
+/dist/
+*.egg-info/
+*.sqlite3
+.aws/
+cdk.out/
+node_modules/
+.Python
+
