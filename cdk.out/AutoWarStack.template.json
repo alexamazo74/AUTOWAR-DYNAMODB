@@ -1,0 +1,2248 @@
+{
+ "Resources": {
+  "autowarclientsTableB2EEA662": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-clients"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarclientsTable/Resource"
+   }
+  },
+  "autowarevaluationsTable12166D40": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "client_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "created_at",
+      "AttributeType": "N"
+     },
+     {
+      "AttributeName": "account_id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "clientIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "client_id",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "created_at",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "accountIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "account_id",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "created_at",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-evaluations"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarevaluationsTable/Resource"
+   }
+  },
+  "autowarwafquestionsTableEB93E0F3": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-waf-questions"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarwafquestionsTable/Resource"
+   }
+  },
+  "autowarbestpracticesTableD62B9A51": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-best-practices"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarbestpracticesTable/Resource"
+   }
+  },
+  "autowarawsresourcesTableE285EB56": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-aws-resources"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarawsresourcesTable/Resource"
+   }
+  },
+  "autowarremediationtrackingTableFADA608A": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-remediation-tracking"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarremediationtrackingTable/Resource"
+   }
+  },
+  "autowarautomationconfigTable72C6E3F3": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-automation-config"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarautomationconfigTable/Resource"
+   }
+  },
+  "autowarrisksTable02FE8929": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-risks"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarrisksTable/Resource"
+   }
+  },
+  "autowaranalysishistoryTable8C50DE08": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-analysis-history"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowaranalysishistoryTable/Resource"
+   }
+  },
+  "autowarcomparativeanalysisTable3DEDDEC1": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-comparative-analysis"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarcomparativeanalysisTable/Resource"
+   }
+  },
+  "autowarperiodicresultsTableB0AC2379": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-periodic-results"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarperiodicresultsTable/Resource"
+   }
+  },
+  "autowarevidencetechnicalTableD0CEB7EC": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-evidence-technical"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarevidencetechnicalTable/Resource"
+   }
+  },
+  "autowaraipromptsresultsTable62182E11": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-ai-prompts-results"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowaraipromptsresultsTable/Resource"
+   }
+  },
+  "autowarindustrybenchmarksTableF981954F": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-industry-benchmarks"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarindustrybenchmarksTable/Resource"
+   }
+  },
+  "autowarnotificationslogTable040BA5B0": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-notifications-log"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarnotificationslogTable/Resource"
+   }
+  },
+  "autowarusermanagementTableCF061B7E": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-user-management"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarusermanagementTable/Resource"
+   }
+  },
+  "autowarawscredentialsTableC0BD5E56": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "autowar-aws-credentials"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/autowarawscredentialsTable/Resource"
+   }
+  },
+  "AutowarReportsTableEBCD172C": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "pk",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "sk",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "evaluationId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "generated_at",
+      "AttributeType": "N"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "evaluationIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "evaluationId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "generated_at",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "pk",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "sk",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "autowar-reports",
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutowarReportsTable/Resource"
+   }
+  },
+  "AutowarAuditLogTable16842522": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "pk",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "sk",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "action",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "created_at",
+      "AttributeType": "N"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "actionIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "action",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "created_at",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "pk",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "sk",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "autowar-audit-log"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutowarAuditLogTable/Resource"
+   }
+  },
+  "AutoWarUserPoolCAB1831D": {
+   "Type": "AWS::Cognito::UserPool",
+   "Properties": {
+    "AccountRecoverySetting": {
+     "RecoveryMechanisms": [
+      {
+       "Name": "verified_phone_number",
+       "Priority": 1
+      },
+      {
+       "Name": "verified_email",
+       "Priority": 2
+      }
+     ]
+    },
+    "AdminCreateUserConfig": {
+     "AllowAdminCreateUserOnly": true
+    },
+    "AutoVerifiedAttributes": [
+     "email"
+    ],
+    "EmailVerificationMessage": "The verification code to your new account is {####}",
+    "EmailVerificationSubject": "Verify your new account",
+    "SmsVerificationMessage": "The verification code to your new account is {####}",
+    "UserPoolName": "autowar-user-pool",
+    "UsernameAttributes": [
+     "email"
+    ],
+    "VerificationMessageTemplate": {
+     "DefaultEmailOption": "CONFIRM_WITH_CODE",
+     "EmailMessage": "The verification code to your new account is {####}",
+     "EmailSubject": "Verify your new account",
+     "SmsMessage": "The verification code to your new account is {####}"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarUserPool/Resource"
+   }
+  },
+  "AutoWarUserPoolClient5066000D": {
+   "Type": "AWS::Cognito::UserPoolClient",
+   "Properties": {
+    "AllowedOAuthFlows": [
+     "implicit",
+     "code"
+    ],
+    "AllowedOAuthFlowsUserPoolClient": true,
+    "AllowedOAuthScopes": [
+     "profile",
+     "phone",
+     "email",
+     "openid",
+     "aws.cognito.signin.user.admin"
+    ],
+    "CallbackURLs": [
+     "https://example.com"
+    ],
+    "GenerateSecret": false,
+    "SupportedIdentityProviders": [
+     "COGNITO"
+    ],
+    "UserPoolId": {
+     "Ref": "AutoWarUserPoolCAB1831D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarUserPoolClient/Resource"
+   }
+  },
+  "AutoWarLambdaServiceRoleF406D210": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarLambda/ServiceRole/Resource"
+   }
+  },
+  "AutoWarLambdaServiceRoleDefaultPolicyA16A2A78": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "autowarevaluationsTable12166D40",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "autowarevaluationsTable12166D40",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "autowarevaluationsTable12166D40",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "autowarevaluationsTable12166D40",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarawscredentialsTableC0BD5E56",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarawscredentialsTableC0BD5E56",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarusermanagementTableCF061B7E",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarusermanagementTableCF061B7E",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarAuditLogTable16842522",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarAuditLogTable16842522",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarAuditLogTable16842522",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarAuditLogTable16842522",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "EvalQueue03D041A6",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AutoWarLambdaServiceRoleDefaultPolicyA16A2A78",
+    "Roles": [
+     {
+      "Ref": "AutoWarLambdaServiceRoleF406D210"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "AutoWarLambda6595C6FE": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "ZipFile": "exports.handler = async (event) => { return { statusCode: 200, body: JSON.stringify({ message: \"AutoWAR funcionando!\" }) }; }"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Ref": "autowarevaluationsTable12166D40"
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "AutoWarLambdaServiceRoleF406D210",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "AutoWarLambdaServiceRoleDefaultPolicyA16A2A78",
+    "AutoWarLambdaServiceRoleF406D210"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarLambda/Resource"
+   }
+  },
+  "CredentialsMaintenanceLambdaServiceRole97BF79A6": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceLambda/ServiceRole/Resource"
+   }
+  },
+  "CredentialsMaintenanceLambdaServiceRoleDefaultPolicy68662F36": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarawscredentialsTableC0BD5E56",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarawscredentialsTableC0BD5E56",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:PutSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:secretsmanager:us-east-1:102080400524:secret:autowar-*"
+      },
+      {
+       "Action": [
+        "iam:CreateAccessKey",
+        "iam:ListAccessKeys",
+        "iam:DeleteAccessKey",
+        "iam:UpdateAccessKey",
+        "iam:GetUser"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:iam::102080400524:user/autowar-*"
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": "arn:aws:iam::*:role/autowar-*"
+      },
+      {
+       "Action": "sns:Publish",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "CredentialsAlertsTopic678779AF"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CredentialsMaintenanceLambdaServiceRoleDefaultPolicy68662F36",
+    "Roles": [
+     {
+      "Ref": "CredentialsMaintenanceLambdaServiceRole97BF79A6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CredentialsMaintenanceLambda666813A2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
+     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "AUTOWAR_CREDENTIALS_TABLE": {
+       "Ref": "autowarawscredentialsTableC0BD5E56"
+      },
+      "CREDENTIALS_ALERT_TOPIC_ARN": {
+       "Ref": "CredentialsAlertsTopic678779AF"
+      }
+     }
+    },
+    "Handler": "lambdas.credentials_maintenance.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CredentialsMaintenanceLambdaServiceRole97BF79A6",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "CredentialsMaintenanceLambdaServiceRoleDefaultPolicy68662F36",
+    "CredentialsMaintenanceLambdaServiceRole97BF79A6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceLambda/Resource",
+    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CredentialsAlertsTopic678779AF": {
+   "Type": "AWS::SNS::Topic",
+   "Properties": {
+    "DisplayName": "AutoWAR Credentials Alerts",
+    "TopicName": "autowar-credentials-alerts"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsAlertsTopic/Resource"
+   }
+  },
+  "CredentialsMaintenanceScheduleFDCEB7B7": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "Description": "Daily maintenance for credentials (cleanup and rotation marking)",
+    "ScheduleExpression": "rate(1 day)",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "CredentialsMaintenanceLambda666813A2",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceSchedule/Resource"
+   }
+  },
+  "CredentialsMaintenanceScheduleAllowEventRuleAutoWarStackCredentialsMaintenanceLambdaF8DC518CCC8844DF": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CredentialsMaintenanceLambda666813A2",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "CredentialsMaintenanceScheduleFDCEB7B7",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceSchedule/AllowEventRuleAutoWarStackCredentialsMaintenanceLambdaF8DC518C"
+   }
+  },
+  "EvalQueue03D041A6": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "autowar-eval-queue",
+    "VisibilityTimeout": 300
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/EvalQueue/Resource"
+   }
+  },
+  "EvalWorkerLambdaServiceRole5C3B370E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/EvalWorkerLambda/ServiceRole/Resource"
+   }
+  },
+  "EvalWorkerLambdaServiceRoleDefaultPolicyDA90C19F": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "autowarevaluationsTable12166D40",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "autowarevaluationsTable12166D40",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "autowarevaluationsTable12166D40",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "autowarevaluationsTable12166D40",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarevidencetechnicalTableD0CEB7EC",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "autowarevidencetechnicalTableD0CEB7EC",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "EvalQueue03D041A6",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReportQueueEBFFFAE8",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "EvalWorkerLambdaServiceRoleDefaultPolicyDA90C19F",
+    "Roles": [
+     {
+      "Ref": "EvalWorkerLambdaServiceRole5C3B370E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/EvalWorkerLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "EvalWorkerLambdaCF47125A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
+     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "AUTOWAR_EVALUATIONS_TABLE": {
+       "Ref": "autowarevaluationsTable12166D40"
+      },
+      "AUTOWAR_EVIDENCE_TABLE": {
+       "Ref": "autowarevidencetechnicalTableD0CEB7EC"
+      },
+      "AUTOWAR_REPORT_QUEUE_URL": {
+       "Ref": "ReportQueueEBFFFAE8"
+      }
+     }
+    },
+    "Handler": "lambdas.evaluation_worker.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "EvalWorkerLambdaServiceRole5C3B370E",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "EvalWorkerLambdaServiceRoleDefaultPolicyDA90C19F",
+    "EvalWorkerLambdaServiceRole5C3B370E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/EvalWorkerLambda/Resource",
+    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "EvalWorkerLambdaSqsEventSourceAutoWarStackEvalQueue754031A19CD564B3": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 5,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "EvalQueue03D041A6",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "EvalWorkerLambdaCF47125A"
+    },
+    "MaximumBatchingWindowInSeconds": 30
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/EvalWorkerLambda/SqsEventSource:AutoWarStackEvalQueue754031A1/Resource"
+   }
+  },
+  "AutoWarReportsBucket47E77691": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "autowar-reports-102080400524-us-east-1",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarReportsBucket/Resource"
+   }
+  },
+  "AutoWarReportsBucketPolicyD8F659AF": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "AutoWarReportsBucket47E77691"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutoWarReportsBucket47E77691",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutoWarReportsBucket47E77691",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarReportsBucket/Policy/Resource"
+   }
+  },
+  "AutoWarReportsBucketAutoDeleteObjectsCustomResourceD1E20464": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "AutoWarReportsBucket47E77691"
+    }
+   },
+   "DependsOn": [
+    "AutoWarReportsBucketPolicyD8F659AF"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarReportsBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "AutoWarReportsBucket47E77691"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "ReportQueueEBFFFAE8": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 604800,
+    "QueueName": "autowar-report-queue",
+    "VisibilityTimeout": 300
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/ReportQueue/Resource"
+   }
+  },
+  "ReportGeneratorLambdaServiceRole569F0BC5": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/ServiceRole/Resource"
+   }
+  },
+  "ReportGeneratorLambdaServiceRoleDefaultPolicy9865405B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "AutoWarReportsBucket47E77691",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AutowarReportsTableEBCD172C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AutowarReportsTableEBCD172C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReportQueueEBFFFAE8",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ReportGeneratorLambdaServiceRoleDefaultPolicy9865405B",
+    "Roles": [
+     {
+      "Ref": "ReportGeneratorLambdaServiceRole569F0BC5"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "ReportGeneratorLambda8F7516F3": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
+     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "REPORTS_BUCKET": {
+       "Ref": "AutoWarReportsBucket47E77691"
+      },
+      "AUTOWAR_REPORTS_TABLE": {
+       "Ref": "AutowarReportsTableEBCD172C"
+      }
+     }
+    },
+    "Handler": "lambdas.report_generator.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "ReportGeneratorLambdaServiceRole569F0BC5",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "ReportGeneratorLambdaServiceRoleDefaultPolicy9865405B",
+    "ReportGeneratorLambdaServiceRole569F0BC5"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/Resource",
+    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ReportGeneratorLambdaSqsEventSourceAutoWarStackReportQueue6391206AA27DEC30": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "ReportQueueEBFFFAE8",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "ReportGeneratorLambda8F7516F3"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/SqsEventSource:AutoWarStackReportQueue6391206A/Resource"
+   }
+  },
+  "AutoWarApiD0180E1B": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Description": "API para el sistema AutoWAR",
+    "Name": "AutoWAR Service"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Resource"
+   }
+  },
+  "AutoWarApiCloudWatchRoleE6A55B0B": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "apigateway.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+       ]
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/CloudWatchRole/Resource"
+   }
+  },
+  "AutoWarApiAccountD181A0A9": {
+   "Type": "AWS::ApiGateway::Account",
+   "Properties": {
+    "CloudWatchRoleArn": {
+     "Fn::GetAtt": [
+      "AutoWarApiCloudWatchRoleE6A55B0B",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "AutoWarApiD0180E1B"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Account"
+   }
+  },
+  "AutoWarApiDeployment9E535A4C7df3066629e588c69c1024f478a9df66": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "API para el sistema AutoWAR",
+    "RestApiId": {
+     "Ref": "AutoWarApiD0180E1B"
+    }
+   },
+   "DependsOn": [
+    "AutoWarApiGETC0F95F8D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "AutoWarApiDeploymentStageprod4A24B808": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "AutoWarApiDeployment9E535A4C7df3066629e588c69c1024f478a9df66"
+    },
+    "RestApiId": {
+     "Ref": "AutoWarApiD0180E1B"
+    },
+    "StageName": "prod"
+   },
+   "DependsOn": [
+    "AutoWarApiAccountD181A0A9"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "AutoWarApiGETApiPermissionAutoWarStackAutoWarApi76AEE318GET381B31AB": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AutoWarLambda6595C6FE",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:102080400524:",
+       {
+        "Ref": "AutoWarApiD0180E1B"
+       },
+       "/",
+       {
+        "Ref": "AutoWarApiDeploymentStageprod4A24B808"
+       },
+       "/GET/"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Default/GET/ApiPermission.AutoWarStackAutoWarApi76AEE318.GET.."
+   }
+  },
+  "AutoWarApiGETApiPermissionTestAutoWarStackAutoWarApi76AEE318GETF7BAA299": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AutoWarLambda6595C6FE",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:102080400524:",
+       {
+        "Ref": "AutoWarApiD0180E1B"
+       },
+       "/test-invoke-stage/GET/"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Default/GET/ApiPermission.Test.AutoWarStackAutoWarApi76AEE318.GET.."
+   }
+  },
+  "AutoWarApiGETC0F95F8D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "AutoWarLambda6595C6FE",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "AutoWarApiD0180E1B",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "AutoWarApiD0180E1B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarApi/Default/GET/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WQwW7CMAyGn4V78LbCCwDbbmhdYWeUpl4XaOOuTkBVlHefkjLotJM/+7cd588gWyzhaSYvPFfVad7oEvzOSnUS8sIHXw1GtlSV4PeybFBsPk2CIBTVRlsC/8HY50RN1G78C5tGo7FTaawE0ci2rCT4V2eU1WRiz5Rz7FvNHLOXMxq7I9cr3Mqu06aODf+rQWjZgi9oPDTFnBqthrQwURC8OEhmtAyrGAQvwK+dOqFdS0YxYhy40hjue6Z5EGwY/J46rZI3EYLAeBqDL9z1Ehcd428G/+7QpVqCIGSna2nxIgfwBbJddTpN3HGlFDljxTN2DQ3t1c5JtrOyTitHKJCTKek3W7RfVEVxpBBueiy+Ods5K5IRcTpZ69hSO+268x8p7+msK+zjQ0EYqhCO/HDOlvCUwePsyFrPe2esbhGKMf4AWm+Ti28CAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "AutoWarUserPoolId": {
+   "Value": {
+    "Ref": "AutoWarUserPoolCAB1831D"
+   }
+  },
+  "AutoWarUserPoolClientId": {
+   "Value": {
+    "Ref": "AutoWarUserPoolClient5066000D"
+   }
+  },
+  "AutoWarEvalQueueUrl": {
+   "Value": {
+    "Ref": "EvalQueue03D041A6"
+   }
+  },
+  "AutoWarEvalQueueArn": {
+   "Value": {
+    "Fn::GetAtt": [
+     "EvalQueue03D041A6",
+     "Arn"
+    ]
+   }
+  },
+  "AutoWarReportsBucketName": {
+   "Value": {
+    "Ref": "AutoWarReportsBucket47E77691"
+   }
+  },
+  "AutoWarReportQueueUrl": {
+   "Value": {
+    "Ref": "ReportQueueEBFFFAE8"
+   }
+  },
+  "AutoWarApiEndpoint2EEFA698": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "AutoWarApiD0180E1B"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "AutoWarApiDeploymentStageprod4A24B808"
+      },
+      "/"
+     ]
+    ]
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

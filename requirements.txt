@@ -1,0 +1,15 @@
+﻿aws-cdk-lib>=2.100.0
+constructs>=10.0.0
+boto3>=1.26.0
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+pydantic>=1.10.0
+python-dotenv>=1.0.0
+aioboto3>=9.0.0
+python-jose[cryptography]>=3.3.0
+httpx>=0.23.0
+cryptography>=40.0.0
+pytest>=7.0.0
+ruff>=0.12.0
+black>=23.9.1
+mypy>=0.991

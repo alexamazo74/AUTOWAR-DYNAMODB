@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: |
+          pip install ruff
+          ruff check src tests
+
+      - name: Autoformat (black) and detect changes
+        run: |
+          pip install black
+          # Run black to auto-format files in-place
+          black --quiet src tests
+          # If black changed files, fail the job and ask author to include changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Black modified files. Please run 'black src tests' locally and include the changes in your PR.";
+            git --no-pager status --porcelain
+            exit 1
+          fi
+
+      - name: Format check (black --check)
+        run: |
+          pip install black
+          black --check src tests || (echo "Run 'black src tests' to format." && false)
+
+      - name: Type check (mypy)
+        run: |
+          pip install mypy
+          mypy src tests --config-file mypy.ini
+
+      - name: Run tests
+        run: pytest -q

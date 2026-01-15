@@ -1,0 +1,1 @@
+{"Records":[{"body":"{\"action\":\"evaluate\",\"evaluationId\":\"eval-test-local\",\"item\":{\"account_id\":\"123456789012\",\"targets\":[\"arn:aws:s3:::example-bucket\"],\"client_id\":\"test-client\"}}"}]}
