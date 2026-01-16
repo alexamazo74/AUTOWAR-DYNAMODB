@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+from typing import Optional, Dict, Any
 from .base import ValidatorBase
 
 
@@ -7,10 +8,14 @@ class IAMPasswordPolicyValidator(ValidatorBase):
     name = "iam-password-policy"
 
     def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+        self,
+        name: Optional[str] = None,
+        region: Optional[str] = None,
+        account_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         iam = boto3.client("iam")
-        result = {"name": self.name}
+        result: Dict[str, Any] = {"name": self.name}
         try:
             policy = iam.get_account_password_policy()
             pwd = policy.get("PasswordPolicy", {})
@@ -34,10 +39,14 @@ class RootMFAValidator(ValidatorBase):
     name = "iam-root-mfa"
 
     def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+        self,
+        name: Optional[str] = None,
+        region: Optional[str] = None,
+        account_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         iam = boto3.client("iam")
-        result = {"name": self.name}
+        result: Dict[str, Any] = {"name": self.name}
         try:
             summary = iam.get_account_summary()
             # AccountMFAEnabled key indicates if account has any MFA devices

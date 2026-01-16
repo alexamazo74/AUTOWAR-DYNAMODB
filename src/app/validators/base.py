@@ -6,7 +6,7 @@ class ValidatorBase:
 
     def run(
         self,
-        name: str,
+        name: Optional[str] = None,
         region: Optional[str] = None,
         account_id: Optional[str] = None,
         extra: Optional[Dict[str, Any]] = None,

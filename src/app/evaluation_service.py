@@ -1,7 +1,7 @@
 import time
 import uuid
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from boto3.dynamodb.conditions import Key
 from .aws_connector import get_table
 from .models import EvaluationIn
@@ -24,7 +24,7 @@ def _get_sqs():
 TABLE_NAME = "autowar-evaluations"
 
 
-def create_evaluation(data: EvaluationIn) -> dict:
+def create_evaluation(data: EvaluationIn) -> Dict[str, Any]:
     evaluation_id = str(uuid.uuid4())
     ts = int(time.time())
     item = data.dict()
@@ -62,13 +62,13 @@ def create_evaluation(data: EvaluationIn) -> dict:
     return item
 
 
-def get_evaluation(evaluation_id: str) -> Optional[dict]:
+def get_evaluation(evaluation_id: str) -> Optional[Dict[str, Any]]:
     table = get_table(TABLE_NAME)
     resp = table.get_item(Key={"id": evaluation_id})
     return resp.get("Item")
 
 
-def list_evaluations_for_client(client_id: str, limit: int = 50) -> List[dict]:
+def list_evaluations_for_client(client_id: str, limit: int = 50) -> List[Dict[str, Any]]:
     table = get_table(TABLE_NAME)
     try:
         resp = table.query(

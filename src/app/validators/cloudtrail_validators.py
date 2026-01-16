@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+from typing import Optional, Dict, Any
 from .base import ValidatorBase
 
 
@@ -7,10 +8,14 @@ class CloudTrailLoggingValidator(ValidatorBase):
     name = "cloudtrail-logging"
 
     def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+        self,
+        name: Optional[str] = None,
+        region: Optional[str] = None,
+        account_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         ct = boto3.client("cloudtrail", region_name=region)
-        result = {"name": self.name}
+        result: Dict[str, Any] = {"name": self.name}
         try:
             trails = ct.describe_trails()["trailList"]
             if not trails:

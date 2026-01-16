@@ -1,21 +1,21 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, List, Dict, Optional
 from .aws_connector import get_table
-from typing import List
 from boto3.dynamodb.conditions import Key, Attr
 
 SCORES_TABLE = "autowar-scores"
 
 
-def _to_decimal_safe(v):
+def _to_decimal_safe(v: Any) -> Any:
     try:
         return Decimal(str(v))
     except Exception:
         return v
 
 
-def create_score(payload) -> dict:
+def create_score(payload: Any) -> Dict[str, Any]:
     table = get_table(SCORES_TABLE)
     sid = str(uuid.uuid4())
     total = Decimal("0")
@@ -29,11 +29,11 @@ def create_score(payload) -> dict:
             if isinstance(d, Decimal):
                 vals.append(d)
         if vals:
-            total = sum(vals)
+            total = sum(vals, Decimal("0"))
     except Exception:
         total = Decimal("0")
 
-    item = {
+    item: Dict[str, Any] = {
         "id": sid,
         "evaluation_id": payload.evaluation_id,
         "bp_id": payload.bp_id,
@@ -43,7 +43,7 @@ def create_score(payload) -> dict:
     }
     table.put_item(Item=item)
     # Convert Decimal total back to float for API responses
-    resp_item = dict(item)
+    resp_item: Dict[str, Any] = dict(item)
     try:
         resp_item["total"] = float(item["total"])
     except Exception:
@@ -51,7 +51,7 @@ def create_score(payload) -> dict:
     return resp_item
 
 
-def get_score(score_id: str) -> dict:
+def get_score(score_id: str) -> Optional[Dict[str, Any]]:
     table = get_table(SCORES_TABLE)
     resp = table.get_item(Key={"id": score_id})
     item = resp.get("Item")
@@ -63,7 +63,7 @@ def get_score(score_id: str) -> dict:
     return item
 
 
-def list_scores_for_evaluation(evaluation_id: str, limit: int = 50) -> List[dict]:
+def list_scores_for_evaluation(evaluation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
     table = get_table(SCORES_TABLE)
     # Prefer query against the GSI named 'evaluationIndex', fallback to scan
     try:
