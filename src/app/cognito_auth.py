@@ -6,6 +6,7 @@ from jose import jwt
 from jose.utils import base64url_decode
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from fastapi import Header, HTTPException, status
 
 COGNITO_REGION = os.getenv('COGNITO_REGION') or os.getenv('AWS_REGION', 'us-east-1')
 COGNITO_USER_POOL_ID = os.getenv('COGNITO_USER_POOL_ID')
@@ -60,8 +61,6 @@ def verify_jwt_token(token: str) -> Dict:
     claims = jwt.decode(token, public_pem, algorithms=['RS256'], audience=COGNITO_APP_CLIENT_ID, issuer=issuer)
     return claims
 
-
-from fastapi import Header, HTTPException, status
 
 def require_cognito_auth(authorization: str | None = Header(None)) -> Dict:
     """FastAPI dependency to require a valid Cognito JWT Bearer token.
