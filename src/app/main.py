@@ -20,12 +20,12 @@ import uuid
 from .scores_service import create_score, get_score, list_scores_for_evaluation
 
 APP_TABLES = {
-    'clients': 'autowar-clients',
-    'evaluations': 'autowar-evaluations',
-    'scores': 'autowar-scores',
+    "clients": "autowar-clients",
+    "evaluations": "autowar-evaluations",
+    "scores": "autowar-scores",
 }
 
-app = FastAPI(title='AutoWAR API')
+app = FastAPI(title="AutoWAR API")
 
 
 class ClientIn(BaseModel):
@@ -34,33 +34,35 @@ class ClientIn(BaseModel):
     industry: str | None = None
 
 
-@app.get('/health')
+@app.get("/health")
 async def health():
-    return {'status': 'ok'}
+    return {"status": "ok"}
 
 
-@app.get('/clients')
+@app.get("/clients")
 def list_clients():
-    table = get_table(APP_TABLES['clients'])
+    table = get_table(APP_TABLES["clients"])
     resp = table.scan()
-    items = resp.get('Items', [])
-    return {'count': len(items), 'items': items}
+    items = resp.get("Items", [])
+    return {"count": len(items), "items": items}
 
 
-@app.post('/clients', status_code=201)
+@app.post("/clients", status_code=201)
 def create_client(client: ClientIn, claims: dict = Depends(require_cognito_auth)):
-    table = get_table(APP_TABLES['clients'])
+    table = get_table(APP_TABLES["clients"])
     item = client.dict()
     try:
         table.put_item(Item=item)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    return {'ok': True, 'item': item}
+    return {"ok": True, "item": item}
 
 
 # Evaluations endpoints
-@app.post('/evaluations', status_code=201, response_model=EvaluationOut)
-def api_create_evaluation(evaluation: EvaluationIn, claims: dict = Depends(require_cognito_auth)):
+@app.post("/evaluations", status_code=201, response_model=EvaluationOut)
+def api_create_evaluation(
+    evaluation: EvaluationIn, claims: dict = Depends(require_cognito_auth)
+):
     try:
         item = create_evaluation(evaluation)
     except Exception as e:
@@ -68,18 +70,18 @@ def api_create_evaluation(evaluation: EvaluationIn, claims: dict = Depends(requi
     return item
 
 
-@app.get('/evaluations/{evaluation_id}')
+@app.get("/evaluations/{evaluation_id}")
 def api_get_evaluation(evaluation_id: str):
     item = get_evaluation(evaluation_id)
     if not item:
-        raise HTTPException(status_code=404, detail='Evaluation not found')
+        raise HTTPException(status_code=404, detail="Evaluation not found")
     return item
 
 
-@app.get('/clients/{client_id}/evaluations')
+@app.get("/clients/{client_id}/evaluations")
 def api_list_evaluations_for_client(client_id: str, limit: int = 50):
     items = list_evaluations_for_client(client_id, limit=limit)
-    return {'count': len(items), 'items': items}
+    return {"count": len(items), "items": items}
 
 
 # Credentials management
@@ -94,47 +96,70 @@ class CredentialsIn(BaseModel):
     save_secret: Optional[bool] = True
 
 
-@app.post('/credentials', status_code=201, dependencies=[Depends(require_api_key)])
+@app.post("/credentials", status_code=201, dependencies=[Depends(require_api_key)])
 def api_create_credentials(payload: CredentialsIn):
     # Prefer AssumeRole when role_arn is provided
     if payload.role_arn:
         session_name = f"autowar-{uuid.uuid4()}"
         try:
-            resp = assume_role(payload.role_arn, session_name, external_id=payload.external_id, region=payload.region)
+            resp = assume_role(
+                payload.role_arn,
+                session_name,
+                external_id=payload.external_id,
+                region=payload.region,
+            )
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"AssumeRole failed: {e}")
         # register metadata (do not store secrets)
         rec = {
-            'type': 'role',
-            'role_arn': payload.role_arn,
-            'caller_identity': resp.get('caller_identity'),
-            'status': 'ACTIVE',
+            "type": "role",
+            "role_arn": payload.role_arn,
+            "caller_identity": resp.get("caller_identity"),
+            "status": "ACTIVE",
         }
         saved = register_credential_record(payload.client_id, rec)
-        return {'ok': True, 'record': saved}
+        return {"ok": True, "record": saved}
 
     # Fallback: keys provided
     if payload.access_key_id and payload.secret_access_key:
         try:
-            identity = validate_keys(payload.access_key_id, payload.secret_access_key, payload.session_token, payload.region)
+            identity = validate_keys(
+                payload.access_key_id,
+                payload.secret_access_key,
+                payload.session_token,
+                payload.region,
+            )
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Credential validation failed: {e}")
+            raise HTTPException(
+                status_code=400, detail=f"Credential validation failed: {e}"
+            )
         secret_arn = None
         if payload.save_secret:
             try:
-                secret_arn = store_secret_for_keys(payload.client_id, payload.access_key_id, payload.secret_access_key, payload.session_token, payload.region)
+                secret_arn = store_secret_for_keys(
+                    payload.client_id,
+                    payload.access_key_id,
+                    payload.secret_access_key,
+                    payload.session_token,
+                    payload.region,
+                )
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Secrets Manager error: {e}")
+                raise HTTPException(
+                    status_code=500, detail=f"Secrets Manager error: {e}"
+                )
         rec = {
-            'type': 'keys',
-            'caller_identity': identity,
-            'secret_arn': secret_arn,
-            'status': 'ACTIVE',
+            "type": "keys",
+            "caller_identity": identity,
+            "secret_arn": secret_arn,
+            "status": "ACTIVE",
         }
         saved = register_credential_record(payload.client_id, rec)
-        return {'ok': True, 'record': saved}
+        return {"ok": True, "record": saved}
 
-    raise HTTPException(status_code=400, detail='Provide either role_arn or access_key_id+secret_access_key')
+    raise HTTPException(
+        status_code=400,
+        detail="Provide either role_arn or access_key_id+secret_access_key",
+    )
 
 
 # Per-BP scoring
@@ -150,7 +175,7 @@ class ScoreOut(ScoreIn):
     created_at: str
 
 
-@app.post('/scores', status_code=201, response_model=ScoreOut)
+@app.post("/scores", status_code=201, response_model=ScoreOut)
 def api_create_score(payload: ScoreIn, claims: dict = Depends(require_cognito_auth)):
     try:
         item = create_score(payload)
@@ -159,15 +184,15 @@ def api_create_score(payload: ScoreIn, claims: dict = Depends(require_cognito_au
     return item
 
 
-@app.get('/scores/{score_id}')
+@app.get("/scores/{score_id}")
 def api_get_score(score_id: str):
     item = get_score(score_id)
     if not item:
-        raise HTTPException(status_code=404, detail='Score not found')
+        raise HTTPException(status_code=404, detail="Score not found")
     return item
 
 
-@app.get('/evaluations/{evaluation_id}/scores')
+@app.get("/evaluations/{evaluation_id}/scores")
 def api_list_scores_for_evaluation(evaluation_id: str, limit: int = 50):
     items = list_scores_for_evaluation(evaluation_id, limit=limit)
-    return {'count': len(items), 'items': items}
+    return {"count": len(items), "items": items}

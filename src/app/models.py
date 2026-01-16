@@ -23,4 +23,4 @@ class EvaluationOut(EvaluationIn):
     evaluationId: str
     created_at: int
     score_total: Optional[float] = None
-    status: str = 'PENDING'
+    status: str = "PENDING"
