@@ -21,6 +21,7 @@ from typing import Optional
 import uuid
 from datetime import datetime
 from .scores_service import create_score, get_score, list_scores_for_evaluation
+from .security_service import SecurityService
 
 APP_TABLES = {
     'clients': 'autowar-clients',
@@ -173,4 +174,34 @@ def api_get_score(score_id: str):
 @app.get('/evaluations/{evaluation_id}/scores')
 def api_list_scores_for_evaluation(evaluation_id: str, limit: int = 50):
     items = list_scores_for_evaluation(evaluation_id, limit=limit)
+    return {'count': len(items), 'items': items}
+
+
+# Security Service Routes
+@app.post('/security/evaluate/{question_id}', dependencies=[Depends(require_cognito_auth)])
+async def evaluate_security_question(evaluation_id: str, question_id: str):
+    """Evaluate a specific security question"""
+    dynamodb = get_table('autowar-waf-questions')  # Get resource
+    service = SecurityService(dynamodb, 'autowar-waf-questions')
+    result = await service.evaluate_security_question(evaluation_id, question_id)
+    return result
+
+
+@app.get('/security/evaluations/{evaluation_id}/{question_id}', dependencies=[Depends(require_cognito_auth)])
+def get_security_evaluation(evaluation_id: str, question_id: str):
+    """Get security evaluation for specific question"""
+    dynamodb = get_table('autowar-waf-questions')
+    service = SecurityService(dynamodb, 'autowar-waf-questions')
+    result = service.get_security_evaluation(evaluation_id, question_id)
+    if not result:
+        raise HTTPException(status_code=404, detail='Security evaluation not found')
+    return result
+
+
+@app.get('/security/evaluations/{evaluation_id}', dependencies=[Depends(require_cognito_auth)])
+def list_security_evaluations(evaluation_id: str):
+    """List all security evaluations for an evaluation"""
+    dynamodb = get_table('autowar-waf-questions')
+    service = SecurityService(dynamodb, 'autowar-waf-questions')
+    items = service.list_security_evaluations_for_evaluation(evaluation_id)
     return {'count': len(items), 'items': items}

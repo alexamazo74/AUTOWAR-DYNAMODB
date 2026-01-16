@@ -1,6 +1,7 @@
 import os
 import boto3
 from boto3.dynamodb.conditions import Key
+from typing import List, Dict, Any
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 
@@ -17,7 +18,40 @@ def get_table(table_name: str):
     resource = _get_resource()
     return resource.Table(table_name)
 
-# Simple helper for reading an item by id
+class AWSConnector:
+    """Connector for AWS services"""
+
+    def __init__(self):
+        self.region = AWS_REGION
+
+    async def get_resources_by_service(self, service: str) -> List[Dict[str, Any]]:
+        """Mock implementation - in real implementation would query AWS APIs"""
+        # For testing, return mock data
+        if service == 'iam':
+            return [
+                {
+                    'service': 'iam',
+                    'type': 'user',
+                    'user_name': 'test-user',
+                    'access_keys': [],
+                    'mfa_enabled': True
+                },
+                {
+                    'service': 'iam',
+                    'type': 'role',
+                    'role_name': 'test-role'
+                }
+            ]
+        elif service == 'cloudtrail':
+            return [
+                {
+                    'service': 'cloudtrail',
+                    'trail_name': 'test-trail',
+                    'is_logging': True,
+                    'is_multi_region_trail': True
+                }
+            ]
+        return []
 def get_item(table_name: str, item_id: str):
     table = get_table(table_name)
     resp = table.get_item(Key={'id': item_id})

@@ -24,3 +24,20 @@ class EvaluationOut(EvaluationIn):
     created_at: int
     score_total: Optional[float] = None
     status: str = 'PENDING'
+
+
+class EvaluationRequest(BaseModel):
+    evaluation_id: str
+    question_id: str
+
+
+class SecurityEvaluation(BaseModel):
+    id: str
+    evaluation_id: str
+    question_id: str
+    pillar: str = 'Security'
+    scoring: Dict[str, Any]
+    validation_results: Dict[str, Any]
+    resources_evaluated: List[Dict[str, Any]]
+    evaluated_at: str
+    status: str
