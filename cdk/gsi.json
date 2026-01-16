@@ -1,0 +1,10 @@
+[
+  {
+    "IndexName": "evaluationIndex",
+    "KeySchema": [
+      { "AttributeName": "evaluation_id", "KeyType": "HASH" },
+      { "AttributeName": "created_at", "KeyType": "RANGE" }
+    ],
+    "Projection": { "ProjectionType": "ALL" }
+  }
+]

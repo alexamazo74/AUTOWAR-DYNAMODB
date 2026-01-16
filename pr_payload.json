@@ -1,0 +1,6 @@
+{
+  "title": "chore: tests and report fixes",
+  "head": "feature/tests-and-report-fixes",
+  "base": "main",
+  "body": "$(cat pr_body.md)"
+}

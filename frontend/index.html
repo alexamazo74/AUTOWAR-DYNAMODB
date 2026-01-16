@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AutoWAR Scores - Demo</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 900px; margin: 2rem auto; }
+      label { display:block; margin-top: .5rem }
+      input, textarea { width: 100%; padding: .5rem; margin-top:.25rem }
+      button { margin-top: .75rem; padding:.5rem 1rem }
+      pre { background:#f7f7f7; padding:1rem }
+    </style>
+  </head>
+  <body>
+    <h1>AutoWAR - Scores Demo</h1>
+    <p>Point this UI to your running backend (default <code>http://127.0.0.1:8001</code>).</p>
+
+    <label>Backend base URL
+      <input id="baseUrl" value="http://127.0.0.1:8001" />
+    </label>
+
+    <h2>Post a Score</h2>
+    <label>Evaluation ID
+      <input id="evaluationId" value="test-eval-1" />
+    </label>
+    <label>BP ID
+      <input id="bpId" value="bp-001" />
+    </label>
+    <label>Scores (JSON object)
+      <textarea id="scores" rows="4">{"s1":3, "s2":4.5, "s3":2}</textarea>
+    </label>
+    <button id="postScore">POST /scores</button>
+
+    <h2>Get Scores For Evaluation</h2>
+    <label>Evaluation ID
+      <input id="listEvalId" value="test-eval-1" />
+    </label>
+    <button id="listScores">GET /evaluations/:id/scores</button>
+
+    <h2>Result</h2>
+    <pre id="result">(no result yet)</pre>
+
+    <script src="app.js"></script>
+  </body>
+</html>

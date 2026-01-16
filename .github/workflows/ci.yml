@@ -58,7 +58,7 @@ jobs:
       - name: Type check (mypy)
         run: |
           pip install mypy
-          mypy src tests --config-file mypy.ini
+          mypy --explicit-package-bases src tests --config-file mypy.ini
 
       - name: Run tests
         run: pytest -q

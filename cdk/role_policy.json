@@ -1,0 +1,156 @@
+﻿{
+    "RoleName": "AutoWarStack-AutoWarLambdaServiceRoleF406D210-hJWJOiuzd2bj",
+    "PolicyName": "AutoWarLambdaServiceRoleDefaultPolicyA16A2A78",
+    "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:Query",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-evaluations",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-evaluations/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-evaluations",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-evaluations/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:Query",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable"
+                ],
+                "Resource": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-aws-credentials",
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                ],
+                "Resource": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-aws-credentials",
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:Query",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable"
+                ],
+                "Resource": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-user-management",
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                ],
+                "Resource": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-user-management",
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:Query",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-reports",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-reports/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-reports",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-reports/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:Query",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-audit-log",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-audit-log/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                ],
+                "Resource": [
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-audit-log",
+                    "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-audit-log/index/*"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "sqs:SendMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:GetQueueUrl"
+                ],
+                "Resource": "arn:aws:sqs:us-east-1:102080400524:autowar-eval-queue",
+                "Effect": "Allow"
+            }
+        ]
+    }
+}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 
 
@@ -23,4 +23,4 @@ class EvaluationOut(EvaluationIn):
     evaluationId: str
     created_at: int
     score_total: Optional[float] = None
-    status: str = 'PENDING'
+    status: str = "PENDING"

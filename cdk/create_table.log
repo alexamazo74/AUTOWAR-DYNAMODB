@@ -1,0 +1,67 @@
+﻿{
+    "TableDescription": {
+        "AttributeDefinitions": [
+            {
+                "AttributeName": "created_at",
+                "AttributeType": "S"
+            },
+            {
+                "AttributeName": "evaluation_id",
+                "AttributeType": "S"
+            },
+            {
+                "AttributeName": "id",
+                "AttributeType": "S"
+            }
+        ],
+        "TableName": "autowar-scores",
+        "KeySchema": [
+            {
+                "AttributeName": "id",
+                "KeyType": "HASH"
+            }
+        ],
+        "TableStatus": "CREATING",
+        "CreationDateTime": "2026-01-15T19:39:17.066000-05:00",
+        "ProvisionedThroughput": {
+            "NumberOfDecreasesToday": 0,
+            "ReadCapacityUnits": 0,
+            "WriteCapacityUnits": 0
+        },
+        "TableSizeBytes": 0,
+        "ItemCount": 0,
+        "TableArn": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "TableId": "abc1fb8a-4254-4a35-8dd8-b64dc731a828",
+        "BillingModeSummary": {
+            "BillingMode": "PAY_PER_REQUEST"
+        },
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "evaluationIndex",
+                "KeySchema": [
+                    {
+                        "AttributeName": "evaluation_id",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "created_at",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                "Projection": {
+                    "ProjectionType": "ALL"
+                },
+                "IndexStatus": "CREATING",
+                "ProvisionedThroughput": {
+                    "NumberOfDecreasesToday": 0,
+                    "ReadCapacityUnits": 0,
+                    "WriteCapacityUnits": 0
+                },
+                "IndexSizeBytes": 0,
+                "ItemCount": 0,
+                "IndexArn": "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/evaluationIndex"
+            }
+        ],
+        "DeletionProtectionEnabled": false
+    }
+}
