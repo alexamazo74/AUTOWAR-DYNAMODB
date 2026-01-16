@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from .s3_validators import S3BucketPublicAccessValidator
 from .base import ValidatorBase
 from .iam_validators import IAMPasswordPolicyValidator, RootMFAValidator
