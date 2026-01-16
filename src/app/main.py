@@ -19,10 +19,13 @@ from .cognito_auth import require_cognito_auth
 from pydantic import BaseModel
 from typing import Optional
 import uuid
+from datetime import datetime
+from .scores_service import create_score, get_score, list_scores_for_evaluation
 
 APP_TABLES = {
     'clients': 'autowar-clients',
     'evaluations': 'autowar-evaluations',
+    'scores': 'autowar-scores',
 }
 
 app = FastAPI(title='AutoWAR API')
@@ -135,3 +138,39 @@ def api_create_credentials(payload: CredentialsIn):
         return {'ok': True, 'record': saved}
 
     raise HTTPException(status_code=400, detail='Provide either role_arn or access_key_id+secret_access_key')
+
+
+# Per-BP scoring
+class ScoreIn(BaseModel):
+    evaluation_id: str
+    bp_id: str
+    scores: dict
+
+
+class ScoreOut(ScoreIn):
+    id: str
+    total: float
+    created_at: str
+
+
+@app.post('/scores', status_code=201, response_model=ScoreOut)
+def api_create_score(payload: ScoreIn, claims: dict = Depends(require_cognito_auth)):
+    try:
+        item = create_score(payload)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return item
+
+
+@app.get('/scores/{score_id}')
+def api_get_score(score_id: str):
+    item = get_score(score_id)
+    if not item:
+        raise HTTPException(status_code=404, detail='Score not found')
+    return item
+
+
+@app.get('/evaluations/{evaluation_id}/scores')
+def api_list_scores_for_evaluation(evaluation_id: str, limit: int = 50):
+    items = list_scores_for_evaluation(evaluation_id, limit=limit)
+    return {'count': len(items), 'items': items}
