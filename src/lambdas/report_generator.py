@@ -7,7 +7,7 @@ import boto3
 try:
     import httpx
 except Exception:
-    httpx = None
+    httpx = None  # type: ignore[assignment]
 from typing import Any, Dict
 
 logging.basicConfig()
