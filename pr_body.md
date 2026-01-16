@@ -1,3 +1,25 @@
+**Resumen de cambios**
+
+- **Backend:** Implementa servicio de puntuaciones (`autowar-scores`) en FastAPI (endpoints para crear, obtener y listar puntuaciones).
+- **Infra (CDK):** evita crear la tabla si ya existe (usa import), añade permisos IAM con nombres únicos y sanea despliegues para evitar colisiones.
+- **Tests:** añade `tests/test_integration_public.py` (prueba CI-friendly) y pruebas locales de humo; las pruebas locales pasan.
+- **Temporal / CI:** se creó temporalmente la ruta pública `/public-scores` para facilitar pruebas de integración en CI y se comprobó; por seguridad, la ruta fue eliminada del stack antes de mergear.
+
+**Estado del branch**
+
+- Branch: `feature/ci-public-test`
+- Contiene: cambios en `cdk/`, implementación FastAPI en `src/`, tests nuevos en `tests/`.
+
+**Notas operativas / Siguientes pasos**
+
+- Para que la prueba CI `tests/test_integration_public.py` se ejecute, elegir una de las opciones:
+  - recrear temporalmente la ruta pública en el pipeline antes de ejecutar los tests y eliminarla después, o
+  - adaptar la prueba para usar autenticación Cognito (recomendado para entornos de producción).
+- Revisar IAM en `cdk/lib/cdk-stack.ts` y validar permisos en CI antes de mergear.
+
+PR propuesta: https://github.com/alexamazo74/AUTOWAR-DYNAMODB/pull/new/feature/ci-public-test
+
+Solicitado por: implementación y ajuste de tests/infra para CI
 Resumen de cambios
 
 - Fixes: make `report_generator` compatible with test doubles (`update_item`) and fallback for real DynamoDB (`put_item`).

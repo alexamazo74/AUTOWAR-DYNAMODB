@@ -963,6 +963,71 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -1133,7 +1198,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
-     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+     "S3Key": "37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b.zip"
     },
     "Environment": {
      "Variables": {
@@ -1161,7 +1226,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "AutoWarStack/CredentialsMaintenanceLambda/Resource",
-    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:path": "asset.37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1374,6 +1439,71 @@
       },
       {
        "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
+      },
+      {
+       "Action": [
         "sqs:ReceiveMessage",
         "sqs:ChangeMessageVisibility",
         "sqs:GetQueueUrl",
@@ -1487,7 +1617,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
-     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+     "S3Key": "37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b.zip"
     },
     "Environment": {
      "Variables": {
@@ -1518,7 +1648,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "AutoWarStack/EvalWorkerLambda/Resource",
-    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:path": "asset.37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1864,6 +1994,71 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:us-east-1:102080400524:table/autowar-scores"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -1884,7 +2079,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-102080400524-us-east-1",
-     "S3Key": "8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59.zip"
+     "S3Key": "37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b.zip"
     },
     "Environment": {
      "Variables": {
@@ -1912,7 +2107,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/Resource",
-    "aws:asset:path": "asset.8b61dc086d10a00f5be33fcdcd2f9d45584f1931a534a3b70bdcc5b7b8752d59",
+    "aws:asset:path": "asset.37fcd52ae7b414e68580cfeeb4e6b7f0921afaee0312c7f369e0b5f3966eae2b",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1933,6 +2128,120 @@
    },
    "Metadata": {
     "aws:cdk:path": "AutoWarStack/ReportGeneratorLambda/SqsEventSource:AutoWarStackReportQueue6391206A/Resource"
+   }
+  },
+  "AutoWarScoresPolicyForAutoWarF1D5CF0B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AutowarScoresAccess-AutoWar",
+    "Roles": [
+     {
+      "Ref": "AutoWarLambdaServiceRoleF406D210"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarScoresPolicyForAutoWar/Resource"
+   }
+  },
+  "AutoWarScoresPolicyForEvalWorker95C38252": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AutowarScoresAccess-EvalWorker",
+    "Roles": [
+     {
+      "Ref": "EvalWorkerLambdaServiceRole5C3B370E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarScoresPolicyForEvalWorker/Resource"
+   }
+  },
+  "AutoWarScoresPolicyForReportGeneratorB897CD89": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores",
+        "arn:aws:dynamodb:us-east-1:102080400524:table/autowar-scores/index/*"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AutowarScoresAccess-ReportGenerator",
+    "Roles": [
+     {
+      "Ref": "ReportGeneratorLambdaServiceRole569F0BC5"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AutoWarStack/AutoWarScoresPolicyForReportGenerator/Resource"
    }
   },
   "AutoWarApiD0180E1B": {
@@ -2147,7 +2456,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WQwW7CMAyGn4V78LbCCwDbbmhdYWeUpl4XaOOuTkBVlHefkjLotJM/+7cd588gWyzhaSYvPFfVad7oEvzOSnUS8sIHXw1GtlSV4PeybFBsPk2CIBTVRlsC/8HY50RN1G78C5tGo7FTaawE0ci2rCT4V2eU1WRiz5Rz7FvNHLOXMxq7I9cr3Mqu06aODf+rQWjZgi9oPDTFnBqthrQwURC8OEhmtAyrGAQvwK+dOqFdS0YxYhy40hjue6Z5EGwY/J46rZI3EYLAeBqDL9z1Ehcd428G/+7QpVqCIGSna2nxIgfwBbJddTpN3HGlFDljxTN2DQ3t1c5JtrOyTitHKJCTKek3W7RfVEVxpBBueiy+Ods5K5IRcTpZ69hSO+268x8p7+msK+zjQ0EYqhCO/HDOlvCUwePsyFrPe2esbhGKMf4AWm+Ti28CAAA="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WSzW7CMAzHn4V78LbCCwDbbmhdYWeUpl4XSJOuTkBVlHefkjDotEv886fsv1JAsVjC04xfaC6a01zJGvzOcnFi/EIH34yad6apwe95rZBtPnWG9K45YWDCtFpaA/6DcCiNUbHqxr+wURK1naZyJDDFu7rh4F+dFlYaHWumXOLQSaLovZxR251xg8At73up21jwPxqY5B34yuSVky2NkmJMAxMFRosDJ0JLsIqG0QL82okT2ngYyxgbrpTNfc7UD4w0gd+bXoqkUoTAMK5G4Ct33cQpDIy+Cfy7Q5diCQLjvWy5xQsfwVdIdtXL1HHHlRDGacuesVdm7K5yTryd5W0amaFCSqKka7Zov0wTk5lCuOVj8M3Z3lmWhIjdSVpH1nTTqjv/SZWDOcsGh/wftGkQjvRwLpbwVMDj7EhSzgenrewQqmx/ADEzLah5AgAA"
    },
    "Metadata": {
     "aws:cdk:path": "AutoWarStack/CDKMetadata/Default"

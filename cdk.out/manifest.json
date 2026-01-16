@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::102080400524:role/cdk-hnb659fds-deploy-role-102080400524-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::102080400524:role/cdk-hnb659fds-cfn-exec-role-102080400524-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-102080400524-us-east-1/192179d2216dd822ca35516296c1db52ea52f9b829d47cd994f8eee33e5c1a8e.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-102080400524-us-east-1/f2e0a3708919c80eecb8b46ab81823a1dfc130879a96341bd46918185380440c.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -484,6 +484,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ReportGeneratorLambdaSqsEventSourceAutoWarStackReportQueue6391206AA27DEC30"
+          }
+        ],
+        "/AutoWarStack/AutoWarScoresPolicyForAutoWar/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AutoWarScoresPolicyForAutoWarF1D5CF0B"
+          }
+        ],
+        "/AutoWarStack/AutoWarScoresPolicyForEvalWorker/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AutoWarScoresPolicyForEvalWorker95C38252"
+          }
+        ],
+        "/AutoWarStack/AutoWarScoresPolicyForReportGenerator/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AutoWarScoresPolicyForReportGeneratorB897CD89"
           }
         ],
         "/AutoWarStack/AutoWarReportsBucketName": [
