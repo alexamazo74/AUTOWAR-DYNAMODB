@@ -18,7 +18,6 @@ VALIDATOR_MAP: Dict[str, List[ValidatorBase]] = {
 }
 
 
-
 def run_validators_for_evaluation(
     targets: List[Dict[str, Any]], region: str = None, account_id: str = None
 ) -> List[Dict[str, Any]]:

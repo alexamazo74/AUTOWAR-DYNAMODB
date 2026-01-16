@@ -68,7 +68,9 @@ def get_evaluation(evaluation_id: str) -> Optional[Dict[str, Any]]:
     return resp.get("Item")
 
 
-def list_evaluations_for_client(client_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+def list_evaluations_for_client(
+    client_id: str, limit: int = 50
+) -> List[Dict[str, Any]]:
     table = get_table(TABLE_NAME)
     try:
         resp = table.query(

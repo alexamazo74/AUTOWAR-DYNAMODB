@@ -63,7 +63,9 @@ def get_score(score_id: str) -> Optional[Dict[str, Any]]:
     return item
 
 
-def list_scores_for_evaluation(evaluation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+def list_scores_for_evaluation(
+    evaluation_id: str, limit: int = 50
+) -> List[Dict[str, Any]]:
     table = get_table(SCORES_TABLE)
     # Prefer query against the GSI named 'evaluationIndex', fallback to scan
     try:
