@@ -2,7 +2,6 @@ import os
 import json
 import logging
 import boto3
-from typing import Any, Dict
 
 from app.validators.manager import run_validators_for_evaluation
 

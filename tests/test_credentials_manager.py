@@ -1,4 +1,3 @@
-import pytest
 import src.app.credentials_manager as cm
 
 

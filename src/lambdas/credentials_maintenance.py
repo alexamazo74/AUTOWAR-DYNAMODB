@@ -2,7 +2,6 @@ import os
 import json
 import time
 import boto3
-from typing import Dict, Any
 from botocore.exceptions import ClientError
 from app.credentials_manager import assume_role
 

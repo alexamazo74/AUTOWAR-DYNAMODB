@@ -1,6 +1,5 @@
 import os
 import boto3
-from boto3.dynamodb.conditions import Key
 
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 

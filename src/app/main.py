@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-import os
 from .aws_connector import get_table
 from .models import EvaluationIn, EvaluationOut
 from .evaluation_service import (
@@ -16,10 +15,8 @@ from .credentials_manager import (
 )
 from .auth import require_api_key
 from .cognito_auth import require_cognito_auth
-from pydantic import BaseModel
 from typing import Optional
 import uuid
-from datetime import datetime
 from .scores_service import create_score, get_score, list_scores_for_evaluation
 
 APP_TABLES = {
