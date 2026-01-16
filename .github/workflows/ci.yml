@@ -56,11 +56,9 @@ jobs:
           black --check src tests || (echo "Run 'black src tests' to format." && false)
 
       - name: Type check (mypy)
-        # Run mypy but do not fail the whole job yet; we'll progressively tighten checks
-        continue-on-error: true
         run: |
           pip install mypy
-          mypy src tests --config-file mypy.ini
+          mypy --explicit-package-bases src tests --config-file mypy.ini
 
       - name: Run tests
         run: pytest -q
