@@ -8,21 +8,26 @@ from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from .aws_connector import AWSConnector
 from .models import EvaluationRequest, SecurityEvaluation
+from .validators.security_validators import SECURITY_DESCRIPTIONS
+from .risk_service import RiskService
+from .remediation_service import RemediationService
 
 
 class SecurityService:
     """Service for Security pillar evaluation"""
 
-    def __init__(self, dynamodb_resource, table_name: str = 'autowar-waf-questions'):
-        self.dynamodb = dynamodb_resource
+    def __init__(self, dynamodb_table, table_name: str = 'autowar-waf-questions'):
+        self.dynamodb = dynamodb_table.meta.client  # Get the client from table
         self.table_name = table_name
-        self.table = self.dynamodb.Table(table_name)
+        self.table = dynamodb_table
         self.aws_connector = AWSConnector()
+        self.risk_service = RiskService(dynamodb_table)
+        self.remediation_service = RemediationService(dynamodb_table)
 
     def _to_decimal_safe(self, value: Any) -> Decimal:
         """Safely convert to Decimal for DynamoDB"""
@@ -50,15 +55,22 @@ class SecurityService:
             # Calculate scoring
             scoring = self._calculate_security_scoring(validation_results)
 
+            # Calculate risks and remediation
+            risks = self.risk_service.calculate_question_risks(question_id, validation_results)
+            remediation_plan = self.remediation_service.generate_question_remediation_plan(question_id, validation_results)
+
             # Store evaluation
             evaluation_data = {
                 'id': f"{evaluation_id}#{question_id}",
                 'evaluation_id': evaluation_id,
                 'question_id': question_id,
+                'question_text': SECURITY_DESCRIPTIONS['questions'].get(question_id, f"Question {question_id}"),
                 'pillar': 'Security',
                 'scoring': scoring,
                 'validation_results': validation_results,
                 'resources_evaluated': resources,
+                'risks': [risk.dict() for risk in risks],
+                'remediation_plan': remediation_plan.dict(),
                 'evaluated_at': datetime.utcnow().isoformat(),
                 'status': 'completed'
             }
@@ -81,11 +93,11 @@ class SecurityService:
         """Get AWS resources relevant to security question"""
         # Map questions to AWS services
         service_mapping = {
-            'SEC01': ['iam', 'organizations'],  # Identity and access management
-            'SEC02': ['cloudtrail', 'config'],  # Logging and monitoring
-            'SEC03': ['kms', 'secretsmanager'],  # Encryption
-            'SEC04': ['vpc', 'ec2', 'security-groups'],  # Network security
-            'SEC05': ['s3', 'rds', 'lambda'],  # Data protection
+            'SEC01': ['iam', 'organizations', 'access-analyzer'],  # Identity and access management
+            'SEC02': ['iam', 'cloudtrail', 'config'],  # Identity management and monitoring
+            'SEC03': ['iam', 'kms', 'secretsmanager', 's3', 'rds'],  # Data protection and encryption
+            'SEC04': ['cloudtrail', 'config', 'vpc', 'ec2', 'security-groups'],  # Detection and investigation
+            'SEC05': ['vpc', 'ec2', 'security-groups', 'guardduty'],  # Network protection
         }
 
         pillar = question_id[:4]  # e.g., SEC01
@@ -104,19 +116,22 @@ class SecurityService:
     async def _run_security_validators(self, question_id: str, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Run security validators for the question"""
         # Import validators dynamically
-        from .validators import security_validators
+        from .validators.security_validators import security_validators
 
         results = {}
         for bp_id, validator_func in security_validators.items():
             if bp_id.startswith(question_id):
                 try:
                     result = await validator_func(resources)
+                    # Add description
+                    result['description'] = SECURITY_DESCRIPTIONS['best_practices'].get(bp_id, f"Best practice {bp_id}")
                     results[bp_id] = result
                 except Exception as e:
                     results[bp_id] = {
                         'status': 'error',
                         'error': str(e),
-                        'score': 0
+                        'score': 0,
+                        'description': SECURITY_DESCRIPTIONS['best_practices'].get(bp_id, f"Best practice {bp_id}")
                     }
 
         return results
@@ -156,9 +171,9 @@ class SecurityService:
     def list_security_evaluations_for_evaluation(self, evaluation_id: str) -> List[Dict[str, Any]]:
         """List all security evaluations for an evaluation"""
         try:
-            response = self.table.query(
-                IndexName='evaluationIndex',  # Assuming GSI exists
-                KeyConditionExpression=Key('evaluation_id').eq(evaluation_id)
+            # Use scan with filter since GSI might not be available
+            response = self.table.scan(
+                FilterExpression=Attr('evaluation_id').eq(evaluation_id)
             )
             return response.get('Items', [])
         except ClientError as e:

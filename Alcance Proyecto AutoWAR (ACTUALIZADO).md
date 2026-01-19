@@ -202,3 +202,102 @@
 16. *✅ autowar-user-management \- Gestión usuarios*  
 17. *✅ autowar-aws-credentials \- Credenciales AWS seguras*
 
+
+PILAR DE SEGURIDAD
+
+"Fundamentos de seguridad
+SEC 1. ¿Cómo opera usted su carga de trabajo de forma segura?"	
+SEC01-BP01 Cargas de trabajo separadas mediante cuentas	
+SEC01-BP02 Proteger el usuario raíz de la cuenta y sus propiedades	
+SEC01-BP03 Identificar y validar los objetivos de control	
+SEC01-BP04 Manténgase actualizado con las amenazas y recomendaciones de seguridad 	
+SEC01-BP05 Reducir el alcance de la gestión de la seguridad	
+SEC01-BP06 Automatizar la implementación de controles de seguridad estándar	
+SEC01-BP07 Identify threats and prioritize mitigations using a threat model	
+SEC01-BP08 Evaluar e implementar nuevos servicios y características de seguridad periódicamente	
+
+"Gestión de identidad y acceso
+SEC 2. ¿Cómo se gestiona la autenticación de personas y máquinas?"	
+"
+SEC02-BP01 Utilizar mecanismos de inicio de sesión fuertes"	
+SEC02-BP02 Utilizar credenciales temporales	
+SEC02-BP03 Almacenar y utilizar secretos de forma segura	
+SEC02-BP04 Confíe en un proveedor de identidad centralizado	
+SEC02-BP05 Auditar y rotar credenciales periódicamente	
+SEC02-BP06 Emplear grupos de usuarios y atributos	
+
+"Gestión de identidad y acceso
+SEC 3. ¿Cómo se gestionan los permisos para personas y máquinas?"	
+SEC03-BP01 Definir los requisitos de acceso	
+SEC03-BP02 Otorgar acceso con privilegios mínimos	
+SEC03-BP03 Establecer proceso de acceso de emergencia	
+SEC03-BP04 Reducir permisos continuamente	
+SEC03-BP05 Defina las barreras de permisos para su organización	
+SEC03-BP06 Gestionar el acceso según el ciclo de vida	
+SEC03-BP07 Analizar el acceso público y entre cuentas	
+SEC03-BP08 Comparta recursos de forma segura dentro de su organización	
+SEC03-BP09 Compartir recursos de forma segura con un tercero	
+"Detección
+
+SEC 4. ¿Cómo se detectan e investigan los eventos de seguridad?"	
+SEC04-BP01 Configurar el servicio y el registro de aplicaciones	
+SEC04-BP02 Capture registros, hallazgos y métricas en ubicaciones estandarizadas	
+SEC04-BP03 Correlaciona y enriquece las alertas de seguridad	
+SEC04-BP04 Iniciar remediación para recursos no conformes	
+
+"Protección de infraestructura
+SEC 5. ¿Cómo protege usted los recursos de su red?"	
+SEC05-BP01 Crear capas de red	
+SEC05-BP02 Controle el flujo de tráfico dentro de sus capas de red	
+SEC05-BP03 Implementar protección basada en inspección	
+SEC05-BP04 Automatice la protección de la red	
+
+"Protección de infraestructura
+SEC 6. ¿Cómo protege sus recursos computacionales?"	
+SEC06-BP01 Realizar gestión de vulnerabilidades	
+SEC06-BP02 Computación de provisión a partir de imágenes endurecidas	
+SEC06-BP03 Reducir la gestión manual y el acceso interactivo	
+SEC06-BP04 Validar la integridad del software	
+SEC06-BP05 Automatice la protección informática	
+
+"Protección de datos
+SEC 7. ¿Cómo clasifica sus datos?"	
+SEC07-BP01 Comprenda su esquema de clasificación de datos	
+SEC07-BP02 Aplicar controles de protección de datos basados en la sensibilidad de datos	
+SEC07-BP03 Automatizar la identificación y clasificación	
+SEC07-BP04 Definir la gestión escalable del ciclo de vida de los datos	
+
+"Protección de datos
+SEC 8. ¿Cómo protege sus datos en reposo?"	
+SEC08-BP01 Implementar la gestión segura de claves	
+SEC08-BP02 Hacer cumplir el cifrado en reposo	
+SEC08-BP03 Automatice los datos en reposo protección	
+SEC08-BP04 Hacer cumplir el control de acceso	
+
+"Protección de datos
+SEC 9. ¿Cómo protege sus datos en tránsito?"	
+SEC09-BP01 Implementar la gestión segura de claves y certificados	
+SEC09-BP02 Hacer cumplir el cifrado en tránsito	
+SEC09-BP03 Autenticar las comunicaciones de red	
+
+"Respuesta a incidencias
+SEC 10. ¿Cómo anticipa, responde y se recupera de los incidentes?"	
+SEC10-BP01 Identificar personal clave y recursos externos	
+SEC10-BP02 Desarrollar planes de gestión de incidentes	
+SEC10-BP03 Preparar capacidades forenses	
+SEC10-BP04 Desarrollar y probar libros de jugadas de respuesta a incidentes de seguridad	
+SEC10-BP05 Acceso previo a la provisión	
+SEC10-BP06 Herramientas de implementación previa	
+SEC10-BP07 Ejecutar simulaciones	
+SEC10-BP08 Establecer un marco para aprender de los incidentes	
+
+"Seguridad de aplicaciónes
+SEC 11. ¿Cómo incorpora y valida las propiedades de seguridad de las aplicaciones a lo largo del ciclo de vida de diseño, desarrollo e implementación?"	
+SEC11-BP01 Tren para seguridad de aplicaciones	
+SEC11-BP02 Automatice las pruebas a lo largo del ciclo de vida de desarrollo y lanzamiento	
+SEC11-BP03 Realizar pruebas de penetración regulares	
+SEC11-BP04 Realizar revisiones de código	
+SEC11-BP05 Centralizar servicios para paquetes y dependencias	
+SEC11-BP06 Implementar software programáticamente	
+SEC11-BP07 Evalúa regularmente las propiedades de seguridad de las tuberías	
+SEC11-BP08 Cree un programa que incorpore la propiedad de seguridad en los equipos de carga de trabajo	

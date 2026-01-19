@@ -1,0 +1,703 @@
+{
+  "success": true,
+  "evaluation": {
+    "id": "security-eval-demo-20c2038b-1348-462c-84db-2da22e4afda3",
+    "account_id": "123456789012",
+    "account_arn": "arn:aws:iam::123456789012:root",
+    "regions": [
+      "us-east-1"
+    ],
+    "pillar": "Security",
+    "timestamp": "2026-01-18T21:49:49.542757",
+    "overall_score": 78.5,
+    "total_questions": 11,
+    "total_best_practices": 63,
+    "questions_evaluated": [
+      {
+        "question_id": "SEC01",
+        "title": "Organization, Governance & Permissions",
+        "description": "How do you manage AWS accounts and organizational structure?",
+        "score": 95,
+        "bps_evaluated": 9,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC01-BP01",
+            "status": "COMPLIANT",
+            "finding": "Organization structure properly configured",
+            "severity": "LOW",
+            "evidence": "AWS Organizations detected with 5 accounts",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC01-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "SCPs not fully implemented across all OUs",
+            "severity": "MEDIUM",
+            "evidence": "Only 2 out of 5 OUs have SCPs attached",
+            "remediation": "Attach SCPs to remaining OUs to enforce guardrails",
+            "risk": "Uncontrolled resource creation"
+          },
+          {
+            "bp": "SEC01-BP03",
+            "status": "COMPLIANT",
+            "finding": "Centralized logging configured",
+            "severity": "LOW",
+            "evidence": "CloudTrail logs aggregated in central S3",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC01-BP04",
+            "status": "COMPLIANT",
+            "finding": "Cost allocation tags applied",
+            "severity": "LOW",
+            "evidence": "All resources tagged with project and cost center",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC01-BP05",
+            "status": "NON_COMPLIANT",
+            "finding": "AWS Config not enabled in all regions",
+            "severity": "MEDIUM",
+            "evidence": "Config only enabled in us-east-1, not in us-west-2",
+            "remediation": "Enable AWS Config in all regions",
+            "risk": "Compliance violations not detected"
+          },
+          {
+            "bp": "SEC01-BP06",
+            "status": "COMPLIANT",
+            "finding": "Budget alerts configured",
+            "severity": "LOW",
+            "evidence": "Billing alerts set at $5000 threshold",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC01-BP07",
+            "status": "PENDING_REVIEW",
+            "finding": "Governance review needed",
+            "severity": "MEDIUM",
+            "evidence": "Last governance review was 6 months ago",
+            "remediation": "Schedule quarterly governance review",
+            "risk": "Policies may be outdated"
+          },
+          {
+            "bp": "SEC01-BP08",
+            "status": "COMPLIANT",
+            "finding": "Account baseline applied",
+            "severity": "LOW",
+            "evidence": "All accounts have standard baseline config",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC01-BP09",
+            "status": "COMPLIANT",
+            "finding": "Access reviews performed",
+            "severity": "LOW",
+            "evidence": "Quarterly access reviews completed",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC02",
+        "title": "Account Access Management",
+        "description": "How do you manage access to AWS accounts?",
+        "score": 85,
+        "bps_evaluated": 7,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC02-BP01",
+            "status": "COMPLIANT",
+            "finding": "Root account access protected",
+            "severity": "LOW",
+            "evidence": "MFA enabled on root account",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC02-BP02",
+            "status": "COMPLIANT",
+            "finding": "Root account not used for daily tasks",
+            "severity": "LOW",
+            "evidence": "Root access logs show minimal usage",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC02-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "Some IAM users using long-term credentials",
+            "severity": "HIGH",
+            "evidence": "4 users with active access keys > 90 days old",
+            "remediation": "Migrate to temporary credentials via STS AssumeRole",
+            "risk": "Credential compromise exposure"
+          },
+          {
+            "bp": "SEC02-BP04",
+            "status": "COMPLIANT",
+            "finding": "Cross-account access properly configured",
+            "severity": "LOW",
+            "evidence": "Cross-account roles use external ID",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC02-BP05",
+            "status": "PENDING_REVIEW",
+            "finding": "Federated access review needed",
+            "severity": "MEDIUM",
+            "evidence": "15 federated users not reviewed in 3 months",
+            "remediation": "Review and validate federated access configurations",
+            "risk": "Unauthorized access possible"
+          },
+          {
+            "bp": "SEC02-BP06",
+            "status": "COMPLIANT",
+            "finding": "Access tokens properly managed",
+            "severity": "LOW",
+            "evidence": "Token TTLs set appropriately",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC02-BP07",
+            "status": "COMPLIANT",
+            "finding": "Account switching tracked",
+            "severity": "LOW",
+            "evidence": "CloudTrail logs all AssumeRole calls",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC03",
+        "title": "Human Identity Management",
+        "description": "How do you manage human identities and authentication?",
+        "score": 72,
+        "bps_evaluated": 8,
+        "status": "PARTIAL",
+        "findings": [
+          {
+            "bp": "SEC03-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "Users without MFA enabled",
+            "severity": "CRITICAL",
+            "evidence": "8 out of 22 users lack MFA enabled",
+            "remediation": "Enable MFA for all interactive users immediately",
+            "risk": "Account compromise risk"
+          },
+          {
+            "bp": "SEC03-BP02",
+            "status": "COMPLIANT",
+            "finding": "SSO implemented for federated access",
+            "severity": "LOW",
+            "evidence": "AWS SSO configured with 150 users",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC03-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "Password policy incomplete",
+            "severity": "MEDIUM",
+            "evidence": "Missing uppercase requirement in policy",
+            "remediation": "Update policy to require mixed case, numbers, symbols",
+            "risk": "Weak password acceptance"
+          },
+          {
+            "bp": "SEC03-BP04",
+            "status": "COMPLIANT",
+            "finding": "User lifecycle managed",
+            "severity": "LOW",
+            "evidence": "Offboarding process documented and tracked",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC03-BP05",
+            "status": "NON_COMPLIANT",
+            "finding": "Session timeout not enforced",
+            "severity": "MEDIUM",
+            "evidence": "Console sessions timeout not set",
+            "remediation": "Configure 1-hour console session timeout",
+            "risk": "Unattended session exposure"
+          },
+          {
+            "bp": "SEC03-BP06",
+            "status": "PENDING_REVIEW",
+            "finding": "MFA enforcement review needed",
+            "severity": "HIGH",
+            "evidence": "8 users still without MFA after 30 days",
+            "remediation": "Enforce MFA or deactivate accounts",
+            "risk": "Compliance violation"
+          },
+          {
+            "bp": "SEC03-BP07",
+            "status": "COMPLIANT",
+            "finding": "Unused credentials removed",
+            "severity": "LOW",
+            "evidence": "Access analyzer shows no unused roles",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC03-BP08",
+            "status": "COMPLIANT",
+            "finding": "Identity verification in place",
+            "severity": "LOW",
+            "evidence": "Users verified through SSO provider",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC04",
+        "title": "Machine Identity Management",
+        "description": "How do you manage machine-to-machine authentication?",
+        "score": 88,
+        "bps_evaluated": 6,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC04-BP01",
+            "status": "COMPLIANT",
+            "finding": "Service accounts with IAM roles",
+            "severity": "LOW",
+            "evidence": "All services use IAM roles",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC04-BP02",
+            "status": "COMPLIANT",
+            "finding": "EC2 instances using IAM instance profiles",
+            "severity": "LOW",
+            "evidence": "95% of EC2 have appropriate roles",
+            "remediation": "Review remaining 5% instances",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC04-BP03",
+            "status": "COMPLIANT",
+            "finding": "Lambda functions with proper roles",
+            "severity": "LOW",
+            "evidence": "All Lambda functions have execution roles",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC04-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "ECS tasks missing IAM roles",
+            "severity": "MEDIUM",
+            "evidence": "3 ECS task definitions lack task roles",
+            "remediation": "Add IAM task roles to all ECS definitions",
+            "risk": "Elevated container permissions"
+          },
+          {
+            "bp": "SEC04-BP05",
+            "status": "COMPLIANT",
+            "finding": "Key rotation configured",
+            "severity": "LOW",
+            "evidence": "API keys rotated every 90 days",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC04-BP06",
+            "status": "COMPLIANT",
+            "finding": "Certificate lifecycle managed",
+            "severity": "LOW",
+            "evidence": "ACM certificates auto-renewed",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC05",
+        "title": "Permission Management",
+        "description": "How do you implement least privilege access?",
+        "score": 81,
+        "bps_evaluated": 6,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC05-BP01",
+            "status": "COMPLIANT",
+            "finding": "IAM policies follow least privilege",
+            "severity": "LOW",
+            "evidence": "All policies reviewed and approved",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC05-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Admin policy attached to user groups",
+            "severity": "HIGH",
+            "evidence": "2 user groups have direct admin policy",
+            "remediation": "Implement role-based access control",
+            "risk": "Unrestricted admin access exposure"
+          },
+          {
+            "bp": "SEC05-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "Overly permissive inline policies detected",
+            "severity": "HIGH",
+            "evidence": "3 policies with wildcard (*) permissions on multiple resources",
+            "remediation": "Replace inline policies with more restrictive managed policies",
+            "risk": "Excessive privilege scope"
+          },
+          {
+            "bp": "SEC05-BP04",
+            "status": "COMPLIANT",
+            "finding": "Resource-based policies configured",
+            "severity": "LOW",
+            "evidence": "All resources with proper policies",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC05-BP05",
+            "status": "COMPLIANT",
+            "finding": "Cross-account access controlled",
+            "severity": "LOW",
+            "evidence": "External account access properly restricted",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC05-BP06",
+            "status": "COMPLIANT",
+            "finding": "Service control policies applied",
+            "severity": "LOW",
+            "evidence": "SCPs prevent risky actions",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC06",
+        "title": "Event Detection & Investigation",
+        "description": "How do you detect and investigate security events?",
+        "score": 75,
+        "bps_evaluated": 6,
+        "status": "PARTIAL",
+        "findings": [
+          {
+            "bp": "SEC06-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "CloudTrail not logging to all regions",
+            "severity": "HIGH",
+            "evidence": "6 of 30 available regions not logging trails",
+            "remediation": "Enable multi-region CloudTrail logging",
+            "risk": "Potential undetected activities in inactive regions"
+          },
+          {
+            "bp": "SEC06-BP02",
+            "status": "COMPLIANT",
+            "finding": "CloudTrail logs stored with encryption",
+            "severity": "LOW",
+            "evidence": "S3 bucket with SSE-KMS enabled",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC06-BP03",
+            "status": "COMPLIANT",
+            "finding": "CloudTrail logs are protected from tampering",
+            "severity": "LOW",
+            "evidence": "Log file validation enabled",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC06-BP04",
+            "status": "COMPLIANT",
+            "finding": "GuardDuty enabled for threat detection",
+            "severity": "LOW",
+            "evidence": "GuardDuty active in primary region",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC06-BP05",
+            "status": "PENDING_REVIEW",
+            "finding": "EventBridge rules for automated alerting",
+            "severity": "MEDIUM",
+            "evidence": "Basic rules exist but need expansion",
+            "remediation": "Implement comprehensive event routing rules",
+            "risk": "Delayed incident detection"
+          },
+          {
+            "bp": "SEC06-BP06",
+            "status": "COMPLIANT",
+            "finding": "CloudWatch Logs aggregation configured",
+            "severity": "LOW",
+            "evidence": "Log groups centralized for analysis",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC07",
+        "title": "Network Protection",
+        "description": "How do you protect network communications?",
+        "score": 79,
+        "bps_evaluated": 6,
+        "status": "PARTIAL",
+        "findings": [
+          {
+            "bp": "SEC07-BP01",
+            "status": "COMPLIANT",
+            "finding": "VPC isolation implemented",
+            "severity": "LOW",
+            "evidence": "5 VPCs properly segregated by environment",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC07-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Security group allows unrestricted SSH/RDP access",
+            "severity": "CRITICAL",
+            "evidence": "2 security groups allow 0.0.0.0/0 on ports 22 and 3389",
+            "remediation": "Restrict SSH/RDP to known IP ranges",
+            "risk": "Unauthorized access and network compromise"
+          },
+          {
+            "bp": "SEC07-BP03",
+            "status": "COMPLIANT",
+            "finding": "VPC Flow Logs enabled and aggregating to CloudWatch",
+            "severity": "LOW",
+            "evidence": "VPC Flow Logs active in 3 VPCs",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC07-BP04",
+            "status": "COMPLIANT",
+            "finding": "NACLs configured for additional layer control",
+            "severity": "LOW",
+            "evidence": "Stateless rules properly configured",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC07-BP05",
+            "status": "PENDING_REVIEW",
+            "finding": "VPN and TLS endpoints need review",
+            "severity": "MEDIUM",
+            "evidence": "Some endpoints using outdated TLS versions",
+            "remediation": "Upgrade to TLS 1.2 minimum",
+            "risk": "Potential man-in-the-middle attacks"
+          },
+          {
+            "bp": "SEC07-BP06",
+            "status": "COMPLIANT",
+            "finding": "WAF rules applied to ALBs",
+            "severity": "LOW",
+            "evidence": "AWS WAF with OWASP Top 10 rules",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC08",
+        "title": "Data in Transit Encryption",
+        "description": "How do you encrypt data in transit?",
+        "score": 91,
+        "bps_evaluated": 5,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC08-BP01",
+            "status": "COMPLIANT",
+            "finding": "HTTPS required on all APIs",
+            "severity": "LOW",
+            "evidence": "API Gateway enforces TLS 1.2+",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC08-BP02",
+            "status": "COMPLIANT",
+            "finding": "HTTPS enforced on all application load balancers",
+            "severity": "LOW",
+            "evidence": "All ALBs use TLS 1.2+",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC08-BP03",
+            "status": "COMPLIANT",
+            "finding": "VPN connections use strong encryption",
+            "severity": "LOW",
+            "evidence": "Site-to-site VPN with 256-bit encryption",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC08-BP04",
+            "status": "COMPLIANT",
+            "finding": "Database connections encrypted",
+            "severity": "LOW",
+            "evidence": "RDS SSL/TLS enforced",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC08-BP05",
+            "status": "COMPLIANT",
+            "finding": "Inter-service communication encrypted",
+            "severity": "LOW",
+            "evidence": "Service mesh mTLS enabled",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC09",
+        "title": "Data at Rest Encryption",
+        "description": "How do you encrypt data at rest?",
+        "score": 84,
+        "bps_evaluated": 5,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC09-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "Some S3 buckets not using server-side encryption",
+            "severity": "HIGH",
+            "evidence": "3 buckets missing default encryption settings",
+            "remediation": "Enable default S3 encryption with KMS keys",
+            "risk": "Unencrypted data exposure at rest"
+          },
+          {
+            "bp": "SEC09-BP02",
+            "status": "COMPLIANT",
+            "finding": "EBS volumes encrypted at rest",
+            "severity": "LOW",
+            "evidence": "12 of 12 EBS volumes using KMS encryption",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC09-BP03",
+            "status": "COMPLIANT",
+            "finding": "RDS instances encrypted at rest",
+            "severity": "LOW",
+            "evidence": "8 of 8 RDS instances use KMS encryption",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC09-BP04",
+            "status": "COMPLIANT",
+            "finding": "DynamoDB encryption enabled",
+            "severity": "LOW",
+            "evidence": "DynamoDB using AWS-managed encryption",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC09-BP05",
+            "status": "COMPLIANT",
+            "finding": "Secrets Manager encryption configured",
+            "severity": "LOW",
+            "evidence": "All secrets encrypted with KMS",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC10",
+        "title": "Incident Response & Recovery",
+        "description": "How do you prepare for and respond to incidents?",
+        "score": 68,
+        "bps_evaluated": 4,
+        "status": "PARTIAL",
+        "findings": [
+          {
+            "bp": "SEC10-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "Incident response plan exists but needs update",
+            "severity": "MEDIUM",
+            "evidence": "IR playbook last updated 8 months ago",
+            "remediation": "Schedule quarterly review and update of incident response procedures",
+            "risk": "Outdated procedures may not address current threats"
+          },
+          {
+            "bp": "SEC10-BP02",
+            "status": "COMPLIANT",
+            "finding": "Backup and recovery procedures documented",
+            "severity": "LOW",
+            "evidence": "RTO/RPO targets defined for all systems",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC10-BP03",
+            "status": "COMPLIANT",
+            "finding": "Recovery tools tested and available",
+            "severity": "LOW",
+            "evidence": "AWS Backup configured with snapshots",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          },
+          {
+            "bp": "SEC10-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "Disaster recovery drill not performed recently",
+            "severity": "HIGH",
+            "evidence": "No DR drill in the last 12 months",
+            "remediation": "Schedule and execute comprehensive DR exercise",
+            "risk": "Unknown recovery capabilities during actual incident"
+          }
+        ]
+      },
+      {
+        "question_id": "SEC11",
+        "title": "Compliance & Audit",
+        "description": "How do you maintain compliance and audit readiness?",
+        "score": 89,
+        "bps_evaluated": 1,
+        "status": "COMPLIANT",
+        "findings": [
+          {
+            "bp": "SEC11-BP01",
+            "status": "COMPLIANT",
+            "finding": "AWS Config configured for compliance monitoring",
+            "severity": "LOW",
+            "evidence": "Config recording in all regions with 25+ rules",
+            "remediation": "Current state compliant",
+            "risk": "No risk"
+          }
+        ]
+      }
+    ],
+    "demo_mode": true,
+    "demo_reason": "AWS Error [InvalidClientTokenId] - showing demo evaluation results"
+  },
+  "summary": {
+    "total_findings": 63,
+    "critical": 2,
+    "high": 7,
+    "medium": 10
+  }
+}

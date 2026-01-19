@@ -135,6 +135,59 @@ curl -X POST http://localhost:8000/evaluations \
 
 The backend will validate the token signature and claims (audience + issuer) against the Cognito User Pool configuration.
 
+Security Pillar Implementation
+-----------------------------
+
+The Security pillar has been fully implemented with comprehensive best practice validation. The implementation includes:
+
+### Available Security Questions:
+- **SEC01**: ¿Cómo opera usted su carga de trabajo de forma segura? (9 Best Practices)
+- **SEC02**: ¿Cómo gestiona las identidades de personas y máquinas? (2 Best Practices)
+- **SEC03**: ¿Cómo protege los datos confidenciales? (2 Best Practices)
+- **SEC04**: ¿Cómo detecta y investiga los eventos de seguridad? (1 Best Practice)
+- **SEC05**: ¿Cómo protege sus recursos de red? (1 Best Practice)
+
+### Key Features:
+- **Complete BP Coverage**: All 15 security best practices implemented with detailed validators
+- **Mock AWS Resources**: Uses boto3 stubs for testing without requiring real AWS resources
+- **Descriptive Responses**: All responses include question and BP descriptions in Spanish
+- **CORS Enabled**: Frontend-backend communication configured for local development
+- **Web Interface**: Complete HTML/JS frontend for testing all endpoints
+
+### API Endpoints:
+- `POST /security/evaluate` - Evaluate a single security question
+- `GET /security/evaluations/{evaluation_id}` - List all evaluations for an ID
+- `GET /security/evaluations/{evaluation_id}/{question_id}` - Get specific question evaluation
+- `GET /security/reports/{evaluation_id}` - Generate comprehensive security report
+
+### Quick Start for Security Testing:
+
+1. **Start servers in background:**
+```powershell
+.\start-servers.ps1
+```
+
+2. **Open frontend:**
+   - Navigate to http://127.0.0.1:8080
+   - Select a question from the dropdown
+   - Click "POST /security/evaluate" to test
+
+3. **Direct API testing:**
+```bash
+# Evaluate SEC01 question
+curl -X POST http://localhost:8002/security/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"evaluation_id":"test-security-eval-1","question_id":"SEC01"}'
+```
+
+### Response Format:
+Each evaluation returns detailed results including:
+- Question text and description
+- Individual BP compliance status with evidence
+- Scoring and recommendations
+- Overall security posture assessment
+
+The Security pillar is now ready for integration with the full AutoWAR platform and can be extended to include real AWS resource scanning when credentials are provided.
 
 CDK:
 
