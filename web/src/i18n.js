@@ -267,8 +267,11 @@ const resources = {
       // Niveles de estado
       status: {
         compliant: "CUMPLE",
-        nonCompliant: "NO_CUMPLE",
-        pendingReview: "REVISION_PENDIENTE"
+        non_compliant: "NO CUMPLE",
+        nonCompliant: "NO CUMPLE",
+        pending_review: "REVISIÓN PENDIENTE",
+        pendingReview: "REVISIÓN PENDIENTE",
+        evaluated: "EVALUADO"
       },
       
       // Títulos de preguntas

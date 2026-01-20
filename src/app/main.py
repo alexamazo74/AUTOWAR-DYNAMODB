@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import os
 import boto3
@@ -42,6 +43,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+def root_redirect():
+    """Redirect root to interactive docs so the browser has a landing page."""
+    return RedirectResponse(url="/docs")
 
 
 class ClientIn(BaseModel):
@@ -110,6 +117,13 @@ async def validate_aws_credentials(request: AWSCredentialsValidationRequest):
 async def evaluate_security_real(request: AWSCredentialsValidationRequest):
     """Evaluate all 11 Security pillar questions against real AWS account"""
     try:
+        import logging
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"[EVAL] Starting evaluation for account {request.account_id}, regions: {request.regions}")
+        
         # Validate credentials first
         sts_client_config = {
             'aws_access_key_id': request.access_key_id,
@@ -121,6 +135,7 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
         
         sts_client = boto3.client('sts', **sts_client_config)
         identity = sts_client.get_caller_identity()
+        logger.info(f"[EVAL] STS Identity verified: {identity['Arn']}")
         
         # Create AWS Connector with real credentials
         from .aws_connector import AWSConnector
@@ -129,12 +144,27 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
         connector = AWSConnector(
             access_key_id=request.access_key_id,
             secret_access_key=request.secret_access_key,
+            session_token=request.session_token,
             regions=request.regions
         )
+        logger.info(f"[EVAL] AWSConnector created")
         
-        # Create evaluator and evaluate all 11 questions
+        # Create evaluator and evaluate all 11 questions with timeout
         evaluator = SecurityPillarEvaluator(connector)
-        eval_results = evaluator.evaluate_all()
+        
+        # Execute evaluation with 60 second timeout
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Run the evaluation (will timeout after 300 seconds)
+        eval_results = await asyncio.wait_for(
+            loop.run_in_executor(ThreadPoolExecutor(), evaluator.evaluate_all),
+            timeout=300
+        )
+        logger.info(f"[EVAL] Evaluation complete: {eval_results['overall_score']}% score, {len(eval_results['questions'])} questions")
         
         # Build evaluation response
         evaluation_id = f"security-eval-{uuid.uuid4()}"
@@ -160,6 +190,8 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
         high = sum(1 for f in all_findings if f.get('severity') == 'HIGH')
         medium = sum(1 for f in all_findings if f.get('severity') == 'MEDIUM')
         
+        logger.info(f"[EVAL] Total findings: {len(all_findings)} (critical: {critical}, high: {high}, medium: {medium})")
+        
         return {
             'success': True,
             'evaluation': evaluation_data,
@@ -177,46 +209,16 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
         error_code = e.response['Error']['Code']
         error_message = e.response['Error']['Message']
         
-        # Return mock data for UI demonstration when credentials fail
-        from .mock_security_evaluator import MockSecurityEvaluator
-        mock_eval = MockSecurityEvaluator()
-        eval_results = mock_eval.evaluate_all()
-        
-        evaluation_id = f"security-eval-demo-{uuid.uuid4()}"
-        evaluation_data = {
-            'id': evaluation_id,
-            'account_id': request.account_id,
-            'account_arn': f"arn:aws:iam::{request.account_id}:root",
-            'regions': request.regions,
-            'pillar': 'Security',
-            'timestamp': datetime.now().isoformat(),
-            'overall_score': eval_results['overall_score'],
-            'total_questions': 11,
-            'total_best_practices': 63,
-            'questions_evaluated': eval_results['questions'],
-            'demo_mode': True,
-            'demo_reason': f"AWS Error [{error_code}] - showing demo evaluation results"
-        }
-        
-        # Count findings by severity
-        all_findings = []
-        for question in eval_results['questions']:
-            all_findings.extend(question['findings'])
-        
-        critical = sum(1 for f in all_findings if f.get('severity') == 'CRITICAL')
-        high = sum(1 for f in all_findings if f.get('severity') == 'HIGH')
-        medium = sum(1 for f in all_findings if f.get('severity') == 'MEDIUM')
-        
-        return {
-            'success': True,
-            'evaluation': evaluation_data,
-            'summary': {
-                'total_findings': len(all_findings),
-                'critical': critical,
-                'high': high,
-                'medium': medium
+        # Return error - do NOT use mock data
+        raise HTTPException(
+            status_code=403,
+            detail={
+                'error': 'AWS Credentials Error',
+                'code': error_code,
+                'message': error_message,
+                'hint': 'Verify your AWS Access Key ID, Secret Access Key, and Session Token are correct and have necessary permissions.'
             }
-        }
+        )
     except Exception as e:
         return {
             'success': False,
@@ -224,9 +226,291 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
         }
 
 
+# ==================== RE-EVALUATE SPECIFIC BPs ====================
+
+class ReEvaluateBPRequest(BaseModel):
+    access_key_id: str
+    secret_access_key: str
+    session_token: Optional[str] = None
+    account_id: str
+    regions: list[str]
+    bp_ids: list[str]  # e.g., ['SEC01-BP01', 'SEC02-BP03']
+
+
+@app.post('/security/re-evaluate-bp')
+async def re_evaluate_best_practices(request: ReEvaluateBPRequest):
+    """Re-evaluate specific Best Practices without running full evaluation"""
+    try:
+        logger.info(f"[RE-EVAL] Re-evaluating BPs: {request.bp_ids}")
+        
+        # Validate credentials
+        sts_client_config = {
+            'aws_access_key_id': request.access_key_id,
+            'aws_secret_access_key': request.secret_access_key,
+            'region_name': 'us-east-1'
+        }
+        if request.session_token:
+            sts_client_config['aws_session_token'] = request.session_token
+        
+        sts_client = boto3.client('sts', **sts_client_config)
+        identity = sts_client.get_caller_identity()
+        
+        # Verify account ID matches
+        if identity['Account'] != request.account_id:
+            return {
+                'success': False,
+                'error': f"Account ID mismatch. Expected {request.account_id}, got {identity['Account']}"
+            }
+        
+        # Create AWS Connector
+        from .aws_connector import AWSConnector
+        from .security_evaluator import SecurityPillarEvaluator
+        
+        connector = AWSConnector(
+            access_key_id=request.access_key_id,
+            secret_access_key=request.secret_access_key,
+            regions=request.regions
+        )
+        
+        # Create evaluator
+        evaluator = SecurityPillarEvaluator(connector)
+        
+        # Re-evaluate the specific BPs
+        results = evaluator.evaluate_bps_batch(request.bp_ids)
+        
+        logger.info(f"[RE-EVAL] Completed: {results['evaluated_count']} successful, {results['failed_count']} failed")
+        
+        return {
+            'success': results['success'],
+            'evaluated': results['evaluated'],
+            'failed': results['failed'],
+            'summary': {
+                'evaluated_count': results['evaluated_count'],
+                'failed_count': results['failed_count'],
+                'timestamp': results['timestamp']
+            }
+        }
+    
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        
+        raise HTTPException(
+            status_code=403,
+            detail={
+                'error': 'AWS Credentials Error',
+                'code': error_code,
+                'message': error_message
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error in re-evaluate-bp: {str(e)}")
+        return {
+            'success': False,
+            'error': f"Error re-evaluating BP: {str(e)[:200]}"
+        }
+
+
+@app.post('/security/test-iam-connection')
+async def test_iam_connection(request_data: dict):
+    """Test IAM connection and report detailed info"""
+    try:
+        access_key_id = request_data.get('access_key_id')
+        secret_access_key = request_data.get('secret_access_key')
+        session_token = request_data.get('session_token')
+        
+        if not access_key_id or not secret_access_key:
+            return {'success': False, 'error': 'Missing credentials'}
+        
+        logger.info("[DIAG] Testing IAM connection with provided credentials...")
+        
+        # Create connector
+        connector = AWSConnector(
+            access_key_id=access_key_id,
+            secret_access_key=secret_access_key,
+            session_token=session_token,
+            regions=['us-east-1']
+        )
+        
+        # Try to get IAM users
+        logger.info("[DIAG] Attempting to retrieve IAM users...")
+        users = connector.get_iam_users()
+        logger.info(f"[DIAG] Successfully retrieved {len(users)} IAM users")
+        
+        # Build detailed response
+        user_details = []
+        for user in users:
+            user_details.append({
+                'user_name': user['user_name'],
+                'mfa_enabled': user.get('mfa_enabled', False),
+                'access_keys_count': len(user.get('access_keys', [])),
+                'policies_count': len(user.get('policies', []))
+            })
+        
+        return {
+            'success': True,
+            'message': f'Successfully connected to IAM. Found {len(users)} users',
+            'users_count': len(users),
+            'users': user_details
+        }
+        
+    except Exception as e:
+        logger.error(f"[DIAG] IAM connection test failed: {str(e)}", exc_info=True)
+        return {
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }
+
+
 @app.get('/health')
 async def health():
     return {'status': 'ok'}
+
+
+@app.get('/security/evaluate-mock')
+async def evaluate_security_mock():
+    """Return mock evaluation data for UI testing"""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("[MOCK] Returning mock evaluation data")
+    
+    # Build mock security evaluation with realistic data
+    evaluation_id = f"security-eval-{uuid.uuid4()}"
+    
+    mock_evaluation = {
+        'id': evaluation_id,
+        'account_id': '123456789012',
+        'account_arn': 'arn:aws:iam::123456789012:root',
+        'regions': ['us-east-1'],
+        'pillar': 'Security',
+        'timestamp': datetime.now().isoformat(),
+        'overall_score': 65.45,
+        'total_questions': 11,
+        'total_best_practices': 63,
+        'questions_evaluated': [
+            {
+                'question_id': 'SEC01',
+                'question': 'Fundamentos de seguridad - Operación segura',
+                'score': 55,
+                'bps_evaluated': 8,
+                'findings': [
+                    {
+                        'bp': 'SEC01-BP01',
+                        'status': 'NON_COMPLIANT',
+                        'finding': 'AWS Organizations not configured',
+                        'severity': 'HIGH'
+                    }
+                ]
+            },
+            {
+                'question_id': 'SEC02',
+                'question': 'Autenticación de personas y máquinas',
+                'score': 70,
+                'bps_evaluated': 6,
+                'findings': [
+                    {
+                        'bp': 'SEC02-BP01',
+                        'status': 'NON_COMPLIANT',
+                        'finding': '3 users without MFA',
+                        'severity': 'CRITICAL'
+                    }
+                ]
+            },
+            {
+                'question_id': 'SEC03',
+                'question': 'Gestión de identidades de personas',
+                'score': 75,
+                'bps_evaluated': 9,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC04',
+                'question': 'Gestión de identidades de máquinas',
+                'score': 60,
+                'bps_evaluated': 4,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC05',
+                'question': 'Gestión de permisos',
+                'score': 65,
+                'bps_evaluated': 4,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC06',
+                'question': 'Detección e investigación de eventos',
+                'score': 50,
+                'bps_evaluated': 5,
+                'findings': [
+                    {
+                        'bp': 'SEC06-BP01',
+                        'status': 'NON_COMPLIANT',
+                        'finding': 'CloudTrail not enabled',
+                        'severity': 'CRITICAL'
+                    }
+                ]
+            },
+            {
+                'question_id': 'SEC07',
+                'question': 'Clasificación de datos',
+                'score': 70,
+                'bps_evaluated': 4,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC08',
+                'question': 'Protección de datos en reposo',
+                'score': 80,
+                'bps_evaluated': 4,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC09',
+                'question': 'Protección de datos en tránsito',
+                'score': 85,
+                'bps_evaluated': 3,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC10',
+                'question': 'Anticipación, respuesta y recuperación ante incidentes',
+                'score': 50,
+                'bps_evaluated': 8,
+                'findings': []
+            },
+            {
+                'question_id': 'SEC11',
+                'question': 'Cumplimiento normativo y auditoría',
+                'score': 65,
+                'bps_evaluated': 8,
+                'findings': []
+            }
+        ]
+    }
+    
+    # Count findings by severity
+    all_findings = []
+    for question in mock_evaluation['questions_evaluated']:
+        all_findings.extend(question['findings'])
+    
+    critical = sum(1 for f in all_findings if f.get('severity') == 'CRITICAL')
+    high = sum(1 for f in all_findings if f.get('severity') == 'HIGH')
+    medium = sum(1 for f in all_findings if f.get('severity') == 'MEDIUM')
+    
+    return {
+        'success': True,
+        'evaluation': mock_evaluation,
+        'summary': {
+            'total_findings': len(all_findings),
+            'critical': critical,
+            'high': high,
+            'medium': medium,
+            'score': mock_evaluation['overall_score'],
+            'bps_evaluated': sum(q['bps_evaluated'] for q in mock_evaluation['questions_evaluated'])
+        }
+    }
 
 
 @app.get('/clients')

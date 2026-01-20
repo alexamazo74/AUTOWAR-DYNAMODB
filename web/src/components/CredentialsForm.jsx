@@ -92,6 +92,7 @@ const CredentialsForm = ({ onConnect }) => {
         onConnect({
           accessKeyId: credentials.accessKeyId,
           secretAccessKey: credentials.secretAccessKey,
+          sessionToken: credentials.sessionToken || null,
           accountId: credentials.accountId,
           regions: credentials.regions.split(',').map(r => r.trim()),
           validatedAt: new Date().toISOString()
@@ -110,6 +111,36 @@ const CredentialsForm = ({ onConnect }) => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !loading) {
       handleConnect();
+    }
+  };
+
+  const handleLoadMockData = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch('http://127.0.0.1:8002/security/evaluate-mock');
+      const data = await response.json();
+      
+      if (data.success && data.evaluation) {
+        // Mock credentials object with demo data
+        onConnect({
+          accessKeyId: 'DEMO-KEY',
+          secretAccessKey: 'DEMO-SECRET',
+          sessionToken: null,
+          accountId: data.evaluation.account_id,
+          regions: data.evaluation.regions,
+          validatedAt: new Date().toISOString(),
+          isMockData: true
+        });
+      } else {
+        setError('Error loading mock data from backend');
+      }
+    } catch (err) {
+      setError(`Error: ${err.message}`);
+      console.error('Mock data load error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,8 +237,18 @@ const CredentialsForm = ({ onConnect }) => {
           {loading ? `🔄 ${t('credentials.connecting')}` : `🔐 ${t('credentials.connect')}`}
         </button>
 
+        <button
+          className="connect-button"
+          style={{ backgroundColor: '#3498db', marginTop: '10px' }}
+          onClick={handleLoadMockData}
+          disabled={loading}
+        >
+          {loading ? '⏳ Loading...' : '📊 Load Demo Data'}
+        </button>
+
         <div className="security-note">
           <p><small>💡 {t('credentials.demoNote')}</small></p>
+          <p><small>Or click <strong>Load Demo Data</strong> to test the UI with mock evaluation results</small></p>
         </div>
       </div>
     </div>

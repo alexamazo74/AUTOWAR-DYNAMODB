@@ -30,17 +30,19 @@ def get_item(table_name: str, item_id: str):
 class AWSConnector:
     """Connector for AWS services - real boto3 implementation"""
 
-    def __init__(self, access_key_id: str, secret_access_key: str, regions: List[str]):
+    def __init__(self, access_key_id: str, secret_access_key: str, session_token: str | None = None, regions: List[str] = None):
         """
         Initialize AWS Connector with credentials
         
         Args:
             access_key_id: AWS Access Key ID
             secret_access_key: AWS Secret Access Key
+            session_token: Optional AWS session token (for STS temporary creds)
             regions: List of AWS regions to evaluate
         """
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
+        self.session_token = session_token
         self.regions = regions if regions else ['us-east-1']
         self.iam_client = None
         self.cloudtrail_clients = {}
@@ -48,6 +50,14 @@ class AWSConnector:
         self.guardduty_clients = {}
         self.kms_clients = {}
         self.s3_client = None
+        self.ec2_clients = {}
+        self.rds_clients = {}
+        self.lambda_clients = {}
+        self.secretsmanager_clients = {}
+        self.cloudwatch_clients = {}
+        self.sns_clients = {}
+        self.logs_clients = {}
+        self.organizations_client = None
 
     def validate_credentials(self):
         """Validate AWS credentials using STS"""
@@ -56,6 +66,7 @@ class AWSConnector:
                 'sts',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
                 region_name='us-east-1'
             )
             identity = sts_client.get_caller_identity()
@@ -71,7 +82,13 @@ class AWSConnector:
                 'iam',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name='us-east-1'
+                aws_session_token=self.session_token,
+                region_name='us-east-1',
+                config=boto3.session.Config(
+                    connect_timeout=30,
+                    read_timeout=120,
+                    retries={'max_attempts': 3, 'mode': 'adaptive'}
+                )
             )
         return self.iam_client
 
@@ -82,7 +99,9 @@ class AWSConnector:
                 'cloudtrail',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name=region
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
             )
         return self.cloudtrail_clients[region]
 
@@ -93,7 +112,9 @@ class AWSConnector:
                 'config',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name=region
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
             )
         return self.config_clients[region]
 
@@ -104,7 +125,9 @@ class AWSConnector:
                 'guardduty',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name=region
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
             )
         return self.guardduty_clients[region]
 
@@ -115,7 +138,9 @@ class AWSConnector:
                 'kms',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name=region
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
             )
         return self.kms_clients[region]
 
@@ -126,19 +151,129 @@ class AWSConnector:
                 's3',
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.secret_access_key,
-                region_name='us-east-1'
+                aws_session_token=self.session_token,
+                region_name='us-east-1',
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
             )
         return self.s3_client
+
+    def _get_ec2_client(self, region: str):
+        """Get or create EC2 client for specific region"""
+        if region not in self.ec2_clients:
+            self.ec2_clients[region] = boto3.client(
+                'ec2',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.ec2_clients[region]
+
+    def _get_rds_client(self, region: str):
+        """Get or create RDS client for specific region"""
+        if region not in self.rds_clients:
+            self.rds_clients[region] = boto3.client(
+                'rds',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.rds_clients[region]
+
+    def _get_lambda_client(self, region: str):
+        """Get or create Lambda client for specific region"""
+        if region not in self.lambda_clients:
+            self.lambda_clients[region] = boto3.client(
+                'lambda',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.lambda_clients[region]
+
+    def _get_secretsmanager_client(self, region: str):
+        """Get or create Secrets Manager client for specific region"""
+        if region not in self.secretsmanager_clients:
+            self.secretsmanager_clients[region] = boto3.client(
+                'secretsmanager',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.secretsmanager_clients[region]
+
+    def _get_cloudwatch_client(self, region: str):
+        """Get or create CloudWatch client for specific region"""
+        if region not in self.cloudwatch_clients:
+            self.cloudwatch_clients[region] = boto3.client(
+                'cloudwatch',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.cloudwatch_clients[region]
+
+    def _get_sns_client(self, region: str):
+        """Get or create SNS client for specific region"""
+        if region not in self.sns_clients:
+            self.sns_clients[region] = boto3.client(
+                'sns',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.sns_clients[region]
+
+    def _get_logs_client(self, region: str):
+        """Get or create CloudWatch Logs client for specific region"""
+        if region not in self.logs_clients:
+            self.logs_clients[region] = boto3.client(
+                'logs',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name=region,
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.logs_clients[region]
+
+    def _get_organizations_client(self):
+        """Get or create Organizations client"""
+        if not self.organizations_client:
+            self.organizations_client = boto3.client(
+                'organizations',
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                aws_session_token=self.session_token,
+                region_name='us-east-1',
+                config=boto3.session.Config(connect_timeout=30, read_timeout=120, retries={'max_attempts': 3, 'mode': 'adaptive'})
+            )
+        return self.organizations_client
 
     # ==================== IAM METHODS ====================
 
     def get_iam_users(self) -> List[Dict[str, Any]]:
         """Get all IAM users from AWS account"""
         try:
+            logger.info("[AWS-CONN] Starting get_iam_users()")
             client = self._get_iam_client()
+            logger.info("[AWS-CONN] IAM client created, calling list_users()...")
             response = client.list_users()
+            logger.info(f"[AWS-CONN] list_users() returned {len(response.get('Users', []))} users")
             users = []
             for user in response.get('Users', []):
+                logger.info(f"[AWS-CONN] Processing user: {user['UserName']}")
                 user_data = {
                     'arn': user['Arn'],
                     'user_name': user['UserName'],
@@ -162,6 +297,7 @@ class AWSConnector:
                 # Check MFA devices
                 mfa_resp = client.list_mfa_devices(UserName=user['UserName'])
                 user_data['mfa_enabled'] = len(mfa_resp.get('MFADevices', [])) > 0
+                logger.info(f"[AWS-CONN] User {user['UserName']}: MFA enabled = {user_data['mfa_enabled']}, Access keys = {len(user_data['access_keys'])}")
                 
                 # Get attached policies
                 policies_resp = client.list_attached_user_policies(UserName=user['UserName'])
@@ -172,10 +308,16 @@ class AWSConnector:
                 
                 users.append(user_data)
             
+            logger.info(f"[AWS-CONN] get_iam_users() completed successfully. Total users: {len(users)}")
             return users
         except ClientError as e:
-            logger.error(f"Error getting IAM users: {str(e)}")
-            return []
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_msg = e.response.get('Error', {}).get('Message', str(e))
+            logger.error(f"[AWS-CONN] ClientError getting IAM users: {error_code} - {error_msg}")
+            raise
+        except Exception as e:
+            logger.error(f"[AWS-CONN] Unexpected error getting IAM users: {str(e)}", exc_info=True)
+            raise
 
     def get_iam_roles(self) -> List[Dict[str, Any]]:
         """Get all IAM roles from AWS account"""
@@ -465,4 +607,319 @@ class AWSConnector:
         except Exception as e:
             logger.error(f"Error getting resources for service {service}: {str(e)}")
             return []
+
+    # ==================== EC2 METHODS ====================
+
+    def get_ec2_instances(self, region: str) -> List[Dict[str, Any]]:
+        """Get EC2 instances in specific region"""
+        try:
+            client = self._get_ec2_client(region)
+            response = client.describe_instances()
+            instances = []
+            
+            for reservation in response.get('Reservations', []):
+                for instance in reservation.get('Instances', []):
+                    instance_data = {
+                        'instance_id': instance.get('InstanceId'),
+                        'instance_type': instance.get('InstanceType'),
+                        'state': instance.get('State', {}).get('Name'),
+                        'launch_time': str(instance.get('LaunchTime', '')),
+                        'vpc_id': instance.get('VpcId'),
+                        'subnet_id': instance.get('SubnetId'),
+                        'public_ip': instance.get('PublicIpAddress'),
+                        'private_ip': instance.get('PrivateIpAddress'),
+                        'iam_instance_profile': instance.get('IamInstanceProfile'),
+                        'security_groups': [sg['GroupId'] for sg in instance.get('SecurityGroups', [])],
+                        'monitoring': instance.get('Monitoring', {}).get('State'),
+                        'region': region,
+                        'encrypted_volumes': []
+                    }
+                    
+                    # Check EBS encryption
+                    for bdm in instance.get('BlockDeviceMappings', []):
+                        if 'Ebs' in bdm:
+                            volume_id = bdm['Ebs'].get('VolumeId')
+                            try:
+                                vol_resp = client.describe_volumes(VolumeIds=[volume_id])
+                                if vol_resp.get('Volumes'):
+                                    volume = vol_resp['Volumes'][0]
+                                    instance_data['encrypted_volumes'].append({
+                                        'volume_id': volume_id,
+                                        'encrypted': volume.get('Encrypted', False)
+                                    })
+                            except:
+                                pass
+                    
+                    instances.append(instance_data)
+            
+            return instances
+        except ClientError as e:
+            logger.error(f"Error getting EC2 instances in {region}: {str(e)}")
+            return []
+
+    def get_vpcs(self, region: str) -> List[Dict[str, Any]]:
+        """Get VPCs in specific region"""
+        try:
+            client = self._get_ec2_client(region)
+            response = client.describe_vpcs()
+            vpcs = []
+            
+            for vpc in response.get('Vpcs', []):
+                vpc_data = {
+                    'vpc_id': vpc.get('VpcId'),
+                    'cidr_block': vpc.get('CidrBlock'),
+                    'is_default': vpc.get('IsDefault'),
+                    'state': vpc.get('State'),
+                    'region': region
+                }
+                vpcs.append(vpc_data)
+            
+            return vpcs
+        except ClientError as e:
+            logger.error(f"Error getting VPCs in {region}: {str(e)}")
+            return []
+
+    def get_security_groups(self, region: str) -> List[Dict[str, Any]]:
+        """Get Security Groups in specific region"""
+        try:
+            client = self._get_ec2_client(region)
+            response = client.describe_security_groups()
+            groups = []
+            
+            for sg in response.get('SecurityGroups', []):
+                # Check for overly permissive rules
+                open_to_world = False
+                for rule in sg.get('IpPermissions', []):
+                    for ip_range in rule.get('IpRanges', []):
+                        if ip_range.get('CidrIp') == '0.0.0.0/0':
+                            open_to_world = True
+                            break
+                
+                sg_data = {
+                    'group_id': sg.get('GroupId'),
+                    'group_name': sg.get('GroupName'),
+                    'description': sg.get('Description'),
+                    'vpc_id': sg.get('VpcId'),
+                    'ingress_rules_count': len(sg.get('IpPermissions', [])),
+                    'egress_rules_count': len(sg.get('IpPermissionsEgress', [])),
+                    'open_to_world': open_to_world,
+                    'region': region
+                }
+                groups.append(sg_data)
+            
+            return groups
+        except ClientError as e:
+            logger.error(f"Error getting Security Groups in {region}: {str(e)}")
+            return []
+
+    def get_ebs_volumes(self, region: str) -> List[Dict[str, Any]]:
+        """Get EBS volumes in specific region"""
+        try:
+            client = self._get_ec2_client(region)
+            response = client.describe_volumes()
+            volumes = []
+            
+            for vol in response.get('Volumes', []):
+                volume_data = {
+                    'volume_id': vol.get('VolumeId'),
+                    'size': vol.get('Size'),
+                    'volume_type': vol.get('VolumeType'),
+                    'encrypted': vol.get('Encrypted', False),
+                    'kms_key_id': vol.get('KmsKeyId'),
+                    'state': vol.get('State'),
+                    'region': region
+                }
+                volumes.append(volume_data)
+            
+            return volumes
+        except ClientError as e:
+            logger.error(f"Error getting EBS volumes in {region}: {str(e)}")
+            return []
+
+    # ==================== RDS METHODS ====================
+
+    def get_rds_instances(self, region: str) -> List[Dict[str, Any]]:
+        """Get RDS instances in specific region"""
+        try:
+            client = self._get_rds_client(region)
+            response = client.describe_db_instances()
+            instances = []
+            
+            for db in response.get('DBInstances', []):
+                instance_data = {
+                    'db_instance_identifier': db.get('DBInstanceIdentifier'),
+                    'engine': db.get('Engine'),
+                    'engine_version': db.get('EngineVersion'),
+                    'db_instance_class': db.get('DBInstanceClass'),
+                    'publicly_accessible': db.get('PubliclyAccessible', False),
+                    'encrypted': db.get('StorageEncrypted', False),
+                    'kms_key_id': db.get('KmsKeyId'),
+                    'backup_retention_period': db.get('BackupRetentionPeriod', 0),
+                    'multi_az': db.get('MultiAZ', False),
+                    'vpc_security_groups': [sg['VpcSecurityGroupId'] for sg in db.get('VpcSecurityGroups', [])],
+                    'region': region
+                }
+                instances.append(instance_data)
+            
+            return instances
+        except ClientError as e:
+            logger.error(f"Error getting RDS instances in {region}: {str(e)}")
+            return []
+
+    # ==================== LAMBDA METHODS ====================
+
+    def get_lambda_functions(self, region: str) -> List[Dict[str, Any]]:
+        """Get Lambda functions in specific region"""
+        try:
+            client = self._get_lambda_client(region)
+            response = client.list_functions()
+            functions = []
+            
+            for func in response.get('Functions', []):
+                function_data = {
+                    'function_name': func.get('FunctionName'),
+                    'function_arn': func.get('FunctionArn'),
+                    'runtime': func.get('Runtime'),
+                    'role': func.get('Role'),
+                    'handler': func.get('Handler'),
+                    'vpc_config': func.get('VpcConfig'),
+                    'environment_variables': bool(func.get('Environment', {}).get('Variables')),
+                    'kms_key_arn': func.get('KMSKeyArn'),
+                    'region': region
+                }
+                functions.append(function_data)
+            
+            return functions
+        except ClientError as e:
+            logger.error(f"Error getting Lambda functions in {region}: {str(e)}")
+            return []
+
+    # ==================== SECRETS MANAGER METHODS ====================
+
+    def get_secrets(self, region: str) -> List[Dict[str, Any]]:
+        """Get secrets from Secrets Manager in specific region"""
+        try:
+            client = self._get_secretsmanager_client(region)
+            response = client.list_secrets()
+            secrets = []
+            
+            for secret in response.get('SecretList', []):
+                secret_data = {
+                    'name': secret.get('Name'),
+                    'arn': secret.get('ARN'),
+                    'description': secret.get('Description'),
+                    'kms_key_id': secret.get('KmsKeyId'),
+                    'rotation_enabled': secret.get('RotationEnabled', False),
+                    'last_rotated_date': str(secret.get('LastRotatedDate', '')),
+                    'region': region
+                }
+                secrets.append(secret_data)
+            
+            return secrets
+        except ClientError as e:
+            logger.error(f"Error getting secrets in {region}: {str(e)}")
+            return []
+
+    # ==================== CLOUDWATCH METHODS ====================
+
+    def get_cloudwatch_alarms(self, region: str) -> List[Dict[str, Any]]:
+        """Get CloudWatch alarms in specific region"""
+        try:
+            client = self._get_cloudwatch_client(region)
+            response = client.describe_alarms()
+            alarms = []
+            
+            for alarm in response.get('MetricAlarms', []):
+                alarm_data = {
+                    'alarm_name': alarm.get('AlarmName'),
+                    'alarm_arn': alarm.get('AlarmArn'),
+                    'state_value': alarm.get('StateValue'),
+                    'actions_enabled': alarm.get('ActionsEnabled'),
+                    'alarm_actions': alarm.get('AlarmActions', []),
+                    'metric_name': alarm.get('MetricName'),
+                    'namespace': alarm.get('Namespace'),
+                    'region': region
+                }
+                alarms.append(alarm_data)
+            
+            return alarms
+        except ClientError as e:
+            logger.error(f"Error getting CloudWatch alarms in {region}: {str(e)}")
+            return []
+
+    def get_log_groups(self, region: str) -> List[Dict[str, Any]]:
+        """Get CloudWatch Log Groups in specific region"""
+        try:
+            client = self._get_logs_client(region)
+            response = client.describe_log_groups()
+            log_groups = []
+            
+            for lg in response.get('logGroups', []):
+                log_data = {
+                    'log_group_name': lg.get('logGroupName'),
+                    'arn': lg.get('arn'),
+                    'creation_time': lg.get('creationTime'),
+                    'retention_in_days': lg.get('retentionInDays'),
+                    'kms_key_id': lg.get('kmsKeyId'),
+                    'stored_bytes': lg.get('storedBytes'),
+                    'region': region
+                }
+                log_groups.append(log_data)
+            
+            return log_groups
+        except ClientError as e:
+            logger.error(f"Error getting log groups in {region}: {str(e)}")
+            return []
+
+    # ==================== SNS METHODS ====================
+
+    def get_sns_topics(self, region: str) -> List[Dict[str, Any]]:
+        """Get SNS topics in specific region"""
+        try:
+            client = self._get_sns_client(region)
+            response = client.list_topics()
+            topics = []
+            
+            for topic in response.get('Topics', []):
+                topic_arn = topic.get('TopicArn')
+                attrs = client.get_topic_attributes(TopicArn=topic_arn)
+                topic_data = {
+                    'topic_arn': topic_arn,
+                    'display_name': attrs.get('Attributes', {}).get('DisplayName'),
+                    'subscriptions_confirmed': attrs.get('Attributes', {}).get('SubscriptionsConfirmed'),
+                    'kms_master_key_id': attrs.get('Attributes', {}).get('KmsMasterKeyId'),
+                    'region': region
+                }
+                topics.append(topic_data)
+            
+            return topics
+        except ClientError as e:
+            logger.error(f"Error getting SNS topics in {region}: {str(e)}")
+            return []
+
+    # ==================== ORGANIZATIONS METHODS ====================
+
+    def get_organization_info(self) -> Dict[str, Any]:
+        """Get AWS Organization information"""
+        try:
+            client = self._get_organizations_client()
+            org_resp = client.describe_organization()
+            org = org_resp.get('Organization', {})
+            
+            # Get accounts
+            accounts_resp = client.list_accounts()
+            accounts = accounts_resp.get('Accounts', [])
+            
+            return {
+                'id': org.get('Id'),
+                'arn': org.get('Arn'),
+                'master_account_id': org.get('MasterAccountId'),
+                'feature_set': org.get('FeatureSet'),
+                'accounts_count': len(accounts),
+                'accounts': [{'id': a.get('Id'), 'name': a.get('Name'), 'email': a.get('Email')} for a in accounts]
+            }
+        except ClientError as e:
+            logger.warning(f"Organization not configured or no access: {str(e)}")
+            return {'enabled': False, 'reason': str(e)}
+
 
