@@ -10,12 +10,16 @@ from .models import RemediationPlan, RemediationStep
 class RemediationService:
     """Service for remediation planning and tracking"""
 
-    def __init__(self, dynamodb_table=None, table_name: str = 'autowar-remediation-tracking'):
+    def __init__(
+        self, dynamodb_table=None, table_name: str = "autowar-remediation-tracking"
+    ):
         self.dynamodb = dynamodb_table.meta.client if dynamodb_table else None
         self.table_name = table_name
         self.table = dynamodb_table
 
-    def generate_bp_remediation(self, bp_id: str, current_score: float) -> List[RemediationStep]:
+    def generate_bp_remediation(
+        self, bp_id: str, current_score: float
+    ) -> List[RemediationStep]:
         """Generate remediation steps for a specific best practice"""
         steps = []
 
@@ -26,7 +30,9 @@ class RemediationService:
         for step in base_steps:
             # Adjust priority based on score
             if current_score < 30:
-                step.priority = min(step.priority + 2, 10)  # Increase priority for critical issues
+                step.priority = min(
+                    step.priority + 2, 10
+                )  # Increase priority for critical issues
             elif current_score < 50:
                 step.priority = min(step.priority + 1, 10)
 
@@ -34,15 +40,17 @@ class RemediationService:
 
         return steps
 
-    def generate_question_remediation_plan(self, question_id: str, bp_results: Dict[str, Any]) -> RemediationPlan:
+    def generate_question_remediation_plan(
+        self, question_id: str, bp_results: Dict[str, Any]
+    ) -> RemediationPlan:
         """Generate comprehensive remediation plan for a question"""
         all_steps = []
         total_effort = "low"
         total_cost = "low"
 
         for bp_id, bp_data in bp_results.items():
-            if isinstance(bp_data, dict) and 'score' in bp_data:
-                bp_steps = self.generate_bp_remediation(bp_id, bp_data['score'])
+            if isinstance(bp_data, dict) and "score" in bp_data:
+                bp_steps = self.generate_bp_remediation(bp_id, bp_data["score"])
                 all_steps.extend(bp_steps)
 
         # Sort steps by priority
@@ -67,7 +75,7 @@ class RemediationService:
             estimated_cost=total_cost,
             steps=all_steps,
             prerequisites=prerequisites,
-            success_criteria=success_criteria
+            success_criteria=success_criteria,
         )
 
     def _get_bp_remediation_steps(self, bp_id: str) -> List[RemediationStep]:
@@ -85,7 +93,7 @@ class RemediationService:
                     cost_estimate="$0",
                     required_skills=["AWS IAM", "MFA Setup"],
                     validation_criteria="MFA habilitado y verificado en la consola AWS",
-                    priority=9
+                    priority=9,
                 ),
                 RemediationStep(
                     step_id="SEC01-BP01-2",
@@ -98,8 +106,8 @@ class RemediationService:
                     cost_estimate="$0",
                     required_skills=["AWS IAM"],
                     validation_criteria="No access keys activas para usuario root",
-                    priority=8
-                )
+                    priority=8,
+                ),
             ],
             "SEC01-BP02": [
                 RemediationStep(
@@ -113,7 +121,7 @@ class RemediationService:
                     cost_estimate="$0",
                     required_skills=["AWS IAM", "Policy Design"],
                     validation_criteria="Roles creados y asignados a recursos EC2/Lambda",
-                    priority=7
+                    priority=7,
                 ),
                 RemediationStep(
                     step_id="SEC01-BP02-2",
@@ -126,8 +134,8 @@ class RemediationService:
                     cost_estimate="$500-2000",
                     required_skills=["AWS SDK", "Application Development"],
                     validation_criteria="Aplicaciones funcionando con roles, access keys removidas",
-                    priority=6
-                )
+                    priority=6,
+                ),
             ],
             "SEC02-BP01": [
                 RemediationStep(
@@ -141,9 +149,9 @@ class RemediationService:
                     cost_estimate="$0-50/month",
                     required_skills=["AWS CloudTrail"],
                     validation_criteria="CloudTrail activo y recolectando logs",
-                    priority=9
+                    priority=9,
                 )
-            ]
+            ],
         }
 
         return remediation_db.get(bp_id, [])
@@ -154,13 +162,13 @@ class RemediationService:
             "SEC01": [
                 "Acceso administrativo a cuenta AWS",
                 "Conocimiento básico de IAM",
-                "Backup de configuraciones actuales"
+                "Backup de configuraciones actuales",
             ],
             "SEC02": [
                 "Permisos para configurar CloudTrail",
                 "Acceso a CloudWatch",
-                "Configuración de SNS topics (opcional)"
-            ]
+                "Configuración de SNS topics (opcional)",
+            ],
         }
         return prerequisites.get(question_id, ["Acceso administrativo a AWS"])
 
@@ -168,6 +176,8 @@ class RemediationService:
         """Get success criteria for question remediation"""
         criteria = {
             "SEC01": "Todas las mejores prácticas de identidad y acceso implementadas con score >80",
-            "SEC02": "Sistema de monitoreo completo activo con alertas configuradas"
+            "SEC02": "Sistema de monitoreo completo activo con alertas configuradas",
         }
-        return criteria.get(question_id, "Todas las BPs con score >70 y validación técnica completa")
+        return criteria.get(
+            question_id, "Todas las BPs con score >70 y validación técnica completa"
+        )

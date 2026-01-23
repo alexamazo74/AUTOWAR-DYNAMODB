@@ -10,7 +10,7 @@ from .models import ClientProfile
 class ClientService:
     """Service for client management and profiling"""
 
-    def __init__(self, dynamodb_table=None, table_name: str = 'autowar-clients'):
+    def __init__(self, dynamodb_table=None, table_name: str = "autowar-clients"):
         self.dynamodb = dynamodb_table.meta.client if dynamodb_table else None
         self.table_name = table_name
         self.table = dynamodb_table
@@ -27,7 +27,7 @@ class ClientService:
                 size="large",
                 compliance_requirements=["SOX", "PCI-DSS", "GDPR"],
                 risk_tolerance="low",
-                contact_info={"email": "security@xyz.com", "phone": "+1-555-0123"}
+                contact_info={"email": "security@xyz.com", "phone": "+1-555-0123"},
             ),
             "client-002": ClientProfile(
                 client_id="client-002",
@@ -37,7 +37,7 @@ class ClientService:
                 size="medium",
                 compliance_requirements=["HIPAA", "GDPR"],
                 risk_tolerance="low",
-                contact_info={"email": "it@hospital.com", "phone": "+34-555-0123"}
+                contact_info={"email": "it@hospital.com", "phone": "+34-555-0123"},
             ),
             "client-003": ClientProfile(
                 client_id="client-003",
@@ -47,8 +47,8 @@ class ClientService:
                 size="small",
                 compliance_requirements=["SOC2"],
                 risk_tolerance="medium",
-                contact_info={"email": "admin@startup.com", "phone": "+1-555-0456"}
-            )
+                contact_info={"email": "admin@startup.com", "phone": "+1-555-0456"},
+            ),
         }
 
         return mock_clients.get(client_id)
@@ -59,35 +59,38 @@ class ClientService:
             "finance": {
                 "security_multiplier": 1.5,
                 "compliance_multiplier": 2.0,
-                "data_protection_multiplier": 1.8
+                "data_protection_multiplier": 1.8,
             },
             "healthcare": {
                 "security_multiplier": 1.8,
                 "compliance_multiplier": 2.5,
-                "data_protection_multiplier": 2.0
+                "data_protection_multiplier": 2.0,
             },
             "government": {
                 "security_multiplier": 2.0,
                 "compliance_multiplier": 3.0,
-                "data_protection_multiplier": 2.5
+                "data_protection_multiplier": 2.5,
             },
             "technology": {
                 "security_multiplier": 1.2,
                 "compliance_multiplier": 1.5,
-                "data_protection_multiplier": 1.3
+                "data_protection_multiplier": 1.3,
             },
             "retail": {
                 "security_multiplier": 1.3,
                 "compliance_multiplier": 1.2,
-                "data_protection_multiplier": 1.4
-            }
+                "data_protection_multiplier": 1.4,
+            },
         }
 
-        return industry_multipliers.get(industry, {
-            "security_multiplier": 1.0,
-            "compliance_multiplier": 1.0,
-            "data_protection_multiplier": 1.0
-        })
+        return industry_multipliers.get(
+            industry,
+            {
+                "security_multiplier": 1.0,
+                "compliance_multiplier": 1.0,
+                "data_protection_multiplier": 1.0,
+            },
+        )
 
     def get_compliance_frameworks(self, industry: str) -> List[str]:
         """Get relevant compliance frameworks for an industry"""
@@ -96,7 +99,7 @@ class ClientService:
             "healthcare": ["HIPAA", "HITECH", "GDPR", "HITRUST"],
             "government": ["FedRAMP", "FISMA", "NIST", "ISO 27001"],
             "technology": ["SOC 2", "ISO 27001", "CSA STAR", "PCI-DSS"],
-            "retail": ["PCI-DSS", "GDPR", "CCPA"]
+            "retail": ["PCI-DSS", "GDPR", "CCPA"],
         }
 
         return frameworks.get(industry, ["ISO 27001", "GDPR"])

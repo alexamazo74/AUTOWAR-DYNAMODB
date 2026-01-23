@@ -19,7 +19,7 @@ from .remediation_service import RemediationService
 class SecurityService:
     """Service for Security pillar evaluation"""
 
-    def __init__(self, dynamodb_table, table_name: str = 'autowar-waf-questions'):
+    def __init__(self, dynamodb_table, table_name: str = "autowar-waf-questions"):
         self.dynamodb = dynamodb_table.meta.client  # Get the client from table
         self.table_name = table_name
         self.table = dynamodb_table
@@ -30,15 +30,17 @@ class SecurityService:
     def _to_decimal_safe(self, value: Any) -> Decimal:
         """Safely convert to Decimal for DynamoDB"""
         if value is None:
-            return Decimal('0')
+            return Decimal("0")
         if isinstance(value, Decimal):
             return value
         try:
             return Decimal(str(value))
         except (ValueError, TypeError):
-            return Decimal('0')
+            return Decimal("0")
 
-    async def evaluate_security_question(self, evaluation_id: str, question_id: str) -> Dict[str, Any]:
+    async def evaluate_security_question(
+        self, evaluation_id: str, question_id: str
+    ) -> Dict[str, Any]:
         """
         Evaluate a specific security question
         Returns scoring and compliance status
@@ -48,29 +50,39 @@ class SecurityService:
             resources = await self._get_security_resources(question_id)
 
             # Run validators for this question
-            validation_results = await self._run_security_validators(question_id, resources)
+            validation_results = await self._run_security_validators(
+                question_id, resources
+            )
 
             # Calculate scoring
             scoring = self._calculate_security_scoring(validation_results)
 
             # Calculate risks and remediation
-            risks = self.risk_service.calculate_question_risks(question_id, validation_results)
-            remediation_plan = self.remediation_service.generate_question_remediation_plan(question_id, validation_results)
+            risks = self.risk_service.calculate_question_risks(
+                question_id, validation_results
+            )
+            remediation_plan = (
+                self.remediation_service.generate_question_remediation_plan(
+                    question_id, validation_results
+                )
+            )
 
             # Store evaluation
             evaluation_data = {
-                'id': f"{evaluation_id}#{question_id}",
-                'evaluation_id': evaluation_id,
-                'question_id': question_id,
-                'question_text': SECURITY_DESCRIPTIONS['questions'].get(question_id, f"Question {question_id}"),
-                'pillar': 'Security',
-                'scoring': scoring,
-                'validation_results': validation_results,
-                'resources_evaluated': resources,
-                'risks': [risk.dict() for risk in risks],
-                'remediation_plan': remediation_plan.dict(),
-                'evaluated_at': datetime.utcnow().isoformat(),
-                'status': 'completed'
+                "id": f"{evaluation_id}#{question_id}",
+                "evaluation_id": evaluation_id,
+                "question_id": question_id,
+                "question_text": SECURITY_DESCRIPTIONS["questions"].get(
+                    question_id, f"Question {question_id}"
+                ),
+                "pillar": "Security",
+                "scoring": scoring,
+                "validation_results": validation_results,
+                "resources_evaluated": resources,
+                "risks": [risk.dict() for risk in risks],
+                "remediation_plan": remediation_plan.dict(),
+                "evaluated_at": datetime.utcnow().isoformat(),
+                "status": "completed",
             }
 
             self.table.put_item(Item=evaluation_data)
@@ -79,23 +91,48 @@ class SecurityService:
 
         except Exception as e:
             return {
-                'id': f"{evaluation_id}#{question_id}",
-                'evaluation_id': evaluation_id,
-                'question_id': question_id,
-                'pillar': 'Security',
-                'error': str(e),
-                'status': 'failed'
+                "id": f"{evaluation_id}#{question_id}",
+                "evaluation_id": evaluation_id,
+                "question_id": question_id,
+                "pillar": "Security",
+                "error": str(e),
+                "status": "failed",
             }
 
     async def _get_security_resources(self, question_id: str) -> List[Dict[str, Any]]:
         """Get AWS resources relevant to security question"""
         # Map questions to AWS services
         service_mapping = {
-            'SEC01': ['iam', 'organizations', 'access-analyzer'],  # Identity and access management
-            'SEC02': ['iam', 'cloudtrail', 'config'],  # Identity management and monitoring
-            'SEC03': ['iam', 'kms', 'secretsmanager', 's3', 'rds'],  # Data protection and encryption
-            'SEC04': ['cloudtrail', 'config', 'vpc', 'ec2', 'security-groups'],  # Detection and investigation
-            'SEC05': ['vpc', 'ec2', 'security-groups', 'guardduty'],  # Network protection
+            "SEC01": [
+                "iam",
+                "organizations",
+                "access-analyzer",
+            ],  # Identity and access management
+            "SEC02": [
+                "iam",
+                "cloudtrail",
+                "config",
+            ],  # Identity management and monitoring
+            "SEC03": [
+                "iam",
+                "kms",
+                "secretsmanager",
+                "s3",
+                "rds",
+            ],  # Data protection and encryption
+            "SEC04": [
+                "cloudtrail",
+                "config",
+                "vpc",
+                "ec2",
+                "security-groups",
+            ],  # Detection and investigation
+            "SEC05": [
+                "vpc",
+                "ec2",
+                "security-groups",
+                "guardduty",
+            ],  # Network protection
         }
 
         pillar = question_id[:4]  # e.g., SEC01
@@ -104,14 +141,18 @@ class SecurityService:
         resources = []
         for service in services:
             try:
-                service_resources = await self.aws_connector.get_resources_by_service(service)
+                service_resources = await self.aws_connector.get_resources_by_service(
+                    service
+                )
                 resources.extend(service_resources)
             except Exception as e:
                 print(f"Error getting {service} resources: {e}")
 
         return resources
 
-    async def _run_security_validators(self, question_id: str, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _run_security_validators(
+        self, question_id: str, resources: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Run security validators for the question"""
         # Import validators dynamically
         from .validators.security_validators import security_validators
@@ -122,26 +163,32 @@ class SecurityService:
                 try:
                     result = await validator_func(resources)
                     # Add description
-                    result['description'] = SECURITY_DESCRIPTIONS['best_practices'].get(bp_id, f"Best practice {bp_id}")
+                    result["description"] = SECURITY_DESCRIPTIONS["best_practices"].get(
+                        bp_id, f"Best practice {bp_id}"
+                    )
                     results[bp_id] = result
                 except Exception as e:
                     results[bp_id] = {
-                        'status': 'error',
-                        'error': str(e),
-                        'score': 0,
-                        'description': SECURITY_DESCRIPTIONS['best_practices'].get(bp_id, f"Best practice {bp_id}")
+                        "status": "error",
+                        "error": str(e),
+                        "score": 0,
+                        "description": SECURITY_DESCRIPTIONS["best_practices"].get(
+                            bp_id, f"Best practice {bp_id}"
+                        ),
                     }
 
         return results
 
-    def _calculate_security_scoring(self, validation_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_security_scoring(
+        self, validation_results: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Calculate overall scoring for security question"""
         total_score = 0
         total_bps = len(validation_results)
         compliant_bps = 0
 
         for bp_result in validation_results.values():
-            score = bp_result.get('score', 0)
+            score = bp_result.get("score", 0)
             total_score += score
             if score >= 80:  # Consider compliant if score >= 80
                 compliant_bps += 1
@@ -149,31 +196,35 @@ class SecurityService:
         avg_score = total_score / total_bps if total_bps > 0 else 0
 
         return {
-            'overall_score': self._to_decimal_safe(avg_score),
-            'compliant_bps': compliant_bps,
-            'total_bps': total_bps,
-            'compliance_percentage': self._to_decimal_safe((compliant_bps / total_bps) * 100 if total_bps > 0 else 0)
+            "overall_score": self._to_decimal_safe(avg_score),
+            "compliant_bps": compliant_bps,
+            "total_bps": total_bps,
+            "compliance_percentage": self._to_decimal_safe(
+                (compliant_bps / total_bps) * 100 if total_bps > 0 else 0
+            ),
         }
 
-    def get_security_evaluation(self, evaluation_id: str, question_id: str) -> Optional[Dict[str, Any]]:
+    def get_security_evaluation(
+        self, evaluation_id: str, question_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get security evaluation for specific question"""
         try:
-            response = self.table.get_item(
-                Key={'id': f"{evaluation_id}#{question_id}"}
-            )
-            return response.get('Item')
+            response = self.table.get_item(Key={"id": f"{evaluation_id}#{question_id}"})
+            return response.get("Item")
         except ClientError as e:
             print(f"Error getting security evaluation: {e}")
             return None
 
-    def list_security_evaluations_for_evaluation(self, evaluation_id: str) -> List[Dict[str, Any]]:
+    def list_security_evaluations_for_evaluation(
+        self, evaluation_id: str
+    ) -> List[Dict[str, Any]]:
         """List all security evaluations for an evaluation"""
         try:
             # Use scan with filter since GSI might not be available
             response = self.table.scan(
-                FilterExpression=Attr('evaluation_id').eq(evaluation_id)
+                FilterExpression=Attr("evaluation_id").eq(evaluation_id)
             )
-            return response.get('Items', [])
+            return response.get("Items", [])
         except ClientError as e:
             print(f"Error listing security evaluations: {e}")
             return []
