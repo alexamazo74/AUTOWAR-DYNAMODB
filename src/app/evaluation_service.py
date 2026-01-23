@@ -1,5 +1,6 @@
 import time
 import uuid
+import json
 from typing import List, Optional
 from boto3.dynamodb.conditions import Key
 from .aws_connector import get_table

@@ -175,7 +175,7 @@ def example_validate_credentials():
     )
     
     if result.get('success'):
-        print(f"✓ Credentials valid")
+        print("✓ Credentials valid")
         print(f"  Account ID: {result.get('account_id')}")
         print(f"  Caller ARN: {result.get('account_arn')}")
     else:
@@ -218,7 +218,7 @@ def example_security_evaluation():
         print(f"Total Questions Evaluated: {eval_data['total_questions']}")
         print(f"Total Best Practices:      {eval_data['total_best_practices']}")
         print(f"Total Findings:            {summary['total_findings']}")
-        print(f"\nFinding Severity Breakdown:")
+        print("\nFinding Severity Breakdown:")
         print(f"  CRITICAL:                {summary['critical']}")
         print(f"  HIGH:                    {summary['high']}")
         print(f"  MEDIUM:                  {summary['medium']}")

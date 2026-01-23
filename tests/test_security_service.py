@@ -10,7 +10,7 @@ def dynamodb_resource():
     with mock_aws():
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         # Create table
-        table = dynamodb.create_table(
+        dynamodb.create_table(
             TableName='autowar-waf-questions',
             KeySchema=[
                 {'AttributeName': 'id', 'KeyType': 'HASH'}

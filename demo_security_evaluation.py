@@ -7,7 +7,6 @@ with real AWS integration points
 """
 # -*- coding: utf-8 -*-
 
-import requests
 import json
 from datetime import datetime
 

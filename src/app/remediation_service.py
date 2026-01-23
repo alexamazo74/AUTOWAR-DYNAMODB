@@ -3,10 +3,8 @@ Remediation Service for AutoWAR Platform
 Generates detailed remediation plans based on evaluation results
 """
 
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Any
 from .models import RemediationPlan, RemediationStep
-from .aws_connector import get_table
 
 
 class RemediationService:

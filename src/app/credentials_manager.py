@@ -1,10 +1,9 @@
 import os
 import uuid
-import time
 import json
 import boto3
 from typing import Optional, Dict, Any
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 from .aws_connector import get_table
 
@@ -45,7 +44,7 @@ def assume_role(role_arn: str, session_name: str, external_id: Optional[str] = N
                                aws_secret_access_key=creds['SecretAccessKey'],
                                aws_session_token=creds['SessionToken'])
         identity = temp_sts.get_caller_identity()
-    except ClientError as e:
+    except ClientError:
         raise
     return {
         'credentials': {
@@ -178,7 +177,7 @@ def rotate_static_secret(secret_arn: str, item_id: Optional[str] = None) -> Dict
     # Fetch secret
     try:
         resp = sm.get_secret_value(SecretId=secret_arn)
-    except ClientError as e:
+    except ClientError:
         raise
 
     secret_str = resp.get('SecretString')

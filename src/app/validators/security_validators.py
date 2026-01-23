@@ -4,7 +4,6 @@ Evaluates Security pillar best practices
 """
 
 from typing import Dict, List, Any, Callable
-import asyncio
 
 
 async def validate_sec01_bp01(resources: List[Dict[str, Any]]) -> Dict[str, Any]:

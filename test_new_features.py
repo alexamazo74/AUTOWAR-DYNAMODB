@@ -5,7 +5,6 @@ Test script to demonstrate the two inquiries:
 2. How BP re-evaluation works
 """
 
-import json
 import requests
 from datetime import datetime
 
@@ -86,7 +85,7 @@ def test_re_evaluate_bp():
             return True
         else:
             data = response.json()
-            print(f"\n✓ Re-evaluation results:")
+            print("\n✓ Re-evaluation results:")
             print(f"  Evaluated: {data['summary']['evaluated_count']}")
             print(f"  Failed: {data['summary']['failed_count']}")
             

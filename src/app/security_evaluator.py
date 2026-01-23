@@ -5,7 +5,6 @@ Evaluates all 11 questions and 63 best practices against real AWS resources
 
 from typing import Dict, List, Any
 from .aws_connector import AWSConnector
-from .security_pillar_definitions import SECURITY_PILLAR_STRUCTURE
 import logging
 
 logger = logging.getLogger(__name__)
@@ -107,7 +106,7 @@ class SecurityPillarEvaluator:
         # SEC01-BP01: Cargas de trabajo separadas mediante cuentas
         try:
             org_info = self.connector.get_organization_info()
-            if org_info.get('enabled') == False:
+            if not org_info.get('enabled'):
                 non_compliant_count += 1
                 findings.append({
                     'bp': 'SEC01-BP01',
@@ -150,7 +149,7 @@ class SecurityPillarEvaluator:
         
         # SEC01-BP02: Proteger el usuario raíz de la cuenta
         try:
-            users = self.connector.get_iam_users()
+            self.connector.get_iam_users()
             password_policy = self.connector.get_password_policy()
             
             if not password_policy or not password_policy.get('require_symbols'):
@@ -528,7 +527,7 @@ class SecurityPillarEvaluator:
                 bp_id = f'SEC03-BP{bp_num:02d}'
                 findings.append(self._create_timeout_finding(
                     bp_id,
-                    f'Unable to evaluate - error collecting IAM user information',
+                    'Unable to evaluate - error collecting IAM user information',
                     'IAM API'
                 ))
             return {
@@ -737,13 +736,11 @@ class SecurityPillarEvaluator:
         # Get IAM policies and roles
         try:
             policies = self.connector.get_iam_policies()
-            users = self.connector.get_iam_users()
-            roles = self.connector.get_iam_roles()
+            self.connector.get_iam_users()
+            self.connector.get_iam_roles()
         except Exception as e:
             logger.error(f"Error getting IAM policies: {str(e)}")
             policies = []
-            users = []
-            roles = []
         
         # SEC05-BP01: Usar principio de menor privilegio
         if policies and len(policies) > 0:
@@ -834,7 +831,7 @@ class SecurityPillarEvaluator:
             findings.append({
                 'bp': 'SEC06-BP01',
                 'status': 'COMPLIANT',
-                'finding': f'CloudTrail is actively logging',
+                'finding': 'CloudTrail is actively logging',
                 'severity': 'NONE'
             })
         else:
@@ -927,7 +924,7 @@ class SecurityPillarEvaluator:
         """SEC07: ¿Cómo clasifica sus datos? (4 BPs)"""
         findings = []
         score = 100
-        primary_region = self.connector.regions[0] if self.connector.regions else 'us-east-1'
+        self.connector.regions[0] if self.connector.regions else 'us-east-1'
         
         # SEC07-BP01: Comprender su esquema de clasificación de datos
         try:
@@ -1035,7 +1032,7 @@ class SecurityPillarEvaluator:
                     'status': 'COMPLIANT',
                     'finding': f'{len(kms_keys)} KMS keys configured for encryption',
                     'severity': 'NONE',
-                    'evidence': f'KMS keys in use for encryption management'
+                    'evidence': 'KMS keys in use for encryption management'
                 })
             else:
                 score -= 10
@@ -1366,7 +1363,6 @@ class SecurityPillarEvaluator:
             }
         """
         try:
-            from datetime import datetime
             # Extract SEC number from BP ID (e.g., 'SEC01' from 'SEC01-BP01')
             sec_num = bp_id[:5]  # 'SEC01'
             
@@ -1399,7 +1395,7 @@ class SecurityPillarEvaluator:
                 return {
                     'success': False,
                     'bp_id': bp_id,
-                    'error': f'BP not found in results'
+                    'error': 'BP not found in results'
                 }
             
             # Normalize the finding

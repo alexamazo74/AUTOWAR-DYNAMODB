@@ -2,7 +2,6 @@
 """Test backend connectivity and mock evaluation"""
 import requests
 import json
-from datetime import datetime
 
 BASE_URL = "http://127.0.0.1:8002"
 
@@ -29,7 +28,7 @@ def test_validate_credentials_mock():
         resp = requests.post(f"{BASE_URL}/security/validate-credentials", json=payload)
         print(f"Status: {resp.status_code}")
         print(f"Response: {json.dumps(resp.json(), indent=2)}")
-        return resp.status_code == 200 and resp.json().get('success') == True
+        return resp.status_code == 200 and resp.json().get('success')
     except Exception as e:
         print(f"✗ Request failed: {e}")
         return False
@@ -42,7 +41,7 @@ def test_evaluate_mock():
         data = resp.json()
         if data.get('success'):
             evaluation = data.get('evaluation', {})
-            print(f"✓ Mock Evaluation Success:")
+            print("✓ Mock Evaluation Success:")
             print(f"  - Account: {evaluation.get('account_id')}")
             print(f"  - Score: {evaluation.get('overall_score')}%")
             print(f"  - Questions: {evaluation.get('total_questions')}")

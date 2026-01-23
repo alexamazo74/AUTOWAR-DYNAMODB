@@ -14,7 +14,7 @@ payload = {
 }
 
 print("Calling backend API with mock credentials...")
-print(f"URL: http://127.0.0.1:8002/security/evaluate-real")
+print("URL: http://127.0.0.1:8002/security/evaluate-real")
 
 try:
     response = requests.post(
@@ -43,7 +43,7 @@ try:
             print(f"\nTotal Questions: {len(questions)}")
             print(f"Total BPs: {evaluation.get('total_best_practices', 0)}")
             print(f"Overall Score: {evaluation.get('overall_score', 0)}")
-            print(f"\nSummary:")
+            print("\nSummary:")
             print(f"  Total Findings: {summary.get('total_findings', 0)}")
             print(f"  Critical: {summary.get('critical', 0)}")
             print(f"  High: {summary.get('high', 0)}")

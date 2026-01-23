@@ -57,12 +57,12 @@ while i < len(lines):
                 finding = finding_match.group(1)
                 severity = severity_match.group(1)
                 
-                new_lines.append(f"        pending_count += 1")
-                new_lines.append(f"        findings.append(self._create_pending_finding(")
+                new_lines.append("        pending_count += 1")
+                new_lines.append("        findings.append(self._create_pending_finding(")
                 new_lines.append(f"            '{bp}',")
                 new_lines.append(f"            '{finding}',")
                 new_lines.append(f"            '{severity}'")
-                new_lines.append(f"        ))")
+                new_lines.append("        ))")
                 i += 1
                 continue
     

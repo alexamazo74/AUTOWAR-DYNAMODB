@@ -6,7 +6,6 @@ Calculates risks based on evaluation results and industry context
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from .models import RiskAssessment, IndustryBenchmark, ClientProfile
-from .aws_connector import get_table
 from .client_service import ClientService
 
 

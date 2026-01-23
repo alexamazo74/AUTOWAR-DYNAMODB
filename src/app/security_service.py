@@ -3,16 +3,14 @@ Security Service for AutoWAR Platform
 Handles evaluation of Security pillar best practices
 """
 
-import json
 from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 
 from .aws_connector import AWSConnector
-from .models import EvaluationRequest, SecurityEvaluation
 from .validators.security_validators import SECURITY_DESCRIPTIONS
 from .risk_service import RiskService
 from .remediation_service import RemediationService

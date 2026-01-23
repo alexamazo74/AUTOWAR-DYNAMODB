@@ -3,10 +3,8 @@ Client Management Service for AutoWAR Platform
 Manages client profiles and industry-specific configurations
 """
 
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Optional
 from .models import ClientProfile
-from .aws_connector import get_table
 
 
 class ClientService:

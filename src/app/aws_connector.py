@@ -1,6 +1,5 @@
 import os
 import boto3
-from boto3.dynamodb.conditions import Key
 from typing import List, Dict, Any
 from botocore.exceptions import ClientError, NoCredentialsError
 import logging
@@ -412,7 +411,7 @@ class AWSConnector:
                     status_resp = client.get_trail_status(Name=trail_name)
                     trail_data['is_logging'] = status_resp.get('IsLogging')
                     trail_data['latest_delivery_time'] = str(status_resp.get('LatestDeliveryTime', ''))
-                except:
+                except ClientError:
                     trail_data['is_logging'] = False
                 
                 trails.append(trail_data)
@@ -551,14 +550,14 @@ class AWSConnector:
                         bucket_data['server_side_encryption'] = {
                             'rules': encryption['ServerSideEncryptionConfiguration'].get('Rules', [])
                         }
-                except:
+                except ClientError:
                     pass
                 
                 # Check versioning
                 try:
                     versioning = client.get_bucket_versioning(Bucket=bucket_name)
                     bucket_data['versioning_enabled'] = versioning.get('Status') == 'Enabled'
-                except:
+                except ClientError:
                     pass
                 
                 # Check public access block
@@ -571,7 +570,7 @@ class AWSConnector:
                         config.get('IgnorePublicAcls'),
                         config.get('RestrictPublicBuckets')
                     ])
-                except:
+                except ClientError:
                     pass
                 
                 buckets.append(bucket_data)
@@ -647,7 +646,7 @@ class AWSConnector:
                                         'volume_id': volume_id,
                                         'encrypted': volume.get('Encrypted', False)
                                     })
-                            except:
+                            except ClientError:
                                 pass
                     
                     instances.append(instance_data)

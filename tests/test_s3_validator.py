@@ -1,4 +1,3 @@
-import json
 
 def test_s3_public_access_validator(monkeypatch):
     # fake s3 client responses

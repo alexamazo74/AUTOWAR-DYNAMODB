@@ -7,7 +7,6 @@ Test script to verify the complete Security Pillar evaluation system
 from src.app.security_evaluator import SecurityPillarEvaluator
 from src.app.aws_connector import AWSConnector
 from unittest.mock import MagicMock
-import json
 import sys
 
 # Force UTF-8 encoding for output
@@ -187,7 +186,7 @@ if __name__ == '__main__':
     
     total_bps = sum(q['bps_evaluated'] for q in results['questions'])
     print(f"Total BPs evaluated: {total_bps}")
-    print(f"Expected: 63")
+    print("Expected: 63")
     print(f"Status: {'[OK] MATCH' if total_bps == 63 else '[FAIL] MISMATCH'}")
     
     print("\n" + "="*60)

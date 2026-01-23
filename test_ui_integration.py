@@ -6,7 +6,6 @@ Tests all 11 Security questions and 63 BPs evaluation
 
 import requests
 import json
-from datetime import datetime
 
 BASE_URL = "http://127.0.0.1:8002"
 
@@ -102,13 +101,13 @@ def test_evaluate_all():
                       for finding in q.get("findings", []) 
                       if finding.get("severity") == "HIGH")
             
-            print(f"\nFinding Severity Summary:")
+            print("\nFinding Severity Summary:")
             print(f"  CRITICAL: {critical}")
             print(f"  HIGH: {high}")
-            print(f"  (+ other severities)")
+            print("  (+ other severities)")
             
             # Show sample findings
-            print(f"\nSample Findings:")
+            print("\nSample Findings:")
             for q in questions[:2]:
                 if q.get("findings"):
                     print(f"\n  {q.get('question_id')}:")

@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-import os
 import boto3
+import logging
 from botocore.exceptions import ClientError
-from .aws_connector import get_table
+from .aws_connector import get_table, AWSConnector
 from .models import EvaluationIn, EvaluationOut
 from .evaluation_service import (
     create_evaluation,
@@ -20,12 +20,13 @@ from .credentials_manager import (
 )
 from .auth import require_api_key
 from .cognito_auth import require_cognito_auth
-from pydantic import BaseModel
 from typing import Optional
 import uuid
 from datetime import datetime
 from .scores_service import create_score, get_score, list_scores_for_evaluation
 from .security_service import SecurityService
+
+logger = logging.getLogger(__name__)
 
 APP_TABLES = {
     'clients': 'autowar-clients',
@@ -147,7 +148,7 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
             session_token=request.session_token,
             regions=request.regions
         )
-        logger.info(f"[EVAL] AWSConnector created")
+        logger.info("[EVAL] AWSConnector created")
         
         # Create evaluator and evaluate all 11 questions with timeout
         evaluator = SecurityPillarEvaluator(connector)
@@ -703,7 +704,7 @@ def get_security_risks(evaluation_id: str, question_id: str):
                     "average_mitigation_priority": sum(r.get('mitigation_priority', 0) for r in evaluation['risks']) / len(evaluation['risks']) if evaluation['risks'] else 0
                 }
             }
-    except Exception as e:
+    except Exception:
         pass
     
     # Return mock data when no real data is available
@@ -771,7 +772,7 @@ def get_security_remediation(evaluation_id: str, question_id: str):
                 "question_id": question_id,
                 "remediation_plan": evaluation['remediation_plan']
             }
-    except Exception as e:
+    except Exception:
         pass
     
     # Return mock data when no real data is available
