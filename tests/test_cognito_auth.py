@@ -12,6 +12,7 @@ def test_require_cognito_auth_missing():
 def test_require_cognito_auth_invalid(monkeypatch):
     def fake_verify(token):
         raise Exception("invalid")
+
     monkeypatch.setattr(cognito_auth, "verify_jwt_token", fake_verify)
     with pytest.raises(HTTPException) as exc:
         cognito_auth.require_cognito_auth("Bearer bad")
