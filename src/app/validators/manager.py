@@ -6,7 +6,6 @@ from .config_validators import ConfigRecorderValidator
 from .vpc_validators import VPCFlowLogsValidator
 from .waf_validators import WAFWebACLPresenceValidator
 
-
 VALIDATOR_MAP = {
     "s3": [S3PublicAccessValidator()],
     "iam": [IAMPasswordPolicyValidator(), RootMFAValidator()],
