@@ -38,18 +38,6 @@ jobs:
           pip install ruff
           ruff check src tests
 
-      - name: Autoformat (black) and detect changes
-        run: |
-          pip install black
-          # Run black to auto-format files in-place
-          black --quiet src tests
-          # If black changed files, fail the job and ask author to include changes
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Black modified files. Please run 'black src tests' locally and include the changes in your PR.";
-            git --no-pager status --porcelain
-            exit 1
-          fi
-
       - name: Format check (black --check)
         run: |
           pip install black
