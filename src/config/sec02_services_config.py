@@ -9,12 +9,12 @@ SEC02_BP_SERVICES = {
         "name": "Utilizar mecanismos de inicio de sesión fuertes",
         "description": "Strong login mechanisms including MFA, password policies, and adaptive authentication",
         "services": [
-            "iam",               # IAM password policies and MFA devices
-            "sso",               # AWS IAM Identity Center
-            "cognito",           # Amazon Cognito user pools
-            "ds",                # AWS Directory Service
-            "cloudtrail",        # Authentication event logging
-            "cloudwatch",        # Failed login alarms
+            "iam",  # IAM password policies and MFA devices
+            "sso",  # AWS IAM Identity Center
+            "cognito",  # Amazon Cognito user pools
+            "ds",  # AWS Directory Service
+            "cloudtrail",  # Authentication event logging
+            "cloudwatch",  # Failed login alarms
         ],
         "resources": {
             "iam": [
@@ -73,20 +73,19 @@ SEC02_BP_SERVICES = {
             "root_mfa_enabled",
         ],
     },
-    
     "SEC02-BP02": {
         "name": "Utilizar credenciales temporales",
         "description": "Temporary credentials through STS, IAM roles, and avoiding long-term access keys",
         "services": [
-            "sts",               # Security Token Service
-            "iam",               # IAM roles and policies
-            "ec2",               # Instance profiles and metadata
-            "lambda",            # Execution roles
-            "ecs",               # Task roles
-            "eks",               # Service accounts with IAM roles
-            "codebuild",         # Service roles
-            "codepipeline",      # Deployment roles
-            "config",            # Credential checks
+            "sts",  # Security Token Service
+            "iam",  # IAM roles and policies
+            "ec2",  # Instance profiles and metadata
+            "lambda",  # Execution roles
+            "ecs",  # Task roles
+            "eks",  # Service accounts with IAM roles
+            "codebuild",  # Service roles
+            "codepipeline",  # Deployment roles
+            "config",  # Credential checks
         ],
         "resources": {
             "sts": [
@@ -157,19 +156,18 @@ SEC02_BP_SERVICES = {
             "unused_credentials_identified",
         ],
     },
-    
     "SEC02-BP03": {
         "name": "Almacenar y utilizar secretos de forma segura",
         "description": "Secure storage and usage of secrets, API keys, and sensitive credentials",
         "services": [
-            "secretsmanager",    # Secrets Manager for secret storage
-            "ssm",               # Systems Manager Parameter Store
-            "kms",               # Key Management Service
-            "rds",               # RDS database credentials
-            "elasticache",       # ElastiCache authentication
-            "lambda",            # Lambda secret handling
-            "ecs",               # ECS secret mounting
-            "eks",               # EKS secret management
+            "secretsmanager",  # Secrets Manager for secret storage
+            "ssm",  # Systems Manager Parameter Store
+            "kms",  # Key Management Service
+            "rds",  # RDS database credentials
+            "elasticache",  # ElastiCache authentication
+            "lambda",  # Lambda secret handling
+            "ecs",  # ECS secret mounting
+            "eks",  # EKS secret management
         ],
         "resources": {
             "secretsmanager": [
@@ -242,17 +240,16 @@ SEC02_BP_SERVICES = {
             "parameter_store_secure_strings",
         ],
     },
-    
     "SEC02-BP04": {
         "name": "Confíe en un proveedor de identidad centralizado",
         "description": "Centralized identity provider for federated access and single sign-on",
         "services": [
-            "sso",               # AWS IAM Identity Center
-            "iam",               # IAM identity providers
-            "cognito",           # Amazon Cognito federation
-            "ds",                # Directory Service
-            "clientvpn",         # Client VPN authentication
-            "workspaces",        # WorkSpaces directory integration
+            "sso",  # AWS IAM Identity Center
+            "iam",  # IAM identity providers
+            "cognito",  # Amazon Cognito federation
+            "ds",  # Directory Service
+            "clientvpn",  # Client VPN authentication
+            "workspaces",  # WorkSpaces directory integration
         ],
         "resources": {
             "sso": [
@@ -313,18 +310,17 @@ SEC02_BP_SERVICES = {
             "external_identity_provider_trusted",
         ],
     },
-    
     "SEC02-BP05": {
         "name": "Auditar y rotar credenciales periódicamente",
         "description": "Regular credential audit and rotation to minimize exposure",
         "services": [
-            "iam",               # Credential management and rotation
-            "config",            # Compliance checking
-            "cloudtrail",        # Credential usage tracking
-            "cloudwatch",        # Monitoring and alerts
-            "secretsmanager",    # Secret rotation
-            "ssm",               # Parameter store and automation
-            "lambda",            # Rotation functions
+            "iam",  # Credential management and rotation
+            "config",  # Compliance checking
+            "cloudtrail",  # Credential usage tracking
+            "cloudwatch",  # Monitoring and alerts
+            "secretsmanager",  # Secret rotation
+            "ssm",  # Parameter store and automation
+            "lambda",  # Rotation functions
         ],
         "resources": {
             "iam": [
@@ -390,17 +386,16 @@ SEC02_BP_SERVICES = {
             "compliance_rules_configured",
         ],
     },
-    
     "SEC02-BP06": {
         "name": "Emplear grupos de usuarios y atributos",
         "description": "User groups and attribute-based access control for efficient permission management",
         "services": [
-            "iam",               # IAM groups and policies
-            "sso",               # Permission sets and groups
-            "cognito",           # User pool groups
-            "ds",                # Active Directory groups
-            "ram",               # Resource sharing
-            "organizations",     # Organizational structure
+            "iam",  # IAM groups and policies
+            "sso",  # Permission sets and groups
+            "cognito",  # User pool groups
+            "ds",  # Active Directory groups
+            "ram",  # Resource sharing
+            "organizations",  # Organizational structure
         ],
         "resources": {
             "iam": [
@@ -462,25 +457,32 @@ SEC02_BP_SERVICES = {
 
 # Summary statistics
 SEC02_TOTAL_BPS = len(SEC02_BP_SERVICES)
-SEC02_TOTAL_SERVICES = len(set(
-    service 
-    for bp_data in SEC02_BP_SERVICES.values() 
-    for service in bp_data["services"]
-))
+SEC02_TOTAL_SERVICES = len(
+    set(
+        service
+        for bp_data in SEC02_BP_SERVICES.values()
+        for service in bp_data["services"]
+    )
+)
 
-SEC02_SERVICE_LIST = sorted(set(
-    service 
-    for bp_data in SEC02_BP_SERVICES.values() 
-    for service in bp_data["services"]
-))
+SEC02_SERVICE_LIST = sorted(
+    set(
+        service
+        for bp_data in SEC02_BP_SERVICES.values()
+        for service in bp_data["services"]
+    )
+)
+
 
 def get_bp_services(bp_code: str) -> dict:
     """Get detailed service configuration for a specific best practice."""
     return SEC02_BP_SERVICES.get(bp_code, {})
 
+
 def get_all_services() -> list:
     """Get list of all AWS services used in SEC02."""
     return SEC02_SERVICE_LIST
+
 
 def get_bp_checks(bp_code: str) -> list:
     """Get list of checks for a specific best practice."""
