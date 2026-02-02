@@ -19,11 +19,16 @@ from .remediation_service import RemediationService
 class SecurityService:
     """Service for Security pillar evaluation"""
 
-    def __init__(self, dynamodb_table, table_name: str = "autowar-waf-questions"):
+    def __init__(
+        self,
+        dynamodb_table,
+        table_name: str = "autowar-waf-questions",
+        aws_connector=None,
+    ):
         self.dynamodb = dynamodb_table.meta.client  # Get the client from table
         self.table_name = table_name
         self.table = dynamodb_table
-        self.aws_connector = AWSConnector()
+        self.aws_connector = aws_connector  # Allow injection for testing
         self.risk_service = RiskService(dynamodb_table)
         self.remediation_service = RemediationService(dynamodb_table)
 
