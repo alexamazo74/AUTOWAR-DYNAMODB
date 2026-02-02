@@ -10,7 +10,6 @@ from datetime import datetime
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 
-from .aws_connector import AWSConnector
 from .validators.security_validators import SECURITY_DESCRIPTIONS
 from .risk_service import RiskService
 from .remediation_service import RemediationService
