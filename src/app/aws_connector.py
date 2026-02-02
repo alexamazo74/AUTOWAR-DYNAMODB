@@ -509,7 +509,7 @@ class AWSConnector:
         """Get AWS Config status for specific region"""
         try:
             client = self._get_config_client(region)
-            recorders = client.describe_config_recorders()
+            recorders = client.describe_configuration_recorders()
             config_data = {
                 "region": region,
                 "enabled": False,
@@ -525,7 +525,7 @@ class AWSConnector:
                 }
 
                 # Check if recording
-                status = client.describe_config_recorder_status(
+                status = client.describe_configuration_recorder_status(
                     ConfigurationRecorderNames=[recorder["name"]]
                 )
                 for s in status.get("ConfigurationRecordersStatus", []):

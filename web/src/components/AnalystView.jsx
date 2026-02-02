@@ -111,8 +111,10 @@ export default function AnalystView({ evaluation }) {
 
   const getEvidenceIcon = (evidence) => {
     if (!evidence) return '❓'
-    if (evidence.includes('No ') && evidence.includes('found')) return '📦'
+    if (evidence.includes('Access denied') || evidence.includes('AccessDenied')) return '🔒'
+    if (evidence.includes('Error querying') || evidence.includes('error')) return '⚠️'
     if (evidence.includes('timeout') || evidence.includes('Timeout')) return '⏱️'
+    if (evidence.includes('No ') && evidence.includes('found')) return '📦'
     if (evidence === 'N/D') return '❓'
     return '✓'
   }

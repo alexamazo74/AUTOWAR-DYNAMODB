@@ -21,7 +21,7 @@ class SecurityPillarEvaluator:
         self.connector = connector
 
     def _create_pending_finding(
-        self, bp: str, finding: str, severity: str = "MEDIUM"
+        self, bp: str, finding: str, severity: str = "MEDIUM", evidence: str = "N/D"
     ) -> Dict[str, Any]:
         """Create a PENDING_REVIEW finding with all required fields"""
         return {
@@ -31,7 +31,7 @@ class SecurityPillarEvaluator:
             "severity": severity,
             "risk": "N/D",
             "remediation": "N/D",
-            "evidence": "N/D",
+            "evidence": evidence,
         }
 
     def _create_no_resources_finding(
@@ -322,11 +322,21 @@ class SecurityPillarEvaluator:
         except Exception as e:
             logger.error(f"Error checking {bp_id}: {str(e)}")
             pending_count += 1
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = f"Access denied - insufficient IAM permissions to check IAM, GuardDuty, Config, or CloudTrail: {error_msg[:100]}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = (
+                    f"Request timeout while querying AWS services: {error_msg[:100]}"
+                )
+            else:
+                evidence_reason = f"Error querying services: {error_msg[:150]}"
             findings.append(
                 self._create_pending_finding(
                     bp_id,
-                    f"Unable to verify account security: {str(e)[:80]}",
+                    "Unable to verify account security",
                     "HIGH",
+                    evidence_reason,
                 )
             )
 
@@ -383,11 +393,21 @@ class SecurityPillarEvaluator:
         except Exception as e:
             logger.error(f"Error checking {bp_id}: {str(e)}")
             pending_count += 1
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = f"Access denied - insufficient IAM permissions for AWS Config: {error_msg[:100]}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = (
+                    f"Request timeout querying AWS Config: {error_msg[:100]}"
+                )
+            else:
+                evidence_reason = f"Error querying AWS Config: {error_msg[:150]}"
             findings.append(
                 self._create_pending_finding(
                     bp_id,
-                    f"Unable to verify Config status: {str(e)[:80]}",
+                    "Unable to verify control validation",
                     "MEDIUM",
+                    evidence_reason,
                 )
             )
 
@@ -505,11 +525,21 @@ class SecurityPillarEvaluator:
         except Exception as e:
             logger.error(f"Error checking {bp_id}: {str(e)}")
             pending_count += 1
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = f"Access denied - insufficient IAM permissions for Config or CloudTrail: {error_msg[:100]}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = (
+                    f"Request timeout querying automation services: {error_msg[:100]}"
+                )
+            else:
+                evidence_reason = f"Error querying Config/CloudTrail: {error_msg[:150]}"
             findings.append(
                 self._create_pending_finding(
                     bp_id,
-                    f"Unable to verify automation: {str(e)[:80]}",
+                    "Unable to verify security automation",
                     "HIGH",
+                    evidence_reason,
                 )
             )
 
@@ -606,11 +636,19 @@ class SecurityPillarEvaluator:
         except Exception as e:
             logger.error(f"Error checking {bp_id}: {str(e)}")
             pending_count += 1
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = f"Access denied - insufficient IAM permissions for Config or GuardDuty: {error_msg[:100]}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = f"Request timeout querying recommendation services: {error_msg[:100]}"
+            else:
+                evidence_reason = f"Error querying Config/GuardDuty: {error_msg[:150]}"
             findings.append(
                 self._create_pending_finding(
                     bp_id,
-                    f"Unable to verify security recommendations: {str(e)[:80]}",
+                    "Unable to verify security recommendations",
                     "MEDIUM",
+                    evidence_reason,
                 )
             )
 
@@ -641,11 +679,19 @@ class SecurityPillarEvaluator:
 
         # SEC02-BP01: Utilizar mecanismos de inicio de sesión fuertes
         if users_error:
+            error_msg = users_error
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = f"Access denied - insufficient IAM permissions to list users: {error_msg}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = f"Request timeout while querying IAM: {error_msg}"
+            else:
+                evidence_reason = f"Error querying IAM users: {error_msg}"
             findings.append(
                 self._create_pending_finding(
                     "SEC02-BP01",
-                    f"Unable to verify IAM authentication: {users_error}",
+                    "Unable to verify IAM authentication",
                     "HIGH",
+                    evidence_reason,
                 )
             )
         else:
