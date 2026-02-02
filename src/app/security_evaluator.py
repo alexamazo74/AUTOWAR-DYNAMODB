@@ -807,12 +807,12 @@ class SecurityPillarEvaluator:
                 findings.append(
                     {
                         "bp": "SEC02-BP03",
-                        "status": "PENDING_REVIEW",
-                        "finding": "Verify secrets are stored in AWS Secrets Manager (none found)",
-                        "severity": "MEDIUM",
-                        "risk": "Unable to verify secrets - no secrets found",
-                        "remediation": "Use AWS Secrets Manager for database and API credentials",
-                        "evidence": "No secrets found in Secrets Manager",
+                        "status": "COMPLIANT",
+                        "finding": "No secrets found in AWS Secrets Manager",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": "No secrets configured - consider using Secrets Manager for database and API credentials",
                     }
                 )
         except Exception as e:
