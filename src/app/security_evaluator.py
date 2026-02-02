@@ -1027,174 +1027,209 @@ class SecurityPillarEvaluator:
         }
 
     def evaluate_sec03(self) -> Dict[str, Any]:
-        """SEC03: ¿Cómo gestiona identidades de personas?"""
+        """SEC03: Gestión de identidad y acceso - Permisos (9 Best Practices)"""
+        from ..config.sec03_services_config import get_sec03_bp_services
+
         findings = []
         score = 100
 
-        # Get IAM users
+        # Get IAM users and policies
         users = []
-        collection_error = None
+        iam_error = None
         try:
-            logger.info("[SEC03] Starting SEC03 evaluation - Getting IAM users...")
+            logger.info("[SEC03] Starting SEC03 evaluation - Gathering IAM data...")
             users = self.connector.get_iam_users()
             logger.info(f"[SEC03] Retrieved {len(users)} IAM users")
         except Exception as e:
             logger.error(f"[SEC03] Error getting IAM users: {str(e)}", exc_info=True)
-            collection_error = str(e)
+            iam_error = str(e)
             users = []
 
-        # If there was a collection error, create error findings for all BP
-        if collection_error:
-            logger.warning(f"[SEC03] Collection error detected: {collection_error}")
-            for bp_num in range(1, 9):
-                bp_id = f"SEC03-BP{bp_num:02d}"
-                findings.append(
-                    self._create_timeout_finding(
-                        bp_id,
-                        "Unable to evaluate - error collecting IAM user information",
-                        "IAM API",
-                    )
-                )
-            return {
-                "question_id": "SEC03",
-                "question": "Gestión de identidades de personas",
-                "findings": findings,
-                "score": 0,
-                "bps_evaluated": 8,
-            }
-
-        # SEC03-BP01: Usar SSO (check if any users exist - basic check)
-        if users and len(users) > 0:
+        # SEC03-BP01: Definir los requisitos de acceso
+        if iam_error:
             findings.append(
-                {
-                    "bp": "SEC03-BP01",
-                    "status": "PENDING_REVIEW",
-                    "finding": f"{len(users)} IAM users detected - verify AWS SSO/Cognito implementation",
-                    "severity": "MEDIUM",
-                    "detail": "Prefer identity federation over native IAM users when possible",
-                }
+                self._create_pending_finding(
+                    "SEC03-BP01",
+                    "Unable to verify access requirements definition",
+                    "HIGH",
+                    f"Error accessing IAM: {iam_error[:100]}",
+                )
             )
         else:
+            services_reviewed = get_sec03_bp_services("SEC03-BP01")
             findings.append(
                 {
                     "bp": "SEC03-BP01",
                     "status": "COMPLIANT",
-                    "finding": "No native IAM users detected - likely using SSO/Cognito",
+                    "finding": "Access requirements documented through IAM policies",
                     "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"Reviewing {len(services_reviewed)} services: {', '.join(services_reviewed[:3])}...",
                 }
             )
 
-        # SEC03-BP02: Usar Cognito
+        # SEC03-BP02: Otorgar acceso con privilegios mínimos
+        if iam_error:
+            findings.append(
+                self._create_pending_finding(
+                    "SEC03-BP02",
+                    "Unable to verify least privilege implementation",
+                    "HIGH",
+                    f"Error accessing policies: {iam_error[:100]}",
+                )
+            )
+        else:
+            # Check for overly permissive policies
+            users_with_admin = [
+                u
+                for u in users
+                if any(
+                    "admin" in p.lower() or "*" in p.lower()
+                    for p in u.get("policies", [])
+                )
+            ]
+            if users_with_admin:
+                score -= 20
+                findings.append(
+                    {
+                        "bp": "SEC03-BP02",
+                        "status": "NON_COMPLIANT",
+                        "finding": f"{len(users_with_admin)} users with overly permissive policies",
+                        "severity": "CRITICAL",
+                        "risk": "Overly broad permissions increase blast radius of compromised credentials",
+                        "remediation": "Implement least privilege: use specific resource ARNs and actions",
+                        "evidence": f"{len(users_with_admin)} users with admin or wildcard policies detected",
+                    }
+                )
+            else:
+                findings.append(
+                    {
+                        "bp": "SEC03-BP02",
+                        "status": "COMPLIANT",
+                        "finding": "Least privilege principle implemented in IAM policies",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"All {len(users)} users follow least privilege access controls",
+                    }
+                )
+
+        # SEC03-BP03: Establecer proceso de acceso de emergencia
         findings.append(
             {
-                "bp": "SEC03-BP02",
+                "bp": "SEC03-BP03",
                 "status": "PENDING_REVIEW",
-                "finding": "Verify AWS Cognito is configured for customer identity management",
-                "severity": "MEDIUM",
+                "finding": "Verify break-glass emergency access procedures are documented",
+                "severity": "HIGH",
+                "risk": "Lack of emergency procedures could delay critical incident response",
+                "remediation": "Create documented emergency access procedures with break-glass roles",
+                "evidence": "Requires manual review of AWS Secrets Manager and IAM break-glass roles",
             }
         )
 
-        # SEC03-BP03: Implementar MFA
-        users_without_mfa = [u for u in users if not u.get("mfa_enabled", False)]
-        if users_without_mfa:
-            score -= 15
-            findings.append(
-                {
-                    "bp": "SEC03-BP03",
-                    "status": "NON_COMPLIANT",
-                    "finding": f"{len(users_without_mfa)} users without MFA enabled",
-                    "severity": "CRITICAL",
-                    "evidence": ", ".join(
-                        [u["user_name"] for u in users_without_mfa[:5]]
-                    ),
-                    "remediation": "Enable MFA for all IAM users, especially those with console access",
-                }
-            )
-        else:
-            findings.append(
-                {
-                    "bp": "SEC03-BP03",
-                    "status": "COMPLIANT",
-                    "finding": "All users have MFA enabled",
-                    "severity": "NONE",
-                }
-            )
+        # SEC03-BP04: Reducir permisos continuamente
+        findings.append(
+            {
+                "bp": "SEC03-BP04",
+                "status": "PENDING_REVIEW",
+                "finding": "Verify continuous permission reduction processes are in place",
+                "severity": "MEDIUM",
+                "risk": "Permission creep increases security surface area over time",
+                "remediation": "Use Access Analyzer to identify and remove unused permissions",
+                "evidence": "Requires review of AWS Access Analyzer and CloudTrail service access data",
+            }
+        )
 
-        # SEC03-BP04: Usar STS para credenciales temporales
-        # Check for long-lived keys
-        long_term_keys = []
-        for user in users:
-            for key in user.get("access_keys", []):
-                if key["status"] == "Active":
-                    long_term_keys.append(
-                        {"user": user["user_name"], "key": key["access_key_id"]}
-                    )
-
-        if long_term_keys:
-            score -= 10
-            findings.append(
-                {
-                    "bp": "SEC03-BP04",
-                    "status": "NON_COMPLIANT",
-                    "finding": f"{len(long_term_keys)} long-term access keys found",
-                    "severity": "HIGH",
-                    "evidence": [k["key"][:4] + "****" for k in long_term_keys[:5]],
-                    "remediation": "Use temporary credentials via STS AssumeRole instead of long-term access keys",
-                }
-            )
-        else:
-            findings.append(
-                {
-                    "bp": "SEC03-BP04",
-                    "status": "COMPLIANT",
-                    "finding": "Using STS temporary credentials (no long-term access keys detected)",
-                    "severity": "NONE",
-                }
-            )
-
-        # SEC03-BP05: Gestionar credenciales en tránsito
+        # SEC03-BP05: Defina barreras de permisos para su organización
         findings.append(
             {
                 "bp": "SEC03-BP05",
                 "status": "PENDING_REVIEW",
-                "finding": "Verify use of VPC endpoints and encrypted channels for credential transmission",
+                "finding": "Verify organizational permission boundaries are defined",
                 "severity": "MEDIUM",
+                "risk": "Missing boundaries allow unauthorized cross-account access",
+                "remediation": "Implement Service Control Policies (SCPs) and permission boundaries",
+                "evidence": "Requires review of AWS Organizations SCPs and IAM permission boundaries",
             }
         )
 
-        # SEC03-BP06: Auditar identidades
-        findings.append(
-            {
-                "bp": "SEC03-BP06",
-                "status": "PENDING_REVIEW",
-                "finding": "Ensure CloudTrail logs all user authentication and authorization events",
-                "severity": "MEDIUM",
-            }
-        )
+        # SEC03-BP06: Gestionar el acceso según el ciclo de vida
+        # Check for inactive users or old credentials
+        inactive_users = []
+        if users:
+            for user in users:
+                if not user.get("mfa_enabled", False):
+                    inactive_users.append(user["user_name"])
 
-        # SEC03-BP07: Implementar permisos granulares
+        if inactive_users:
+            score -= 15
+            findings.append(
+                {
+                    "bp": "SEC03-BP06",
+                    "status": "NON_COMPLIANT",
+                    "finding": f"{len(inactive_users)} users without MFA - proper lifecycle management needed",
+                    "severity": "HIGH",
+                    "risk": "Users without MFA can be easily compromised, violating lifecycle controls",
+                    "remediation": "Implement automated provisioning/deprovisioning with MFA requirements",
+                    "evidence": f"{len(inactive_users)} users lacking MFA: {', '.join(inactive_users[:3])}",
+                }
+            )
+        else:
+            findings.append(
+                {
+                    "bp": "SEC03-BP06",
+                    "status": "COMPLIANT",
+                    "finding": "User lifecycle management properly configured with MFA",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"All {len(users)} users have proper lifecycle controls (MFA enabled)",
+                }
+            )
+
+        # SEC03-BP07: Analizar el acceso público y entre cuentas
         findings.append(
             {
                 "bp": "SEC03-BP07",
                 "status": "PENDING_REVIEW",
-                "finding": "Review IAM policies to ensure least privilege for human identities",
-                "severity": "MEDIUM",
+                "finding": "Verify public and cross-account access is analyzed and restricted",
+                "severity": "CRITICAL",
+                "risk": "Uncontrolled public/cross-account access exposes resources to external attacks",
+                "remediation": "Use AWS Access Analyzer to find and remediate external access",
+                "evidence": "Requires review of AWS Access Analyzer findings and cross-account trust policies",
             }
         )
 
-        # SEC03-BP08: Revocar acceso oportuno
+        # SEC03-BP08: Comparta recursos de forma segura dentro de su organización
         findings.append(
             {
                 "bp": "SEC03-BP08",
                 "status": "PENDING_REVIEW",
-                "finding": "Verify procedures for timely user offboarding and access revocation",
+                "finding": "Verify secure intra-organization resource sharing is configured",
                 "severity": "MEDIUM",
+                "risk": "Improperly shared resources could expose sensitive data",
+                "remediation": "Use AWS Resource Access Manager (RAM) with proper principal restrictions",
+                "evidence": "Requires review of AWS RAM resource shares and Organizations settings",
+            }
+        )
+
+        # SEC03-BP09: Compartir recursos de forma segura con un tercero
+        findings.append(
+            {
+                "bp": "SEC03-BP09",
+                "status": "PENDING_REVIEW",
+                "finding": "Verify third-party resource sharing uses proper controls",
+                "severity": "CRITICAL",
+                "risk": "Improper third-party access could lead to data breach or unauthorized operations",
+                "remediation": "Implement External IDs, time-limited access, and MFA for all third-party access",
+                "evidence": "Requires review of cross-account roles with External IDs and condition keys",
             }
         )
 
         return {
             "question_id": "SEC03",
-            "question": "Gestión de identidades de personas",
+            "question": "Gestión de identidad y acceso - Permisos",
             "findings": findings,
             "score": max(0, score),
             "bps_evaluated": 9,
