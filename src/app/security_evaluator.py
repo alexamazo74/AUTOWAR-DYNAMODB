@@ -798,6 +798,9 @@ class SecurityPillarEvaluator:
                             "status": "COMPLIANT",
                             "finding": f"All {len(secrets)} secrets have automatic rotation enabled",
                             "severity": "NONE",
+                            "risk": "N/D",
+                            "remediation": "N/D",
+                            "evidence": "All secrets have automatic rotation enabled",
                         }
                     )
             else:
@@ -807,14 +810,51 @@ class SecurityPillarEvaluator:
                         "status": "PENDING_REVIEW",
                         "finding": "Verify secrets are stored in AWS Secrets Manager (none found)",
                         "severity": "MEDIUM",
+                        "risk": "Unable to verify secrets - no secrets found",
                         "remediation": "Use AWS Secrets Manager for database and API credentials",
+                        "evidence": "No secrets found in Secrets Manager",
                     }
                 )
         except Exception as e:
+            error_msg = str(e)[:100]
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence = f"Access denied - insufficient IAM permissions: {error_msg}"
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence = (
+                    f"Request timeout while querying Secrets Manager: {error_msg}"
+                )
+            else:
+                evidence = f"Error querying Secrets Manager: {error_msg}"
             logger.error(f"Error checking secrets: {str(e)}")
+            findings.append(
+                self._create_pending_finding(
+                    "SEC02-BP03",
+                    "Unable to verify secret storage and rotation",
+                    "HIGH",
+                    evidence,
+                )
+            )
 
         # SEC02-BP04: Confíe en un proveedor de identidad centralizado
-        if len(users) > 10:
+        if users_error:
+            error_msg = users_error
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = (
+                    f"Access denied - insufficient IAM permissions: {error_msg}"
+                )
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = f"Request timeout while querying IAM: {error_msg}"
+            else:
+                evidence_reason = f"Error querying IAM users: {error_msg}"
+            findings.append(
+                self._create_pending_finding(
+                    "SEC02-BP04",
+                    "Unable to verify identity federation configuration",
+                    "HIGH",
+                    evidence_reason,
+                )
+            )
+        elif len(users) > 10:
             score -= 10
             findings.append(
                 {
@@ -834,63 +874,112 @@ class SecurityPillarEvaluator:
                     "status": "COMPLIANT",
                     "finding": f"Limited IAM users ({len(users)}) - likely using identity federation",
                     "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"{len(users)} IAM users - acceptable for federated setup",
                 }
             )
 
         # SEC02-BP05: Auditar y rotar credenciales periódicamente
-        old_keys = []
-        for user in users:
-            for key in user.get("access_keys", []):
-                if key["status"] == "Active":
-                    # In real scenario, check age from create_date
-                    old_keys.append(key)
-
-        if len(old_keys) > 0:
+        if users_error:
+            error_msg = users_error
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = (
+                    f"Access denied - insufficient IAM permissions: {error_msg}"
+                )
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = f"Request timeout while querying IAM: {error_msg}"
+            else:
+                evidence_reason = f"Error querying IAM users: {error_msg}"
             findings.append(
-                {
-                    "bp": "SEC02-BP05",
-                    "status": "PENDING_REVIEW",
-                    "finding": f"{len(old_keys)} active access keys - verify they are rotated regularly",
-                    "severity": "MEDIUM",
-                    "risk": "Old credentials increase compromise risk",
-                    "remediation": "Rotate all access keys every 90 days maximum",
-                    "evidence": f"{len(old_keys)} keys require age verification",
-                }
+                self._create_pending_finding(
+                    "SEC02-BP05",
+                    "Unable to verify credential rotation policy",
+                    "HIGH",
+                    evidence_reason,
+                )
             )
         else:
-            findings.append(
-                {
-                    "bp": "SEC02-BP05",
-                    "status": "COMPLIANT",
-                    "finding": "No active access keys requiring rotation",
-                    "severity": "NONE",
-                }
-            )
+            old_keys = []
+            for user in users:
+                for key in user.get("access_keys", []):
+                    if key["status"] == "Active":
+                        # In real scenario, check age from create_date
+                        old_keys.append(key)
+
+            if len(old_keys) > 0:
+                findings.append(
+                    {
+                        "bp": "SEC02-BP05",
+                        "status": "PENDING_REVIEW",
+                        "finding": f"{len(old_keys)} active access keys - verify they are rotated regularly",
+                        "severity": "MEDIUM",
+                        "risk": "Old credentials increase compromise risk",
+                        "remediation": "Rotate all access keys every 90 days maximum",
+                        "evidence": f"{len(old_keys)} keys require age verification",
+                    }
+                )
+            else:
+                findings.append(
+                    {
+                        "bp": "SEC02-BP05",
+                        "status": "COMPLIANT",
+                        "finding": "No active access keys requiring rotation",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": "No active access keys - rotation policy compliant",
+                    }
+                )
 
         # SEC02-BP06: Emplear grupos de usuarios y atributos
-        user_with_direct_policies = [u for u in users if len(u.get("policies", [])) > 0]
-        if user_with_direct_policies:
-            score -= 5
+        if users_error:
+            error_msg = users_error
+            if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
+                evidence_reason = (
+                    f"Access denied - insufficient IAM permissions: {error_msg}"
+                )
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                evidence_reason = f"Request timeout while querying IAM: {error_msg}"
+            else:
+                evidence_reason = f"Error querying IAM users: {error_msg}"
             findings.append(
-                {
-                    "bp": "SEC02-BP06",
-                    "status": "NON_COMPLIANT",
-                    "finding": f"{len(user_with_direct_policies)} users have directly attached policies",
-                    "severity": "MEDIUM",
-                    "risk": "Direct policy attachment makes permission management difficult",
-                    "remediation": "Use IAM groups for permission management, not direct user policies",
-                    "evidence": f"{len(user_with_direct_policies)} users with direct policies",
-                }
+                self._create_pending_finding(
+                    "SEC02-BP06",
+                    "Unable to verify user groups and attributes",
+                    "HIGH",
+                    evidence_reason,
+                )
             )
         else:
-            findings.append(
-                {
-                    "bp": "SEC02-BP06",
-                    "status": "COMPLIANT",
-                    "finding": "Using groups for permission management",
-                    "severity": "NONE",
-                }
-            )
+            user_with_direct_policies = [
+                u for u in users if len(u.get("policies", [])) > 0
+            ]
+            if user_with_direct_policies:
+                score -= 5
+                findings.append(
+                    {
+                        "bp": "SEC02-BP06",
+                        "status": "NON_COMPLIANT",
+                        "finding": f"{len(user_with_direct_policies)} users have directly attached policies",
+                        "severity": "MEDIUM",
+                        "risk": "Direct policy attachment makes permission management difficult",
+                        "remediation": "Use IAM groups for permission management, not direct user policies",
+                        "evidence": f"{len(user_with_direct_policies)} users with direct policies",
+                    }
+                )
+            else:
+                findings.append(
+                    {
+                        "bp": "SEC02-BP06",
+                        "status": "COMPLIANT",
+                        "finding": "Using groups for permission management",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": "No direct policies attached - using groups correctly",
+                    }
+                )
 
         return {
             "question_id": "SEC02",
