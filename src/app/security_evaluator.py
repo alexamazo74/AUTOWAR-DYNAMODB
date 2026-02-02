@@ -9,11 +9,6 @@ from ..config.sec01_services_config import (
     get_bp_services,
     get_bp_name,
 )
-from ..config.sec02_services_config import (
-    get_bp_services as get_bp_services_sec02,
-    get_all_services as get_all_services_sec02,
-    get_bp_checks as get_bp_checks_sec02,
-)
 import logging
 
 logger = logging.getLogger(__name__)
