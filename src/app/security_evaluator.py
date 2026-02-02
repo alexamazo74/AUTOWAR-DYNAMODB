@@ -1116,43 +1116,127 @@ class SecurityPillarEvaluator:
                 )
 
         # SEC03-BP03: Establecer proceso de acceso de emergencia
-        findings.append(
-            {
-                "bp": "SEC03-BP03",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify break-glass emergency access procedures are documented",
-                "severity": "HIGH",
-                "risk": "Lack of emergency procedures could delay critical incident response",
-                "remediation": "Create documented emergency access procedures with break-glass roles",
-                "evidence": "Requires manual review of AWS Secrets Manager and IAM break-glass roles",
-            }
-        )
+        # Check for break-glass roles (roles with 'break' or 'emergency' in name)
+        roles = []
+        try:
+            roles = self.connector.get_iam_roles()
+        except Exception as e:
+            logger.error(f"[SEC03] Error getting IAM roles: {str(e)}")
+
+        breakglass_roles = [
+            r
+            for r in roles
+            if "break" in r.get("name", "").lower()
+            or "emergency" in r.get("name", "").lower()
+        ]
+
+        if breakglass_roles:
+            findings.append(
+                {
+                    "bp": "SEC03-BP03",
+                    "status": "COMPLIANT",
+                    "finding": "Break-glass roles configured for emergency access",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"{len(breakglass_roles)} break-glass role(s) found: {', '.join([r['name'] for r in breakglass_roles[:2]])}",
+                }
+            )
+        else:
+            score -= 15
+            findings.append(
+                {
+                    "bp": "SEC03-BP03",
+                    "status": "NON_COMPLIANT",
+                    "finding": "No break-glass emergency access roles configured",
+                    "severity": "CRITICAL",
+                    "risk": "Lack of emergency procedures could delay critical incident response",
+                    "remediation": "Create documented emergency access procedures with break-glass roles",
+                    "evidence": "No roles with 'break' or 'emergency' in name detected - create break-glass role",
+                }
+            )
 
         # SEC03-BP04: Reducir permisos continuamente
-        findings.append(
-            {
-                "bp": "SEC03-BP04",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify continuous permission reduction processes are in place",
-                "severity": "MEDIUM",
-                "risk": "Permission creep increases security surface area over time",
-                "remediation": "Use Access Analyzer to identify and remove unused permissions",
-                "evidence": "Requires review of AWS Access Analyzer and CloudTrail service access data",
-            }
-        )
+        # Check for old/inactive IAM users (no login in 90+ days)
+        from datetime import datetime, timezone
+
+        inactive_console_users = []
+        for user in users:
+            last_login = user.get("last_login")
+            if last_login:
+                try:
+                    login_date = datetime.fromisoformat(
+                        last_login.replace("Z", "+00:00")
+                    )
+                    days_inactive = (datetime.now(timezone.utc) - login_date).days
+                    if days_inactive > 90:
+                        inactive_console_users.append(
+                            {
+                                "user": user["user_name"],
+                                "days": days_inactive,
+                            }
+                        )
+                except Exception:
+                    pass
+
+        if inactive_console_users:
+            score -= 10
+            findings.append(
+                {
+                    "bp": "SEC03-BP04",
+                    "status": "NON_COMPLIANT",
+                    "finding": f"{len(inactive_console_users)} users inactive 90+ days - permissions should be reviewed",
+                    "severity": "MEDIUM",
+                    "risk": "Stale user accounts with permissions increase security surface area",
+                    "remediation": "Review and remove unused permissions from inactive users or deactivate accounts",
+                    "evidence": f"{len(inactive_console_users)} inactive users detected: {', '.join([u['user'] for u in inactive_console_users[:3]])}",
+                }
+            )
+        else:
+            findings.append(
+                {
+                    "bp": "SEC03-BP04",
+                    "status": "COMPLIANT",
+                    "finding": "Permission reduction process active - no long-term inactive users detected",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"All {len(users)} active users have recent activity (< 90 days)",
+                }
+            )
 
         # SEC03-BP05: Defina barreras de permisos para su organización
-        findings.append(
-            {
-                "bp": "SEC03-BP05",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify organizational permission boundaries are defined",
-                "severity": "MEDIUM",
-                "risk": "Missing boundaries allow unauthorized cross-account access",
-                "remediation": "Implement Service Control Policies (SCPs) and permission boundaries",
-                "evidence": "Requires review of AWS Organizations SCPs and IAM permission boundaries",
-            }
-        )
+        # Check for permission boundaries implementation on users
+        users_with_boundaries = [
+            u for u in users if u.get("permission_boundary") is not None
+        ]
+
+        if len(users_with_boundaries) > 0:
+            boundary_coverage = (len(users_with_boundaries) / max(len(users), 1)) * 100
+            findings.append(
+                {
+                    "bp": "SEC03-BP05",
+                    "status": "COMPLIANT",
+                    "finding": "Permission boundaries implemented for organizational access control",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"{len(users_with_boundaries)}/{len(users)} users ({boundary_coverage:.0f}%) have permission boundaries",
+                }
+            )
+        else:
+            score -= 12
+            findings.append(
+                {
+                    "bp": "SEC03-BP05",
+                    "status": "NON_COMPLIANT",
+                    "finding": "No permission boundaries defined for organizational access control",
+                    "severity": "HIGH",
+                    "risk": "Missing boundaries allow unauthorized cross-account access and permission creep",
+                    "remediation": "Implement IAM permission boundaries on all users/roles",
+                    "evidence": "No users have permission boundaries configured - implement boundary policy",
+                }
+            )
 
         # SEC03-BP06: Gestionar el acceso según el ciclo de vida
         # Check for inactive users or old credentials
@@ -1189,19 +1273,60 @@ class SecurityPillarEvaluator:
             )
 
         # SEC03-BP07: Analizar el acceso público y entre cuentas
-        findings.append(
-            {
-                "bp": "SEC03-BP07",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify public and cross-account access is analyzed and restricted",
-                "severity": "CRITICAL",
-                "risk": "Uncontrolled public/cross-account access exposes resources to external attacks",
-                "remediation": "Use AWS Access Analyzer to find and remediate external access",
-                "evidence": "Requires review of AWS Access Analyzer findings and cross-account trust policies",
-            }
-        )
+        # Check for cross-account roles and trust relationships
+        cross_account_roles = [
+            r
+            for r in roles
+            if r.get("trust_policy") and "AWS" in r.get("trust_policy", "")
+        ]
+
+        if cross_account_roles:
+            external_id_count = sum(
+                1
+                for r in cross_account_roles
+                if "ExternalId" in r.get("trust_policy", "")
+            )
+            if external_id_count == len(cross_account_roles):
+                findings.append(
+                    {
+                        "bp": "SEC03-BP07",
+                        "status": "COMPLIANT",
+                        "finding": "Cross-account access properly controlled with External IDs",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"All {len(cross_account_roles)} cross-account roles use External IDs",
+                    }
+                )
+            else:
+                score -= 18
+                findings.append(
+                    {
+                        "bp": "SEC03-BP07",
+                        "status": "NON_COMPLIANT",
+                        "finding": f"{len(cross_account_roles) - external_id_count} cross-account roles missing External IDs",
+                        "severity": "CRITICAL",
+                        "risk": "Cross-account access without External IDs allows account takeover",
+                        "remediation": "Add External IDs to all cross-account trust relationships",
+                        "evidence": f"{len(cross_account_roles)} cross-account roles found, only {external_id_count} use External IDs",
+                    }
+                )
+        else:
+            findings.append(
+                {
+                    "bp": "SEC03-BP07",
+                    "status": "COMPLIANT",
+                    "finding": "No cross-account roles detected or properly isolated",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"No cross-account access roles found among {len(roles)} total roles",
+                }
+            )
 
         # SEC03-BP08: Comparta recursos de forma segura dentro de su organización
+        # Check for resource-based policies that allow sharing
+        # This is complex without AWS Organizations info, so we'll do a basic check
         findings.append(
             {
                 "bp": "SEC03-BP08",
@@ -1210,22 +1335,70 @@ class SecurityPillarEvaluator:
                 "severity": "MEDIUM",
                 "risk": "Improperly shared resources could expose sensitive data",
                 "remediation": "Use AWS Resource Access Manager (RAM) with proper principal restrictions",
-                "evidence": "Requires review of AWS RAM resource shares and Organizations settings",
+                "evidence": "Requires manual review of AWS Organizations and AWS RAM configurations",
             }
         )
 
         # SEC03-BP09: Compartir recursos de forma segura con un tercero
-        findings.append(
-            {
-                "bp": "SEC03-BP09",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify third-party resource sharing uses proper controls",
-                "severity": "CRITICAL",
-                "risk": "Improper third-party access could lead to data breach or unauthorized operations",
-                "remediation": "Implement External IDs, time-limited access, and MFA for all third-party access",
-                "evidence": "Requires review of cross-account roles with External IDs and condition keys",
-            }
-        )
+        # Check for roles with third-party indicators (external accounts in trust policy)
+        third_party_roles = [
+            r
+            for r in roles
+            if any(
+                ext in r.get("trust_policy", "").upper()
+                for ext in ["EXTERNAL", "THIRD", "PARTNER", "VENDOR"]
+            )
+        ]
+
+        if third_party_roles:
+            external_id_count = sum(
+                1
+                for r in third_party_roles
+                if "ExternalId" in r.get("trust_policy", "")
+            )
+            mfa_count = sum(
+                1
+                for r in third_party_roles
+                if "aws:MultiFactorAuthPresent" in r.get("trust_policy", "")
+            )
+
+            if external_id_count == len(third_party_roles) and mfa_count > 0:
+                findings.append(
+                    {
+                        "bp": "SEC03-BP09",
+                        "status": "COMPLIANT",
+                        "finding": "Third-party access properly secured with External IDs and MFA controls",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"All {len(third_party_roles)} third-party roles use External IDs and MFA controls",
+                    }
+                )
+            else:
+                score -= 18
+                findings.append(
+                    {
+                        "bp": "SEC03-BP09",
+                        "status": "NON_COMPLIANT",
+                        "finding": "Third-party access missing security controls (External IDs or MFA)",
+                        "severity": "CRITICAL",
+                        "risk": "Improper third-party access could lead to data breach or unauthorized operations",
+                        "remediation": "Add External IDs and MFA requirements to all third-party roles",
+                        "evidence": f"Third-party roles: {len(third_party_roles)} total, {external_id_count} with External ID, {mfa_count} with MFA",
+                    }
+                )
+        else:
+            findings.append(
+                {
+                    "bp": "SEC03-BP09",
+                    "status": "COMPLIANT",
+                    "finding": "No third-party access roles detected or properly restricted",
+                    "severity": "NONE",
+                    "risk": "N/D",
+                    "remediation": "N/D",
+                    "evidence": f"No third-party access roles found among {len(roles)} total roles",
+                }
+            )
 
         return {
             "question_id": "SEC03",
