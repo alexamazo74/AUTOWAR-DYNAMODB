@@ -900,23 +900,60 @@ class SecurityPillarEvaluator:
                 )
             )
         else:
+            from datetime import datetime, timezone
+
             old_keys = []
+            active_keys_count = 0
             for user in users:
                 for key in user.get("access_keys", []):
                     if key["status"] == "Active":
-                        # In real scenario, check age from create_date
-                        old_keys.append(key)
+                        active_keys_count += 1
+                        try:
+                            # Parse create_date and check if older than 90 days
+                            create_date = datetime.fromisoformat(
+                                key["create_date"].replace("Z", "+00:00")
+                            )
+                            age_days = (datetime.now(timezone.utc) - create_date).days
+                            if age_days > 90:
+                                old_keys.append(
+                                    {
+                                        "key_id": key["access_key_id"],
+                                        "user": user["user_name"],
+                                        "age_days": age_days,
+                                    }
+                                )
+                        except Exception:
+                            # If we can't parse date, treat as old for safety
+                            old_keys.append(
+                                {
+                                    "key_id": key["access_key_id"],
+                                    "user": user["user_name"],
+                                    "age_days": "unknown",
+                                }
+                            )
 
             if len(old_keys) > 0:
                 findings.append(
                     {
                         "bp": "SEC02-BP05",
-                        "status": "PENDING_REVIEW",
-                        "finding": f"{len(old_keys)} active access keys - verify they are rotated regularly",
+                        "status": "NON_COMPLIANT",
+                        "finding": f"{len(old_keys)} access keys older than 90 days need rotation",
                         "severity": "MEDIUM",
                         "risk": "Old credentials increase compromise risk",
                         "remediation": "Rotate all access keys every 90 days maximum",
-                        "evidence": f"{len(old_keys)} keys require age verification",
+                        "evidence": f"{len(old_keys)} of {active_keys_count} active keys are older than 90 days",
+                    }
+                )
+            elif active_keys_count > 0:
+                findings.append(
+                    {
+                        "bp": "SEC02-BP05",
+                        "status": "COMPLIANT",
+                        "finding": f"All {active_keys_count} active access keys are rotated regularly",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"All {active_keys_count} active keys are less than 90 days old",
                     }
                 )
             else:
