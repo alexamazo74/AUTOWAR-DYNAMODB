@@ -20,6 +20,21 @@ class SecurityPillarEvaluator:
     def __init__(self, connector: AWSConnector):
         self.connector = connector
 
+    def _calculate_score_from_findings(self, findings: List[Dict[str, Any]]) -> int:
+        """
+        Calculate score as percentage of COMPLIANT best practices
+        Score = (Compliant BPs / (Compliant + Non-Compliant BPs)) * 100
+        PENDING_REVIEW and other statuses are excluded from the calculation
+        """
+        compliant = sum(1 for f in findings if f.get("status") == "COMPLIANT")
+        non_compliant = sum(1 for f in findings if f.get("status") == "NON_COMPLIANT")
+        total = compliant + non_compliant
+
+        if total == 0:
+            # If no COMPLIANT or NON_COMPLIANT (all PENDING_REVIEW), assume 100%
+            return 100
+        return int((compliant / total) * 100)
+
     def _create_pending_finding(
         self, bp: str, finding: str, severity: str = "MEDIUM", evidence: str = "N/D"
     ) -> Dict[str, Any]:
@@ -1022,7 +1037,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC02",
             "question": "Autenticación de personas y máquinas",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 6,
         }
 
@@ -1085,7 +1100,8 @@ class SecurityPillarEvaluator:
                 u
                 for u in users
                 if any(
-                    "admin" in p.lower() or "*" in p.lower()
+                    "admin" in p.get("name", "").lower()
+                    or "*" in p.get("name", "").lower()
                     for p in u.get("policies", [])
                 )
             ]
@@ -1325,19 +1341,43 @@ class SecurityPillarEvaluator:
             )
 
         # SEC03-BP08: Comparta recursos de forma segura dentro de su organización
-        # Check for resource-based policies that allow sharing
-        # This is complex without AWS Organizations info, so we'll do a basic check
-        findings.append(
-            {
-                "bp": "SEC03-BP08",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify secure intra-organization resource sharing is configured",
-                "severity": "MEDIUM",
-                "risk": "Improperly shared resources could expose sensitive data",
-                "remediation": "Use AWS Resource Access Manager (RAM) with proper principal restrictions",
-                "evidence": "Requires manual review of AWS Organizations and AWS RAM configurations",
-            }
-        )
+        # Check if using AWS Organizations for resource sharing
+        try:
+            org_info = self.connector.get_organization_info()
+            if org_info.get("enabled"):
+                findings.append(
+                    {
+                        "bp": "SEC03-BP08",
+                        "status": "COMPLIANT",
+                        "finding": "AWS Organizations enabled for secure resource sharing",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"Organizations enabled with {org_info.get('accounts_count', 1)} accounts. Use AWS RAM for resource sharing.",
+                    }
+                )
+            else:
+                findings.append(
+                    {
+                        "bp": "SEC03-BP08",
+                        "status": "NON_COMPLIANT",
+                        "finding": "AWS Organizations not enabled for secure intra-organization resource sharing",
+                        "severity": "MEDIUM",
+                        "risk": "Improperly shared resources could expose sensitive data",
+                        "remediation": "Enable AWS Organizations and use AWS Resource Access Manager (RAM) for controlled resource sharing",
+                        "evidence": "Organizations not configured - unable to enforce secure resource sharing policies",
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Error checking SEC03-BP08: {str(e)}")
+            findings.append(
+                self._create_pending_finding(
+                    "SEC03-BP08",
+                    "Unable to verify secure intra-organization resource sharing",
+                    "MEDIUM",
+                    f"Error checking Organizations: {str(e)[:100]}",
+                )
+            )
 
         # SEC03-BP09: Compartir recursos de forma segura con un tercero
         # Check for roles with third-party indicators (external accounts in trust policy)
@@ -1404,7 +1444,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC03",
             "question": "Gestión de identidad y acceso - Permisos",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 9,
         }
 
@@ -1497,14 +1537,13 @@ class SecurityPillarEvaluator:
             "question_id": "SEC04",
             "question": "Gestión de identidades de máquinas",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
     def evaluate_sec05(self) -> Dict[str, Any]:
         """SEC05: ¿Cómo gestiona los permisos?"""
         findings = []
-        score = 100
 
         # Get IAM policies and roles
         try:
@@ -1592,7 +1631,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC05",
             "question": "Gestión de permisos",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
@@ -1725,7 +1764,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC06",
             "question": "Detección e investigación de eventos",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 5,
         }
 
@@ -1842,7 +1881,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC07",
             "question": "Clasificación de datos",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
@@ -1977,7 +2016,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC08",
             "question": "Protección de datos en reposo",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
@@ -2040,7 +2079,7 @@ class SecurityPillarEvaluator:
             "question_id": "SEC09",
             "question": "Protección de datos en tránsito",
             "findings": findings,
-            "score": max(0, score),
+            "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 3,
         }
 
