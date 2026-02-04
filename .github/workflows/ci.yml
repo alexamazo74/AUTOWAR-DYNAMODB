@@ -41,7 +41,7 @@ jobs:
       - name: Format check (black --check)
         run: |
           pip install black
-          black --check src tests || (echo "Run 'black src tests' to format." && false)
+          black --check --line-length 100 src tests || (echo "Run 'black --line-length 100 src tests' to format." && false)
 
       - name: Type check (mypy)
         run: |
