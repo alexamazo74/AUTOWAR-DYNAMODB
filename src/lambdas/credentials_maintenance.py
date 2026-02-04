@@ -33,9 +33,7 @@ def handler(event, context):
             secret_arn = item.get("secret_arn")
             if secret_arn:
                 try:
-                    secrets.delete_secret(
-                        SecretId=secret_arn, ForceDeleteWithoutRecovery=True
-                    )
+                    secrets.delete_secret(SecretId=secret_arn, ForceDeleteWithoutRecovery=True)
                 except Exception:
                     pass
             # mark expired
@@ -87,9 +85,7 @@ def handler(event, context):
                                         table.update_item(
                                             Key={"id": item["id"]},
                                             UpdateExpression="SET last_rotated_ts = :t REMOVE rotation_due",
-                                            ExpressionAttributeValues={
-                                                ":t": int(_now_ts())
-                                            },
+                                            ExpressionAttributeValues={":t": int(_now_ts())},
                                         )
                                     except Exception:
                                         pass
@@ -153,9 +149,7 @@ def handler(event, context):
                                     role_arn=role_arn,
                                     session_name=f"autowar-{item.get('id')}",
                                     external_id=item.get("external_id"),
-                                    duration_seconds=int(
-                                        item.get("duration_seconds", 3600)
-                                    ),
+                                    duration_seconds=int(item.get("duration_seconds", 3600)),
                                 )
                                 creds = resp.get("credentials", {})
                                 expiry = creds.get("expiration")
@@ -187,9 +181,7 @@ def handler(event, context):
                                     table.update_item(
                                         Key={"id": item["id"]},
                                         UpdateExpression="SET rotation_due = :r",
-                                        ExpressionAttributeValues={
-                                            ":r": int(_now_ts())
-                                        },
+                                        ExpressionAttributeValues={":r": int(_now_ts())},
                                     )
                                 except Exception:
                                     pass
@@ -227,7 +219,5 @@ def handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps(
-            {"expired_deleted": deleted, "rotation_marked": rotation_due}
-        ),
+        "body": json.dumps({"expired_deleted": deleted, "rotation_marked": rotation_due}),
     }

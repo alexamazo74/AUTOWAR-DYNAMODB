@@ -167,9 +167,7 @@ async def validate_sec01_bp03(resources: List[Dict[str, Any]]) -> Dict[str, Any]
     """
     try:
         iam_policies = [
-            r
-            for r in resources
-            if r.get("service") == "iam" and r.get("type") == "policy"
+            r for r in resources if r.get("service") == "iam" and r.get("type") == "policy"
         ]
 
         policies_analyzed = len(iam_policies)
@@ -193,13 +191,9 @@ async def validate_sec01_bp03(resources: List[Dict[str, Any]]) -> Dict[str, Any]
             wildcard_ratio = policies_with_wildcard / policies_analyzed
             score = max(0, 100 - (wildcard_ratio * 100))
             if policies_with_wildcard > 0:
-                details.append(
-                    f"{policies_with_wildcard} policies use wildcard permissions"
-                )
+                details.append(f"{policies_with_wildcard} policies use wildcard permissions")
             if policies_with_least_privilege > 0:
-                details.append(
-                    f"{policies_with_least_privilege} policies follow least privilege"
-                )
+                details.append(f"{policies_with_least_privilege} policies follow least privilege")
 
         return {
             "bp_id": "SEC01-BP03",
@@ -380,9 +374,7 @@ async def validate_sec01_bp06(resources: List[Dict[str, Any]]) -> Dict[str, Any]
     """
     try:
         iam_policies = [
-            r
-            for r in resources
-            if r.get("service") == "iam" and r.get("type") == "policy"
+            r for r in resources if r.get("service") == "iam" and r.get("type") == "policy"
         ]
 
         managed_policies = 0
@@ -404,9 +396,7 @@ async def validate_sec01_bp06(resources: List[Dict[str, Any]]) -> Dict[str, Any]
             managed_ratio = managed_policies / (managed_policies + inline_policies)
             score = managed_ratio * 100
             if inline_policies > 0:
-                details.append(
-                    f"{inline_policies} inline policies (prefer managed policies)"
-                )
+                details.append(f"{inline_policies} inline policies (prefer managed policies)")
 
         return {
             "bp_id": "SEC01-BP06",
@@ -470,11 +460,7 @@ async def validate_sec01_bp08(resources: List[Dict[str, Any]]) -> Dict[str, Any]
     Check if human users have appropriate access patterns
     """
     try:
-        iam_users = [
-            r
-            for r in resources
-            if r.get("service") == "iam" and r.get("type") == "user"
-        ]
+        iam_users = [r for r in resources if r.get("service") == "iam" and r.get("type") == "user"]
 
         human_users = 0
         programmatic_users = 0
@@ -531,8 +517,7 @@ async def validate_sec01_bp09(resources: List[Dict[str, Any]]) -> Dict[str, Any]
                 programmatic_access_count += 1
                 # Check if using roles or temporary credentials
                 if resource.get("has_role", False) or any(
-                    key.get("temporary", False)
-                    for key in resource.get("access_keys", [])
+                    key.get("temporary", False) for key in resource.get("access_keys", [])
                 ):
                     appropriate_credentials += 1
 
@@ -577,11 +562,7 @@ async def validate_sec03_bp01(resources: List[Dict[str, Any]]) -> Dict[str, Any]
     Check if IAM users have MFA enabled
     """
     try:
-        iam_users = [
-            r
-            for r in resources
-            if r.get("service") == "iam" and r.get("type") == "user"
-        ]
+        iam_users = [r for r in resources if r.get("service") == "iam" and r.get("type") == "user"]
 
         total_users = len(iam_users)
         users_with_mfa = 0
@@ -600,9 +581,7 @@ async def validate_sec03_bp01(resources: List[Dict[str, Any]]) -> Dict[str, Any]
             mfa_ratio = users_with_mfa / total_users
             score = mfa_ratio * 100
             if users_with_mfa < total_users:
-                details.append(
-                    f"{total_users - users_with_mfa} users without MFA enabled"
-                )
+                details.append(f"{total_users - users_with_mfa} users without MFA enabled")
             if users_with_mfa > 0:
                 details.append(f"{users_with_mfa} users have MFA enabled")
 
@@ -680,11 +659,7 @@ async def validate_sec02_bp02(resources: List[Dict[str, Any]]) -> Dict[str, Any]
     Check if human users use temporary credentials
     """
     try:
-        iam_users = [
-            r
-            for r in resources
-            if r.get("service") == "iam" and r.get("type") == "user"
-        ]
+        iam_users = [r for r in resources if r.get("service") == "iam" and r.get("type") == "user"]
 
         human_users_temp_creds = 0
         human_users_total = 0

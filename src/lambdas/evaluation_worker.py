@@ -71,9 +71,7 @@ def handler(event, context):
                     account_id=item.get("account_id"),
                 )
             except Exception:
-                logger.exception(
-                    "Validator execution failed for evaluation %s", evaluation_id
-                )
+                logger.exception("Validator execution failed for evaluation %s", evaluation_id)
                 results = []
 
             # persist results into evaluation item
@@ -105,15 +103,11 @@ def handler(event, context):
                 try:
                     evidence_table.put_item(Item=evidence_item)
                 except Exception:
-                    logger.exception(
-                        "Failed to write evidence item for %s", evaluation_id
-                    )
+                    logger.exception("Failed to write evidence item for %s", evaluation_id)
 
             # persist a minimal report metadata record (use pk/sk schema)
             try:
-                reports_table = dynamo.Table(
-                    os.getenv("AUTOWAR_REPORTS_TABLE", "autowar-reports")
-                )
+                reports_table = dynamo.Table(os.getenv("AUTOWAR_REPORTS_TABLE", "autowar-reports"))
                 report_item = {
                     "pk": evaluation_id,
                     "sk": "meta",
@@ -123,9 +117,7 @@ def handler(event, context):
                 }
                 reports_table.put_item(Item=report_item)
             except Exception:
-                logger.exception(
-                    "Failed to write report metadata for %s", evaluation_id
-                )
+                logger.exception("Failed to write report metadata for %s", evaluation_id)
 
             # enqueue report generation job if configured
             try:

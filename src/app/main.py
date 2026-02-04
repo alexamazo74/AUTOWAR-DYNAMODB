@@ -203,9 +203,7 @@ async def evaluate_security_real(request: AWSCredentialsValidationRequest):
                 "high": high,
                 "medium": medium,
                 "score": eval_results["overall_score"],
-                "bps_evaluated": sum(
-                    q["bps_evaluated"] for q in eval_results["questions"]
-                ),
+                "bps_evaluated": sum(q["bps_evaluated"] for q in eval_results["questions"]),
             },
         }
 
@@ -536,9 +534,7 @@ def create_client(client: ClientIn, claims: dict = Depends(require_cognito_auth)
 
 # Evaluations endpoints
 @app.post("/evaluations", status_code=201, response_model=EvaluationOut)
-def api_create_evaluation(
-    evaluation: EvaluationIn, claims: dict = Depends(require_cognito_auth)
-):
+def api_create_evaluation(evaluation: EvaluationIn, claims: dict = Depends(require_cognito_auth)):
     try:
         item = create_evaluation(evaluation)
     except Exception as e:
@@ -606,9 +602,7 @@ def api_create_credentials(payload: CredentialsIn):
                 payload.region,
             )
         except Exception as e:
-            raise HTTPException(
-                status_code=400, detail=f"Credential validation failed: {e}"
-            )
+            raise HTTPException(status_code=400, detail=f"Credential validation failed: {e}")
         secret_arn = None
         if payload.save_secret:
             try:
@@ -620,9 +614,7 @@ def api_create_credentials(payload: CredentialsIn):
                     payload.region,
                 )
             except Exception as e:
-                raise HTTPException(
-                    status_code=500, detail=f"Secrets Manager error: {e}"
-                )
+                raise HTTPException(status_code=500, detail=f"Secrets Manager error: {e}")
         rec = {
             "type": "keys",
             "caller_identity": identity,
@@ -681,9 +673,7 @@ async def evaluate_security_question(payload: dict):
     evaluation_id = payload.get("evaluation_id")
     question_id = payload.get("question_id")
     if not evaluation_id or not question_id:
-        raise HTTPException(
-            status_code=400, detail="evaluation_id and question_id required"
-        )
+        raise HTTPException(status_code=400, detail="evaluation_id and question_id required")
     dynamodb = get_table("autowar-waf-questions")  # Get table directly
     service = SecurityService(dynamodb, "autowar-waf-questions")
     result = await service.evaluate_security_question(evaluation_id, question_id)
@@ -707,18 +697,14 @@ def get_security_evaluation(evaluation_id: str, question_id: str):
 def list_security_evaluations(evaluation_id: str = None):
     """List all security evaluations for an evaluation"""
     if not evaluation_id:
-        raise HTTPException(
-            status_code=400, detail="evaluation_id query parameter required"
-        )
+        raise HTTPException(status_code=400, detail="evaluation_id query parameter required")
     dynamodb = get_table("autowar-waf-questions")
     service = SecurityService(dynamodb, "autowar-waf-questions")
     items = service.list_security_evaluations_for_evaluation(evaluation_id)
     return {"count": len(items), "items": items}
 
 
-@app.get(
-    "/security/risks/{evaluation_id}/{question_id}"
-)  # Temporarily removed auth for testing
+@app.get("/security/risks/{evaluation_id}/{question_id}")  # Temporarily removed auth for testing
 def get_security_risks(evaluation_id: str, question_id: str):
     """Get risk assessment for a security question"""
     try:
@@ -734,19 +720,13 @@ def get_security_risks(evaluation_id: str, question_id: str):
                 "summary": {
                     "total_risks": len(evaluation["risks"]),
                     "critical_risks": len(
-                        [
-                            r
-                            for r in evaluation["risks"]
-                            if r.get("severity") == "critical"
-                        ]
+                        [r for r in evaluation["risks"] if r.get("severity") == "critical"]
                     ),
                     "high_risks": len(
                         [r for r in evaluation["risks"] if r.get("severity") == "high"]
                     ),
                     "average_mitigation_priority": (
-                        sum(
-                            r.get("mitigation_priority", 0) for r in evaluation["risks"]
-                        )
+                        sum(r.get("mitigation_priority", 0) for r in evaluation["risks"])
                         / len(evaluation["risks"])
                         if evaluation["risks"]
                         else 0
@@ -804,13 +784,10 @@ def get_security_risks(evaluation_id: str, question_id: str):
         "risks": mock_risks,
         "summary": {
             "total_risks": len(mock_risks),
-            "critical_risks": len(
-                [r for r in mock_risks if r.get("severity") == "critical"]
-            ),
+            "critical_risks": len([r for r in mock_risks if r.get("severity") == "critical"]),
             "high_risks": len([r for r in mock_risks if r.get("severity") == "high"]),
             "average_mitigation_priority": (
-                sum(r.get("mitigation_priority", 0) for r in mock_risks)
-                / len(mock_risks)
+                sum(r.get("mitigation_priority", 0) for r in mock_risks) / len(mock_risks)
                 if mock_risks
                 else 0
             ),

@@ -456,9 +456,7 @@ SECURITY_PILLAR_STRUCTURE = {
 
 # Total: 11 preguntas, 63 Best Practices
 TOTAL_QUESTIONS = 11
-TOTAL_BEST_PRACTICES = sum(
-    q["best_practices"] for q in SECURITY_PILLAR_STRUCTURE.values()
-)
+TOTAL_BEST_PRACTICES = sum(q["best_practices"] for q in SECURITY_PILLAR_STRUCTURE.values())
 
 print(f"Total Security Pillar Questions: {TOTAL_QUESTIONS}")
 print(f"Total Best Practices: {TOTAL_BEST_PRACTICES}")

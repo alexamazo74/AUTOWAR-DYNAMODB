@@ -40,9 +40,7 @@ def render_report(evaluation: Dict[str, Any]) -> bytes:
             # call external renderer service (POST JSON -> returns bytes)
             if httpx is None:
                 raise RuntimeError("httpx not available in this lambda package")
-            resp = httpx.post(
-                renderer, json={"payload": content, "format": "pdf"}, timeout=30.0
-            )
+            resp = httpx.post(renderer, json={"payload": content, "format": "pdf"}, timeout=30.0)
             resp.raise_for_status()
             return resp.content
         except Exception:
@@ -55,9 +53,7 @@ def render_report(evaluation: Dict[str, Any]) -> bytes:
 
 def handler(event, context):
     table = dynamo.Table(REPORTS_TABLE)
-    eval_table = dynamo.Table(
-        os.getenv("AUTOWAR_EVALUATIONS_TABLE", "autowar-evaluations")
-    )
+    eval_table = dynamo.Table(os.getenv("AUTOWAR_EVALUATIONS_TABLE", "autowar-evaluations"))
     processed = 0
     for record in event.get("Records", []):
         try:
@@ -118,9 +114,7 @@ def handler(event, context):
                     )
             except Exception:
                 logger.exception("Failed to update reports table for %s", evaluation_id)
-                print(
-                    f"report_generator: failed to update reports table for {evaluation_id}"
-                )
+                print(f"report_generator: failed to update reports table for {evaluation_id}")
 
             processed += 1
         except Exception:

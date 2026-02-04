@@ -6,9 +6,7 @@ from .base import ValidatorBase
 class IAMPasswordPolicyValidator(ValidatorBase):
     name = "iam-password-policy"
 
-    def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+    def run(self, name: str = None, region: str = None, account_id: str = None, extra=None):
         iam = boto3.client("iam")
         result = {"name": self.name}
         try:
@@ -33,9 +31,7 @@ class IAMPasswordPolicyValidator(ValidatorBase):
 class RootMFAValidator(ValidatorBase):
     name = "iam-root-mfa"
 
-    def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+    def run(self, name: str = None, region: str = None, account_id: str = None, extra=None):
         iam = boto3.client("iam")
         result = {"name": self.name}
         try:

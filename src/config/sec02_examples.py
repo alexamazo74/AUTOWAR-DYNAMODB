@@ -90,9 +90,7 @@ def get_bp_by_service(service: str) -> list:
                 {
                     "bp": bp_code,
                     "name": bp_data["name"],
-                    "resources_in_service": list(
-                        bp_data.get("resources", {}).get(service, [])
-                    ),
+                    "resources_in_service": list(bp_data.get("resources", {}).get(service, [])),
                 }
             )
 
@@ -113,14 +111,10 @@ def print_service_coverage():
         for bp in bps:
             print(f"  • {bp['bp']}: {bp['name']}")
             if bp["resources_in_service"]:
-                for resource in bp["resources_in_service"][
-                    :3
-                ]:  # Show first 3 resources
+                for resource in bp["resources_in_service"][:3]:  # Show first 3 resources
                     print(f"    - {resource}")
                 if len(bp["resources_in_service"]) > 3:
-                    print(
-                        f"    ... and {len(bp['resources_in_service']) - 3} more resources"
-                    )
+                    print(f"    ... and {len(bp['resources_in_service']) - 3} more resources")
 
 
 def compliance_checklist():
@@ -167,9 +161,7 @@ if __name__ == "__main__":
             print("  services      - Print service coverage")
             print("  checklist     - Generate compliance checklist")
             print("  export        - Export configuration as JSON")
-            print(
-                "  bp:CODE       - Print details for specific BP (e.g., bp:SEC02-BP01)"
-            )
+            print("  bp:CODE       - Print details for specific BP (e.g., bp:SEC02-BP01)")
     else:
         print_all_bps()
         print_service_coverage()

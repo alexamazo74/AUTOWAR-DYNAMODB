@@ -6,9 +6,7 @@ from .base import ValidatorBase
 class CloudTrailLoggingValidator(ValidatorBase):
     name = "cloudtrail-logging"
 
-    def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+    def run(self, name: str = None, region: str = None, account_id: str = None, extra=None):
         ct = boto3.client("cloudtrail", region_name=region)
         result = {"name": self.name}
         try:

@@ -10,16 +10,12 @@ from .models import RemediationPlan, RemediationStep
 class RemediationService:
     """Service for remediation planning and tracking"""
 
-    def __init__(
-        self, dynamodb_table=None, table_name: str = "autowar-remediation-tracking"
-    ):
+    def __init__(self, dynamodb_table=None, table_name: str = "autowar-remediation-tracking"):
         self.dynamodb = dynamodb_table.meta.client if dynamodb_table else None
         self.table_name = table_name
         self.table = dynamodb_table
 
-    def generate_bp_remediation(
-        self, bp_id: str, current_score: float
-    ) -> List[RemediationStep]:
+    def generate_bp_remediation(self, bp_id: str, current_score: float) -> List[RemediationStep]:
         """Generate remediation steps for a specific best practice"""
         steps = []
 
@@ -30,9 +26,7 @@ class RemediationService:
         for step in base_steps:
             # Adjust priority based on score
             if current_score < 30:
-                step.priority = min(
-                    step.priority + 2, 10
-                )  # Increase priority for critical issues
+                step.priority = min(step.priority + 2, 10)  # Increase priority for critical issues
             elif current_score < 50:
                 step.priority = min(step.priority + 1, 10)
 

@@ -74,9 +74,7 @@ def list_scores_for_evaluation(evaluation_id: str, limit: int = 50) -> List[dict
         )
         items = resp.get("Items", [])
     except Exception:
-        resp = table.scan(
-            FilterExpression=Attr("evaluation_id").eq(evaluation_id), Limit=limit
-        )
+        resp = table.scan(FilterExpression=Attr("evaluation_id").eq(evaluation_id), Limit=limit)
         items = resp.get("Items", [])
 
     # normalize totals

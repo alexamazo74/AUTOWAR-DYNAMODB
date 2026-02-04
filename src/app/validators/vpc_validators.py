@@ -11,9 +11,7 @@ class VPCFlowLogsValidator(ValidatorBase):
         ec2 = boto3.client("ec2", region_name=region)
         result = {"name": self.name, "resource": name}
         try:
-            resp = ec2.describe_flow_logs(
-                Filters=[{"Name": "resource-id", "Values": [name]}]
-            )
+            resp = ec2.describe_flow_logs(Filters=[{"Name": "resource-id", "Values": [name]}])
             logs = resp.get("FlowLogs", [])
             if logs:
                 result["status"] = "PASS"

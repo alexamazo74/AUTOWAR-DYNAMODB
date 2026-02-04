@@ -63,9 +63,7 @@ def verify_jwt_token(token: str) -> Dict:
     if not key:
         raise ValueError("Public key not found in JWKS")
     public_pem = _jwk_to_pem(key)
-    issuer = (
-        f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}"
-    )
+    issuer = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}"
     claims = jwt.decode(
         token,
         public_pem,
@@ -95,7 +93,5 @@ def require_cognito_auth(authorization: str | None = Header(None)) -> Dict:
     try:
         claims = verify_jwt_token(token)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}")
     return claims

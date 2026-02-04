@@ -369,9 +369,7 @@ class AWSConnector:
             client = self._get_iam_client()
             logger.info("[AWS-CONN] IAM client created, calling list_users()...")
             response = client.list_users()
-            logger.info(
-                f"[AWS-CONN] list_users() returned {len(response.get('Users', []))} users"
-            )
+            logger.info(f"[AWS-CONN] list_users() returned {len(response.get('Users', []))} users")
             users = []
             for user in response.get("Users", []):
                 logger.info(f"[AWS-CONN] Processing user: {user['UserName']}")
@@ -403,9 +401,7 @@ class AWSConnector:
                 )
 
                 # Get attached policies
-                policies_resp = client.list_attached_user_policies(
-                    UserName=user["UserName"]
-                )
+                policies_resp = client.list_attached_user_policies(UserName=user["UserName"])
                 user_data["policies"] = [
                     {"name": p["PolicyName"], "arn": p["PolicyArn"]}
                     for p in policies_resp.get("AttachedPolicies", [])
@@ -420,9 +416,7 @@ class AWSConnector:
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
             error_msg = e.response.get("Error", {}).get("Message", str(e))
-            logger.error(
-                f"[AWS-CONN] ClientError getting IAM users: {error_code} - {error_msg}"
-            )
+            logger.error(f"[AWS-CONN] ClientError getting IAM users: {error_code} - {error_msg}")
             raise
         except Exception as e:
             logger.error(
@@ -447,9 +441,7 @@ class AWSConnector:
                 }
 
                 # Get attached policies
-                policies_resp = client.list_attached_role_policies(
-                    RoleName=role["RoleName"]
-                )
+                policies_resp = client.list_attached_role_policies(RoleName=role["RoleName"])
                 role_data["policies"] = [
                     {"name": p["PolicyName"], "arn": p["PolicyArn"]}
                     for p in policies_resp.get("AttachedPolicies", [])
@@ -515,9 +507,7 @@ class AWSConnector:
                     "name": trail.get("Name"),
                     "arn": trail.get("TrailARN"),
                     "s3_bucket": trail.get("S3BucketName"),
-                    "include_global_service_events": trail.get(
-                        "IncludeGlobalServiceEvents"
-                    ),
+                    "include_global_service_events": trail.get("IncludeGlobalServiceEvents"),
                     "is_multi_region_trail": trail.get("IsMultiRegionTrail"),
                     "has_custom_event_selectors": trail.get("HasCustomEventSelectors"),
                     "has_organization_trail": trail.get("IsOrganizationTrail"),
@@ -606,9 +596,7 @@ class AWSConnector:
                     "status": detector_resp.get("Status"),
                     "created_at": str(detector_resp.get("CreatedAt", "")),
                     "updated_at": str(detector_resp.get("UpdatedAt", "")),
-                    "finding_publishing_frequency": detector_resp.get(
-                        "FindingPublishingFrequency"
-                    ),
+                    "finding_publishing_frequency": detector_resp.get("FindingPublishingFrequency"),
                     "findings": 0,
                 }
 
@@ -639,9 +627,7 @@ class AWSConnector:
                     "key_id": key_id,
                     "arn": key_meta["KeyMetadata"].get("Arn"),
                     "description": key_meta["KeyMetadata"].get("Description"),
-                    "creation_date": str(
-                        key_meta["KeyMetadata"].get("CreationDate", "")
-                    ),
+                    "creation_date": str(key_meta["KeyMetadata"].get("CreationDate", "")),
                     "enabled": key_meta["KeyMetadata"].get("Enabled"),
                     "key_state": key_meta["KeyMetadata"].get("KeyState"),
                     "key_usage": key_meta["KeyMetadata"].get("KeyUsage"),
@@ -680,9 +666,9 @@ class AWSConnector:
                     if "ServerSideEncryptionConfiguration" in encryption:
                         bucket_data["encryption_enabled"] = True
                         bucket_data["server_side_encryption"] = {
-                            "rules": encryption[
-                                "ServerSideEncryptionConfiguration"
-                            ].get("Rules", [])
+                            "rules": encryption["ServerSideEncryptionConfiguration"].get(
+                                "Rules", []
+                            )
                         }
                 except ClientError:
                     pass
@@ -690,9 +676,7 @@ class AWSConnector:
                 # Check versioning
                 try:
                     versioning = client.get_bucket_versioning(Bucket=bucket_name)
-                    bucket_data["versioning_enabled"] = (
-                        versioning.get("Status") == "Enabled"
-                    )
+                    bucket_data["versioning_enabled"] = versioning.get("Status") == "Enabled"
                 except ClientError:
                     pass
 
@@ -779,9 +763,7 @@ class AWSConnector:
                         if "Ebs" in bdm:
                             volume_id = bdm["Ebs"].get("VolumeId")
                             try:
-                                vol_resp = client.describe_volumes(
-                                    VolumeIds=[volume_id]
-                                )
+                                vol_resp = client.describe_volumes(VolumeIds=[volume_id])
                                 if vol_resp.get("Volumes"):
                                     volume = vol_resp["Volumes"][0]
                                     instance_data["encrypted_volumes"].append(
@@ -900,8 +882,7 @@ class AWSConnector:
                     "backup_retention_period": db.get("BackupRetentionPeriod", 0),
                     "multi_az": db.get("MultiAZ", False),
                     "vpc_security_groups": [
-                        sg["VpcSecurityGroupId"]
-                        for sg in db.get("VpcSecurityGroups", [])
+                        sg["VpcSecurityGroupId"] for sg in db.get("VpcSecurityGroups", [])
                     ],
                     "region": region,
                 }
@@ -929,9 +910,7 @@ class AWSConnector:
                     "role": func.get("Role"),
                     "handler": func.get("Handler"),
                     "vpc_config": func.get("VpcConfig"),
-                    "environment_variables": bool(
-                        func.get("Environment", {}).get("Variables")
-                    ),
+                    "environment_variables": bool(func.get("Environment", {}).get("Variables")),
                     "kms_key_arn": func.get("KMSKeyArn"),
                     "region": region,
                 }
@@ -1037,9 +1016,7 @@ class AWSConnector:
                     "subscriptions_confirmed": attrs.get("Attributes", {}).get(
                         "SubscriptionsConfirmed"
                     ),
-                    "kms_master_key_id": attrs.get("Attributes", {}).get(
-                        "KmsMasterKeyId"
-                    ),
+                    "kms_master_key_id": attrs.get("Attributes", {}).get("KmsMasterKeyId"),
                     "region": region,
                 }
                 topics.append(topic_data)

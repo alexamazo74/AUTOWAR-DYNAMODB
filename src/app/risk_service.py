@@ -63,9 +63,7 @@ class RiskService:
 
         return risks
 
-    def get_industry_benchmarks(
-        self, industry: str, pillar: str
-    ) -> List[IndustryBenchmark]:
+    def get_industry_benchmarks(self, industry: str, pillar: str) -> List[IndustryBenchmark]:
         """Get industry-specific benchmarks"""
         # Mock benchmarks for now
         return [
@@ -127,24 +125,16 @@ class RiskService:
 
         if client_profile:
             # Get industry risk multipliers
-            multipliers = self.client_service.get_industry_risk_multipliers(
-                client_profile.industry
-            )
+            multipliers = self.client_service.get_industry_risk_multipliers(client_profile.industry)
 
             # Adjust impact based on BP type and industry
             if bp_id.startswith("SEC01"):  # Identity and access
-                base_impact = (
-                    "high" if multipliers["security_multiplier"] > 1.3 else "medium"
-                )
+                base_impact = "high" if multipliers["security_multiplier"] > 1.3 else "medium"
             elif bp_id.startswith("SEC02"):  # Monitoring
-                base_impact = (
-                    "high" if multipliers["compliance_multiplier"] > 1.5 else "medium"
-                )
+                base_impact = "high" if multipliers["compliance_multiplier"] > 1.5 else "medium"
             elif bp_id.startswith("SEC03"):  # Data protection
                 base_impact = (
-                    "high"
-                    if multipliers["data_protection_multiplier"] > 1.5
-                    else "medium"
+                    "high" if multipliers["data_protection_multiplier"] > 1.5 else "medium"
                 )
 
             # Consider risk tolerance
@@ -163,9 +153,7 @@ class RiskService:
         else:
             return "medium"
 
-    def _calculate_mitigation_priority(
-        self, severity: str, probability: str, impact: str
-    ) -> int:
+    def _calculate_mitigation_priority(self, severity: str, probability: str, impact: str) -> int:
         """Calculate mitigation priority (1-10)"""
         severity_score = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         probability_score = {"high": 3, "medium": 2, "low": 1}

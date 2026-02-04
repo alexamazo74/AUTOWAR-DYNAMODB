@@ -96,9 +96,7 @@ def store_secret_for_keys(
     except ClientError as e:
         # if already exists, put a new value
         if e.response.get("Error", {}).get("Code") == "ResourceExistsException":
-            resp = sm.put_secret_value(
-                SecretId=secret_name, SecretString=json.dumps(secret_value)
-            )
+            resp = sm.put_secret_value(SecretId=secret_name, SecretString=json.dumps(secret_value))
             # ARN can be retrieved via describe
             desc = sm.describe_secret(SecretId=secret_name)
             return desc["ARN"]
@@ -120,9 +118,7 @@ def validate_keys(
     return sts.get_caller_identity()
 
 
-def register_credential_record(
-    client_id: str, record: Dict[str, Any]
-) -> Dict[str, Any]:
+def register_credential_record(client_id: str, record: Dict[str, Any]) -> Dict[str, Any]:
     table = get_table("autowar-aws-credentials")
     item_id = str(uuid.uuid4())
     # Attach lifecycle metadata fields if not present
@@ -196,9 +192,7 @@ def rotate_secret_placeholder(item: Dict[str, Any]) -> Dict[str, Any]:
     return {"rotated": False, "reason": "no_secret_arn"}
 
 
-def rotate_static_secret(
-    secret_arn: str, item_id: Optional[str] = None
-) -> Dict[str, Any]:
+def rotate_static_secret(secret_arn: str, item_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Rotate a Secrets Manager secret that contains credentials for an IAM user when possible.
     Expected secret JSON structure: {"iam_user": "username", "access_key_id": "...", "secret_access_key": "..."}
@@ -255,9 +249,7 @@ def rotate_static_secret(
             keys_sorted = sorted(keys, key=lambda k: k["CreateDate"])
             for old in keys_sorted[:-2]:
                 try:
-                    iam.delete_access_key(
-                        UserName=iam_user, AccessKeyId=old["AccessKeyId"]
-                    )
+                    iam.delete_access_key(UserName=iam_user, AccessKeyId=old["AccessKeyId"])
                 except Exception:
                     pass
     except Exception:

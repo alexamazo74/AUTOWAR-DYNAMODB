@@ -6,15 +6,11 @@ from .base import ValidatorBase
 class ConfigRecorderValidator(ValidatorBase):
     name = "config-recorder"
 
-    def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+    def run(self, name: str = None, region: str = None, account_id: str = None, extra=None):
         cfg = boto3.client("config", region_name=region)
         result = {"name": self.name}
         try:
-            recs = cfg.describe_configuration_recorders().get(
-                "ConfigurationRecorders", []
-            )
+            recs = cfg.describe_configuration_recorders().get("ConfigurationRecorders", [])
             if not recs:
                 result["status"] = "FAIL"
                 result["details"] = {"recorders": 0}

@@ -467,19 +467,11 @@ SEC02_BP_SERVICES = {
 # Summary statistics
 SEC02_TOTAL_BPS = len(SEC02_BP_SERVICES)
 SEC02_TOTAL_SERVICES = len(
-    set(
-        service
-        for bp_data in SEC02_BP_SERVICES.values()
-        for service in bp_data["services"]
-    )
+    set(service for bp_data in SEC02_BP_SERVICES.values() for service in bp_data["services"])
 )
 
 SEC02_SERVICE_LIST = sorted(
-    set(
-        service
-        for bp_data in SEC02_BP_SERVICES.values()
-        for service in bp_data["services"]
-    )
+    set(service for bp_data in SEC02_BP_SERVICES.values() for service in bp_data["services"])
 )
 
 

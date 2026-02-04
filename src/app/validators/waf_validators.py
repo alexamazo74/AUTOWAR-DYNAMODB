@@ -6,9 +6,7 @@ from .base import ValidatorBase
 class WAFWebACLPresenceValidator(ValidatorBase):
     name = "waf-web-acl"
 
-    def run(
-        self, name: str = None, region: str = None, account_id: str = None, extra=None
-    ):
+    def run(self, name: str = None, region: str = None, account_id: str = None, extra=None):
         # name may be resource or webacl name; we check if there is any web ACL configured
         waf = boto3.client("wafv2", region_name=region)
         result = {"name": self.name}

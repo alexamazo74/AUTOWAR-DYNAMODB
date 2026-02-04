@@ -54,21 +54,15 @@ class SecurityService:
             resources = await self._get_security_resources(question_id)
 
             # Run validators for this question
-            validation_results = await self._run_security_validators(
-                question_id, resources
-            )
+            validation_results = await self._run_security_validators(question_id, resources)
 
             # Calculate scoring
             scoring = self._calculate_security_scoring(validation_results)
 
             # Calculate risks and remediation
-            risks = self.risk_service.calculate_question_risks(
+            risks = self.risk_service.calculate_question_risks(question_id, validation_results)
+            remediation_plan = self.remediation_service.generate_question_remediation_plan(
                 question_id, validation_results
-            )
-            remediation_plan = (
-                self.remediation_service.generate_question_remediation_plan(
-                    question_id, validation_results
-                )
             )
 
             # Store evaluation
@@ -145,9 +139,7 @@ class SecurityService:
         resources = []
         for service in services:
             try:
-                service_resources = await self.aws_connector.get_resources_by_service(
-                    service
-                )
+                service_resources = await self.aws_connector.get_resources_by_service(service)
                 resources.extend(service_resources)
             except Exception as e:
                 print(f"Error getting {service} resources: {e}")
@@ -183,9 +175,7 @@ class SecurityService:
 
         return results
 
-    def _calculate_security_scoring(
-        self, validation_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_security_scoring(self, validation_results: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate overall scoring for security question"""
         total_score = 0
         total_bps = len(validation_results)
@@ -219,15 +209,11 @@ class SecurityService:
             print(f"Error getting security evaluation: {e}")
             return None
 
-    def list_security_evaluations_for_evaluation(
-        self, evaluation_id: str
-    ) -> List[Dict[str, Any]]:
+    def list_security_evaluations_for_evaluation(self, evaluation_id: str) -> List[Dict[str, Any]]:
         """List all security evaluations for an evaluation"""
         try:
             # Use scan with filter since GSI might not be available
-            response = self.table.scan(
-                FilterExpression=Attr("evaluation_id").eq(evaluation_id)
-            )
+            response = self.table.scan(FilterExpression=Attr("evaluation_id").eq(evaluation_id))
             return response.get("Items", [])
         except ClientError as e:
             print(f"Error listing security evaluations: {e}")
