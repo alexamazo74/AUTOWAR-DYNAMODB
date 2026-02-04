@@ -135,6 +135,26 @@ SEC03_CONFIG = {
                     "Layer permissions",
                 ],
             },
+            {
+                "name": "Amazon EKS",
+                "resources": [
+                    "RBAC roles and bindings",
+                    "Service accounts with IAM roles (IRSA)",
+                    "Cluster authentication modes",
+                    "Namespace access boundaries",
+                    "Pod security admission controls",
+                ],
+            },
+            {
+                "name": "Amazon API Gateway",
+                "resources": [
+                    "Resource policies",
+                    "IAM authorization",
+                    "Cognito/Lambda authorizers",
+                    "Stage-level access controls",
+                    "Usage plans and API keys",
+                ],
+            },
         ],
     },
     "SEC03-BP03": {
@@ -443,6 +463,26 @@ SEC03_CONFIG = {
                     "Resource policies",
                     "CORS configurations",
                     "Authentication methods",
+                ],
+            },
+            {
+                "name": "Amazon CloudFront",
+                "resources": [
+                    "Public distribution analysis",
+                    "Origin access controls",
+                    "Geo restrictions",
+                    "Signed URLs and cookies",
+                    "Public vs private distributions",
+                ],
+            },
+            {
+                "name": "Elastic Load Balancing (ALB/NLB)",
+                "resources": [
+                    "Internet-facing vs internal load balancers",
+                    "Listener exposure and protocols",
+                    "Target group accessibility",
+                    "Security group exposure",
+                    "Public endpoint analysis",
                 ],
             },
         ],

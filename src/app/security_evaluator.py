@@ -96,6 +96,9 @@ class SecurityPillarEvaluator:
                 else:
                     finding[field] = "N/D"
 
+        if finding.get("status") == "PENDING_REVIEW":
+            finding["remediation"] = "Requiere verificación manual"
+
         return finding
 
     def _normalize_findings_list(
@@ -130,6 +133,303 @@ class SecurityPillarEvaluator:
 
         score = (total_points / max_points) * 100 if max_points > 0 else 0
         return round(score, 2)
+
+    def get_security_metrics(self) -> Dict[str, Any]:
+        """
+        Calculate security metrics and KPIs across all evaluated sections.
+        
+        Returns:
+            {
+                "detection_metrics": {...},
+                "network_security_metrics": {...},
+                "compute_security_metrics": {...},
+                "operational_efficiency_metrics": {...},
+                "timestamp": "ISO timestamp"
+            }
+        """
+        from datetime import datetime
+        
+        logger.info("[METRICS] Calculating security metrics and KPIs...")
+        
+        try:
+            # Evaluate all sections to get current state
+            all_results = self.evaluate_all()
+            questions = all_results.get("questions", [])
+            
+            # Initialize metrics
+            metrics = {
+                "detection_metrics": self._calculate_detection_metrics(questions),
+                "network_security_metrics": self._calculate_network_metrics(questions),
+                "compute_security_metrics": self._calculate_compute_metrics(questions),
+                "operational_efficiency_metrics": self._calculate_operational_metrics(questions),
+                "overall_metrics": {
+                    "overall_score": all_results.get("overall_score", 0),
+                    "total_findings": all_results.get("total_findings", 0),
+                    "compliant_count": sum(
+                        len([f for f in q.get("findings", []) if f.get("status") == "COMPLIANT"])
+                        for q in questions
+                    ),
+                    "non_compliant_count": sum(
+                        len([f for f in q.get("findings", []) if f.get("status") == "NON_COMPLIANT"])
+                        for q in questions
+                    ),
+                    "pending_count": sum(
+                        len([f for f in q.get("findings", []) if f.get("status") == "PENDING_REVIEW"])
+                        for q in questions
+                    ),
+                },
+                "timestamp": datetime.now().isoformat(),
+            }
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"[METRICS] Error calculating metrics: {str(e)}", exc_info=True)
+            return {
+                "error": f"Error calculating metrics: {str(e)[:100]}",
+                "timestamp": datetime.now().isoformat(),
+            }
+
+    def _calculate_detection_metrics(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate detection-related metrics (SEC04)"""
+        # Find SEC04 findings
+        sec04 = next((q for q in questions if q.get("question_id") == "SEC04"), {})
+        findings = sec04.get("findings", [])
+        
+        compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
+        non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
+        
+        # Calculate MTTD (simulated - would require historical data)
+        # Calculate false positive rate (simulated - would require historical data)
+        
+        return {
+            "coverage_percentage": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "detection_services_enabled": compliant,
+            "detection_services_required": compliant + non_compliant,
+            "mean_time_to_detection_mttd": "N/D (requires historical data)",
+            "false_positive_rate": "N/D (requires historical data)",
+            "alert_volume_trends": "N/D (requires historical data)",
+        }
+
+    def _calculate_network_metrics(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate network security metrics (SEC05)"""
+        sec05 = next((q for q in questions if q.get("question_id") == "SEC05"), {})
+        findings = sec05.get("findings", [])
+        
+        compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
+        non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
+        
+        return {
+            "network_segmentation_compliance": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "traffic_flow_controls_enabled": compliant,
+            "inspection_systems_active": "Evaluate findings for specific counts",
+            "blocked_connection_attempts": "N/D (requires flow log analysis)",
+            "ddos_mitigation_effectiveness": "N/D (requires attack data)",
+            "network_segmentation_score": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+        }
+
+    def _calculate_compute_metrics(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate compute security metrics (SEC06)"""
+        sec06 = next((q for q in questions if q.get("question_id") == "SEC06"), {})
+        findings = sec06.get("findings", [])
+        
+        compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
+        non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
+        
+        return {
+            "vulnerability_remediation_rate": "N/D (requires time-series data)",
+            "patch_compliance_rate": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "image_hardening_compliance": compliant,
+            "automated_response_success_rate": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "manual_access_reduction": "Evaluate Session Manager and Run Command usage",
+            "code_signing_compliance": "Evaluate AWS Signer and Lambda signing policies",
+        }
+
+    def _calculate_operational_metrics(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate operational efficiency metrics"""
+        all_findings = []
+        for q in questions:
+            all_findings.extend(q.get("findings", []))
+        
+        compliant = len([f for f in all_findings if f.get("status") == "COMPLIANT"])
+        non_compliant = len([f for f in all_findings if f.get("status") == "NON_COMPLIANT"])
+        
+        total_bps = compliant + non_compliant
+        
+        return {
+            "manual_intervention_reduction": "Evaluate automation functions count",
+            "automation_success_rate": round((compliant / max(total_bps, 1)) * 100, 2),
+            "mean_time_to_remediation_mttr": "N/D (requires incident ticket data)",
+            "cost_per_security_event": "N/D (requires cost analysis)",
+            "overall_automation_coverage": round((compliant / max(total_bps, 1)) * 100, 2),
+            "findings_resolution_rate": "N/D (requires trending data)",
+        }
+
+    def get_security_kpis(self) -> Dict[str, Any]:
+        """
+        Get Key Performance Indicators for security posture.
+        
+        Returns:
+            {
+                "critical_findings": {...},
+                "compliance_score": {...},
+                "risk_trend": {...},
+                "remediation_tracking": {...}
+            }
+        """
+        from datetime import datetime
+        
+        logger.info("[KPIs] Calculating security KPIs...")
+        
+        try:
+            all_results = self.evaluate_all()
+            questions = all_results.get("questions", [])
+            
+            all_findings = []
+            for q in questions:
+                all_findings.extend(q.get("findings", []))
+            
+            # Count findings by severity and status
+            critical_findings = [
+                f for f in all_findings 
+                if f.get("severity") == "CRITICAL" and f.get("status") == "NON_COMPLIANT"
+            ]
+            high_findings = [
+                f for f in all_findings 
+                if f.get("severity") == "HIGH" and f.get("status") == "NON_COMPLIANT"
+            ]
+            
+            compliant_bps = len([f for f in all_findings if f.get("status") == "COMPLIANT"])
+            non_compliant_bps = len([f for f in all_findings if f.get("status") == "NON_COMPLIANT"])
+            
+            kpis = {
+                "critical_findings": {
+                    "count": len(critical_findings),
+                    "percentage": round(
+                        (len(critical_findings) / max(len(all_findings), 1)) * 100, 2
+                    ),
+                    "trend": "Requires historical data for trend analysis",
+                    "examples": [
+                        {
+                            "bp": f.get("bp"),
+                            "finding": f.get("finding", "")[:100],
+                            "risk": f.get("risk", "")[:100],
+                        }
+                        for f in critical_findings[:5]
+                    ],
+                },
+                "high_findings": {
+                    "count": len(high_findings),
+                    "percentage": round(
+                        (len(high_findings) / max(len(all_findings), 1)) * 100, 2
+                    ),
+                },
+                "compliance_score": {
+                    "overall": round(
+                        (compliant_bps / max(compliant_bps + non_compliant_bps, 1)) * 100, 2
+                    ),
+                    "by_section": self._get_section_compliance_scores(questions),
+                    "trending": "Requires historical data",
+                },
+                "risk_indicators": {
+                    "high_risk_bps": len([f for f in all_findings if f.get("severity") in ["CRITICAL", "HIGH"] and f.get("status") == "NON_COMPLIANT"]),
+                    "unaddressed_findings": len([f for f in all_findings if f.get("status") == "PENDING_REVIEW"]),
+                    "remediation_priority": self._determine_remediation_priority(all_findings),
+                },
+                "recommendations": self._generate_security_recommendations(all_findings),
+                "timestamp": datetime.now().isoformat(),
+            }
+            
+            return kpis
+            
+        except Exception as e:
+            logger.error(f"[KPIs] Error calculating KPIs: {str(e)}", exc_info=True)
+            return {
+                "error": f"Error calculating KPIs: {str(e)[:100]}",
+                "timestamp": datetime.now().isoformat(),
+            }
+
+    def _get_section_compliance_scores(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Get compliance scores for each section"""
+        scores = {}
+        for q in questions:
+            question_id = q.get("question_id", "UNKNOWN")
+            findings = q.get("findings", [])
+            
+            compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
+            non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
+            
+            total = compliant + non_compliant
+            score = round((compliant / total * 100), 2) if total > 0 else 100
+            
+            scores[question_id] = {
+                "score": score,
+                "compliant_bps": compliant,
+                "non_compliant_bps": non_compliant,
+            }
+        
+        return scores
+
+    def _determine_remediation_priority(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Determine which BPs should be remediated first"""
+        # Sort by severity and compliance status
+        critical_non_compliant = [
+            f for f in findings 
+            if f.get("severity") == "CRITICAL" and f.get("status") == "NON_COMPLIANT"
+        ]
+        high_non_compliant = [
+            f for f in findings 
+            if f.get("severity") == "HIGH" and f.get("status") == "NON_COMPLIANT"
+        ]
+        
+        priority_list = []
+        for f in critical_non_compliant[:5]:
+            priority_list.append({
+                "bp": f.get("bp"),
+                "priority": "CRITICAL",
+                "remediation": f.get("remediation", "N/D"),
+            })
+        
+        for f in high_non_compliant[:5]:
+            priority_list.append({
+                "bp": f.get("bp"),
+                "priority": "HIGH",
+                "remediation": f.get("remediation", "N/D"),
+            })
+        
+        return priority_list
+
+    def _generate_security_recommendations(self, findings: List[Dict[str, Any]]) -> List[str]:
+        """Generate actionable security recommendations"""
+        recommendations = []
+        
+        # Check for logging gaps
+        logging_bps = [f for f in findings if "log" in f.get("bp", "").lower()]
+        if logging_bps and any(f.get("status") == "NON_COMPLIANT" for f in logging_bps):
+            recommendations.append("Priority: Enable comprehensive logging across CloudTrail, CloudWatch, and VPC Flow Logs")
+        
+        # Check for encryption issues
+        encryption_bps = [f for f in findings if "encrypt" in f.get("finding", "").lower()]
+        if encryption_bps:
+            recommendations.append("Ensure all data in transit and at rest is encrypted with KMS")
+        
+        # Check for access control issues
+        access_bps = [f for f in findings if "access" in f.get("bp", "").lower() or "permission" in f.get("bp", "").lower()]
+        if access_bps and any(f.get("status") == "NON_COMPLIANT" for f in access_bps):
+            recommendations.append("Review and implement least privilege access controls across all resources")
+        
+        # Check for automation
+        automation_bps = [f for f in findings if "automat" in f.get("finding", "").lower()]
+        if not automation_bps:
+            recommendations.append("Implement automated security responses using Lambda, EventBridge, and Systems Manager")
+        
+        # Check for monitoring
+        monitoring_bps = [f for f in findings if "monitor" in f.get("finding", "").lower() or "alert" in f.get("finding", "").lower()]
+        if not monitoring_bps:
+            recommendations.append("Configure CloudWatch alarms and Security Hub custom insights for threat detection")
+        
+        return recommendations[:10]  # Return top 10 recommendations
+
 
     def evaluate_sec01(self) -> Dict[str, Any]:
         """SEC01: ¿Cómo opera usted su carga de trabajo de forma segura? (8 BPs)
@@ -667,8 +967,8 @@ class SecurityPillarEvaluator:
                 )
             )
 
-        # Calculate score based on compliant BPs (pending/N/D count as 0)
-        score = self._calculate_section_score(total_bps, compliant_count)
+        # Calculate score based on findings (PENDING_REVIEW excluded)
+        score = self._calculate_score_from_findings(findings)
 
         return {
             "question_id": "SEC01",
@@ -715,6 +1015,47 @@ class SecurityPillarEvaluator:
                 for u in users
                 if not u.get("mfa_enabled", False) and len(u.get("access_keys", [])) > 0
             ]
+            apis_total = 0
+            apis_with_auth = 0
+            api_auth_status = "N/D"
+
+            # Check API Gateway authentication methods (REST + HTTP APIs)
+            try:
+                rest_apis = self.connector.client.apigateway.get_rest_apis()
+                for api in rest_apis.get("items", []):
+                    apis_total += 1
+                    try:
+                        auths = self.connector.client.apigateway.get_authorizers(
+                            restApiId=api.get("id")
+                        )
+                        if len(auths.get("items", [])) > 0:
+                            apis_with_auth += 1
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+            try:
+                http_apis = self.connector.client.apigatewayv2.get_apis()
+                for api in http_apis.get("Items", []):
+                    apis_total += 1
+                    try:
+                        auths = self.connector.client.apigatewayv2.get_authorizers(
+                            ApiId=api.get("ApiId")
+                        )
+                        if len(auths.get("Items", [])) > 0:
+                            apis_with_auth += 1
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+            if apis_total > 0:
+                api_auth_status = f"API Gateways with authorizers: {apis_with_auth}/{apis_total}"
+            else:
+                api_auth_status = "No API Gateways found"
+
+            apis_without_auth = apis_total > 0 and apis_with_auth == 0
             if users_without_mfa:
                 score -= 20
                 findings.append(
@@ -725,9 +1066,20 @@ class SecurityPillarEvaluator:
                         "severity": "CRITICAL",
                         "risk": "Compromised credentials can lead to full account access",
                         "remediation": "Enforce MFA for all users with console or API access",
-                        "evidence": ", ".join(
-                            [u["user_name"] for u in users_without_mfa[:5]]
-                        ),
+                        "evidence": f"{', '.join([u['user_name'] for u in users_without_mfa[:5]])} | {api_auth_status}",
+                    }
+                )
+            elif apis_without_auth:
+                score -= 10
+                findings.append(
+                    {
+                        "bp": "SEC02-BP01",
+                        "status": "NON_COMPLIANT",
+                        "finding": "API Gateway authentication not configured",
+                        "severity": "HIGH",
+                        "risk": "Unauthenticated APIs can be invoked by unauthorized actors",
+                        "remediation": "Configure IAM/Cognito/Lambda authorizers or resource policies for all APIs",
+                        "evidence": api_auth_status,
                     }
                 )
             else:
@@ -739,7 +1091,7 @@ class SecurityPillarEvaluator:
                         "severity": "NONE",
                         "risk": "N/D",
                         "remediation": "N/D",
-                        "evidence": f"{len(users)} users evaluated",
+                        "evidence": f"{len(users)} users evaluated | {api_auth_status}",
                     }
                 )
 
@@ -869,31 +1221,50 @@ class SecurityPillarEvaluator:
                     evidence_reason,
                 )
             )
-        elif len(users) > 10:
-            score -= 10
-            findings.append(
-                {
-                    "bp": "SEC02-BP04",
-                    "status": "NON_COMPLIANT",
-                    "finding": f"{len(users)} IAM users - consider centralized identity provider",
-                    "severity": "MEDIUM",
-                    "risk": "Many IAM users indicate lack of identity federation",
-                    "remediation": "Use AWS IAM Identity Center (SSO) or federate with corporate identity provider",
-                    "evidence": f"{len(users)} native IAM users instead of federated identities",
-                }
-            )
         else:
-            findings.append(
-                {
-                    "bp": "SEC02-BP04",
-                    "status": "COMPLIANT",
-                    "finding": f"Limited IAM users ({len(users)}) - likely using identity federation",
-                    "severity": "NONE",
-                    "risk": "N/D",
-                    "remediation": "N/D",
-                    "evidence": f"{len(users)} IAM users - acceptable for federated setup",
-                }
-            )
+            client_vpn_total = 0
+            client_vpn_federated = 0
+            client_vpn_auth_status = "No Client VPN endpoints found"
+            try:
+                cvpn = self.connector.client.ec2.describe_client_vpn_endpoints()
+                endpoints = cvpn.get("ClientVpnEndpoints", [])
+                client_vpn_total = len(endpoints)
+                for ep in endpoints:
+                    for auth in ep.get("AuthenticationOptions", []):
+                        if auth.get("Type") in ["directory-service-authentication", "federated-authentication"]:
+                            client_vpn_federated += 1
+                            break
+                if client_vpn_total > 0:
+                    client_vpn_auth_status = f"Client VPN federated auth: {client_vpn_federated}/{client_vpn_total}"
+            except Exception:
+                client_vpn_auth_status = "Unable to verify Client VPN authentication"
+
+            client_vpn_issue = client_vpn_total > 0 and client_vpn_federated == 0
+            if len(users) > 10 or client_vpn_issue:
+                score -= 10
+                findings.append(
+                    {
+                        "bp": "SEC02-BP04",
+                        "status": "NON_COMPLIANT",
+                        "finding": "Centralized identity provider not fully implemented",
+                        "severity": "MEDIUM",
+                        "risk": "Many IAM users or VPN auth without federation indicate weak centralized identity",
+                        "remediation": "Use AWS IAM Identity Center (SSO) or federate with corporate identity provider; configure Client VPN with federated/directory authentication",
+                        "evidence": f"IAM users: {len(users)} | {client_vpn_auth_status}",
+                    }
+                )
+            else:
+                findings.append(
+                    {
+                        "bp": "SEC02-BP04",
+                        "status": "COMPLIANT",
+                        "finding": f"Centralized identity provider likely in place",
+                        "severity": "NONE",
+                        "risk": "N/D",
+                        "remediation": "N/D",
+                        "evidence": f"IAM users: {len(users)} | {client_vpn_auth_status}",
+                    }
+                )
 
         # SEC02-BP05: Auditar y rotar credenciales periódicamente
         if users_error:
@@ -1105,6 +1476,39 @@ class SecurityPillarEvaluator:
                     for p in u.get("policies", [])
                 )
             ]
+            eks_clusters = 0
+            apis_with_policies = 0
+            apis_checked = 0
+            try:
+                eks_clusters = len(
+                    self.connector.client.eks.list_clusters().get("clusters", [])
+                )
+            except Exception:
+                eks_clusters = 0
+
+            try:
+                rest_apis = self.connector.client.apigateway.get_rest_apis()
+                for api in rest_apis.get("items", []):
+                    apis_checked += 1
+                    if api.get("policy"):
+                        apis_with_policies += 1
+            except Exception:
+                pass
+
+            try:
+                http_apis = self.connector.client.apigatewayv2.get_apis()
+                for api in http_apis.get("Items", []):
+                    apis_checked += 1
+                    if api.get("ApiEndpoint") and api.get("CorsConfiguration"):
+                        apis_with_policies += 1
+            except Exception:
+                pass
+
+            api_policy_status = (
+                f"API policies/CORS: {apis_with_policies}/{apis_checked}"
+                if apis_checked > 0
+                else "No API Gateways found"
+            )
             if users_with_admin:
                 score -= 20
                 findings.append(
@@ -1115,7 +1519,7 @@ class SecurityPillarEvaluator:
                         "severity": "CRITICAL",
                         "risk": "Overly broad permissions increase blast radius of compromised credentials",
                         "remediation": "Implement least privilege: use specific resource ARNs and actions",
-                        "evidence": f"{len(users_with_admin)} users with admin or wildcard policies detected",
+                        "evidence": f"{len(users_with_admin)} users with admin or wildcard policies detected | EKS clusters: {eks_clusters} | {api_policy_status}",
                     }
                 )
             else:
@@ -1127,7 +1531,7 @@ class SecurityPillarEvaluator:
                         "severity": "NONE",
                         "risk": "N/D",
                         "remediation": "N/D",
-                        "evidence": f"All {len(users)} users follow least privilege access controls",
+                        "evidence": f"All {len(users)} users follow least privilege access controls | EKS clusters: {eks_clusters} | {api_policy_status}",
                     }
                 )
 
@@ -1296,6 +1700,71 @@ class SecurityPillarEvaluator:
             if r.get("trust_policy") and "AWS" in r.get("trust_policy", "")
         ]
 
+        public_ec2_instances = 0
+        public_rds_instances = 0
+        public_albs = 0
+        public_apis = 0
+        cloudfront_distributions = 0
+
+        try:
+            ec2_instances = self.connector.client.ec2.describe_instances(
+                Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
+            )
+            public_ec2_instances = sum(
+                1
+                for r in ec2_instances.get("Reservations", [])
+                for i in r.get("Instances", [])
+                if i.get("PublicIpAddress")
+            )
+        except Exception:
+            public_ec2_instances = 0
+
+        try:
+            rds_instances = self.connector.client.rds.describe_db_instances()
+            public_rds_instances = sum(
+                1
+                for db in rds_instances.get("DBInstances", [])
+                if db.get("PubliclyAccessible")
+            )
+        except Exception:
+            public_rds_instances = 0
+
+        try:
+            elbv2 = self.connector.client.elbv2.describe_load_balancers()
+            public_albs = sum(
+                1
+                for lb in elbv2.get("LoadBalancers", [])
+                if lb.get("Scheme") == "internet-facing"
+            )
+        except Exception:
+            public_albs = 0
+
+        try:
+            rest_apis = self.connector.client.apigateway.get_rest_apis()
+            public_apis += len(rest_apis.get("items", []))
+        except Exception:
+            pass
+
+        try:
+            http_apis = self.connector.client.apigatewayv2.get_apis()
+            public_apis += len(http_apis.get("Items", []))
+        except Exception:
+            pass
+
+        try:
+            cfd = self.connector.client.cloudfront.list_distributions()
+            cloudfront_distributions = len(
+                cfd.get("DistributionList", {}).get("Items", [])
+            )
+        except Exception:
+            cloudfront_distributions = 0
+
+        public_access_summary = (
+            f"Public EC2: {public_ec2_instances} | Public RDS: {public_rds_instances} | "
+            f"Internet-facing ALB/NLB: {public_albs} | API Gateways: {public_apis} | "
+            f"CloudFront distributions: {cloudfront_distributions}"
+        )
+
         if cross_account_roles:
             external_id_count = sum(
                 1
@@ -1311,7 +1780,7 @@ class SecurityPillarEvaluator:
                         "severity": "NONE",
                         "risk": "N/D",
                         "remediation": "N/D",
-                        "evidence": f"All {len(cross_account_roles)} cross-account roles use External IDs",
+                        "evidence": f"All {len(cross_account_roles)} cross-account roles use External IDs | {public_access_summary}",
                     }
                 )
             else:
@@ -1324,7 +1793,7 @@ class SecurityPillarEvaluator:
                         "severity": "CRITICAL",
                         "risk": "Cross-account access without External IDs allows account takeover",
                         "remediation": "Add External IDs to all cross-account trust relationships",
-                        "evidence": f"{len(cross_account_roles)} cross-account roles found, only {external_id_count} use External IDs",
+                        "evidence": f"{len(cross_account_roles)} cross-account roles found, only {external_id_count} use External IDs | {public_access_summary}",
                     }
                 )
         else:
@@ -1336,7 +1805,7 @@ class SecurityPillarEvaluator:
                     "severity": "NONE",
                     "risk": "N/D",
                     "remediation": "N/D",
-                    "evidence": f"No cross-account access roles found among {len(roles)} total roles",
+                        "evidence": f"No cross-account access roles found among {len(roles)} total roles | {public_access_summary}",
                 }
             )
 
@@ -1449,320 +1918,1753 @@ class SecurityPillarEvaluator:
         }
 
     def evaluate_sec04(self) -> Dict[str, Any]:
-        """SEC04: ¿Cómo gestiona identidades de máquinas?"""
+        """SEC04: Detección - ¿Cómo se detectan e investigan los eventos de seguridad? (4 BPs)"""
         findings = []
-        score = 100
+        primary_region = (
+            self.connector.regions[0] if self.connector.regions else "us-east-1"
+        )
 
-        # Get IAM roles
+        # SEC04-BP01: Configurar el servicio y el registro de aplicaciones
+        logger.info("[SEC04-BP01] Evaluating logging configuration...")
+        cloudtrail_ok = False
+        cloudwatch_logs_ok = False
+        config_ok = False
+        vpc_flow_logs_ok = False
+
         try:
-            roles = self.connector.get_iam_roles()
+            # Check CloudTrail
+            trails = self.connector.get_cloudtrail_trails(primary_region)
+            cloudtrail_ok = (
+                trails
+                and any(t.get("is_logging", False) for t in trails)
+                and any(t.get("multi_region", False) for t in trails)
+            )
+            cloudtrail_status = (
+                "COMPLIANT" if cloudtrail_ok else "NON_COMPLIANT"
+            )
+            cloudtrail_evidence = (
+                f"{len([t for t in trails if t.get('is_logging')])} logging trails found with multi-region support"
+                if trails
+                else "No CloudTrail trails configured"
+            )
+
+            # Check CloudWatch Logs
+            try:
+                log_groups = self.connector.get_log_groups(primary_region)
+                log_group_count = len(log_groups)
+                cloudwatch_logs_ok = log_group_count > 0
+                cloudwatch_status = (
+                    "COMPLIANT" if cloudwatch_logs_ok else "NON_COMPLIANT"
+                )
+                cloudwatch_evidence = (
+                    f"{log_group_count} CloudWatch Log Groups configured"
+                )
+            except Exception as e:
+                logger.warning(f"[SEC04-BP01] Error checking CloudWatch Logs: {str(e)}")
+                cloudwatch_logs_ok = False
+                cloudwatch_status = "PENDING_REVIEW"
+                cloudwatch_evidence = f"Unable to verify: {str(e)[:50]}"
+
+            # Check AWS Config
+            try:
+                config_status = self.connector.get_config_status(primary_region)
+                config_ok = config_status.get("recording", False)
+                config_state = (
+                    "COMPLIANT" if config_ok else "NON_COMPLIANT"
+                )
+                config_evidence = (
+                    "AWS Config recording enabled"
+                    if config_ok
+                    else "AWS Config not recording"
+                )
+            except Exception as e:
+                logger.warning(f"[SEC04-BP01] Error checking AWS Config: {str(e)}")
+                config_ok = False
+                config_state = "PENDING_REVIEW"
+                config_evidence = f"Unable to verify: {str(e)[:50]}"
+
+            # Check VPC Flow Logs
+            try:
+                ec2_client = self.connector._get_ec2_client(primary_region)
+                vpcs = ec2_client.describe_vpcs()
+                vpc_count = len(vpcs.get("Vpcs", []))
+                vpcs_with_flow_logs = 0
+                for vpc in vpcs.get("Vpcs", []):
+                    try:
+                        flow_logs = ec2_client.describe_flow_logs(
+                            Filters=[{"Name": "resource-id", "Values": [vpc["VpcId"]]}]
+                        )
+                        if flow_logs.get("FlowLogs"):
+                            vpcs_with_flow_logs += 1
+                    except Exception:
+                        pass
+
+                vpc_flow_logs_ok = (
+                    vpcs_with_flow_logs > 0 and vpc_flow_logs_ok is False
+                ) or (vpc_count == vpcs_with_flow_logs)
+                vpc_flow_status = (
+                    "COMPLIANT" if vpc_flow_logs_ok else "NON_COMPLIANT"
+                )
+                vpc_flow_evidence = (
+                    f"{vpcs_with_flow_logs}/{vpc_count} VPCs have Flow Logs configured"
+                )
+            except Exception as e:
+                logger.warning(f"[SEC04-BP01] Error checking VPC Flow Logs: {str(e)}")
+                vpc_flow_status = "PENDING_REVIEW"
+                vpc_flow_evidence = f"Unable to verify: {str(e)[:50]}"
+
+            # Overall BP01 status
+            services_enabled = sum(
+                [cloudtrail_ok, cloudwatch_logs_ok, config_ok, vpc_flow_logs_ok]
+            )
+            bp01_status = (
+                "COMPLIANT"
+                if services_enabled >= 3
+                else "NON_COMPLIANT"
+                if services_enabled == 0
+                else "PARTIAL"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC04-BP01",
+                    "status": bp01_status,
+                    "finding": f"Application and service logging configuration - {services_enabled}/4 services configured",
+                    "severity": "CRITICAL" if services_enabled == 0 else "HIGH",
+                    "risk": "Without comprehensive logging, security events cannot be detected or investigated",
+                    "remediation": "Enable CloudTrail (multi-region), CloudWatch Logs, AWS Config recording, and VPC Flow Logs",
+                    "evidence": f"CloudTrail: {cloudtrail_status} | CloudWatch: {cloudwatch_status} | Config: {config_state} | VPC Flow Logs: {vpc_flow_status}",
+                }
+            )
+
         except Exception as e:
-            logger.error(f"Error getting IAM roles: {str(e)}")
-            roles = []
+            logger.error(f"[SEC04-BP01] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC04-BP01",
+                    "Unable to evaluate logging configuration",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
 
-        # SEC04-BP01: Usar roles de IAM
-        if roles and len(roles) > 0:
+        # SEC04-BP02: Capture registros, hallazgos y métricas en ubicaciones estandarizadas
+        logger.info("[SEC04-BP02] Evaluating centralized log storage...")
+        try:
+            security_hub_ok = False
+            centralized_storage_ok = False
+            org_trails_ok = False
+
+            # Check Security Hub
+            try:
+                sh_hub = self.connector.client.securityhub.describe_hub()
+                security_hub_ok = True
+                sh_status = "COMPLIANT"
+                sh_evidence = "AWS Security Hub enabled"
+            except Exception:
+                security_hub_ok = False
+                sh_status = "NON_COMPLIANT"
+                sh_evidence = "AWS Security Hub not enabled"
+
+            # Check for centralized S3 logging bucket
+            try:
+                buckets = self.connector.client.s3.list_buckets()
+                log_buckets = [
+                    b
+                    for b in buckets.get("Buckets", [])
+                    if "log" in b.get("Name", "").lower()
+                ]
+                centralized_storage_ok = len(log_buckets) > 0
+                s3_status = (
+                    "COMPLIANT" if centralized_storage_ok else "NON_COMPLIANT"
+                )
+                s3_evidence = (
+                    f"{len(log_buckets)} S3 buckets for log storage identified"
+                    if log_buckets
+                    else "No dedicated log storage buckets found"
+                )
+            except Exception:
+                centralized_storage_ok = False
+                s3_status = "NON_COMPLIANT"
+                s3_evidence = "Unable to verify S3 log storage"
+
+            # Check for organization-level trails
+            try:
+                all_trails = self.connector.get_cloudtrail_trails(primary_region)
+                org_trails_ok = any(t.get("is_organization_trail", False) for t in all_trails)
+                org_status = (
+                    "COMPLIANT" if org_trails_ok else "NON_COMPLIANT"
+                )
+                org_evidence = (
+                    "Organization-level CloudTrail trail configured"
+                    if org_trails_ok
+                    else "No organization-level trails found"
+                )
+            except Exception:
+                org_trails_ok = False
+                org_status = "NON_COMPLIANT"
+                org_evidence = "Unable to verify organization trails"
+
+            services_centralized = sum(
+                [security_hub_ok, centralized_storage_ok, org_trails_ok]
+            )
+            bp02_status = (
+                "COMPLIANT"
+                if services_centralized >= 2
+                else "NON_COMPLIANT"
+            )
+
             findings.append(
                 {
-                    "bp": "SEC04-BP01",
-                    "status": "COMPLIANT",
-                    "finding": f"{len(roles)} IAM roles configured for service identities",
-                    "severity": "NONE",
-                    "detail": "Service role usage detected",
+                    "bp": "SEC04-BP02",
+                    "status": bp02_status,
+                    "finding": f"Centralized log and metric storage - {services_centralized}/3 mechanisms in place",
+                    "severity": "HIGH",
+                    "risk": "Without centralized storage, logs may be deleted or modified after compromise",
+                    "remediation": "Implement AWS Security Hub, centralized S3 bucket for logs, and organization-level CloudTrail trails",
+                    "evidence": f"Security Hub: {sh_status} | S3 Logs: {s3_status} | Org Trails: {org_status}",
                 }
             )
-        else:
+
+        except Exception as e:
+            logger.error(f"[SEC04-BP02] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC04-BP02",
+                    "Unable to evaluate centralized log storage",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC04-BP03: Correlaciona y enriquece las alertas de seguridad
+        logger.info("[SEC04-BP03] Evaluating alert correlation and enrichment...")
+        try:
+            guardduty_ok = False
+            detective_ok = False
+            eventbridge_ok = False
+
+            # Check GuardDuty
+            try:
+                detectors = self.connector.get_guardduty_detectors(primary_region)
+                guardduty_ok = len(detectors) > 0
+                gd_status = (
+                    "COMPLIANT" if guardduty_ok else "NON_COMPLIANT"
+                )
+                gd_evidence = (
+                    f"{len(detectors)} GuardDuty detector(s) enabled"
+                    if detectors
+                    else "GuardDuty not enabled"
+                )
+            except Exception:
+                guardduty_ok = False
+                gd_status = "NON_COMPLIANT"
+                gd_evidence = "Unable to verify GuardDuty"
+
+            # Check Detective
+            try:
+                graphs = self.connector.client.detective.list_graphs()
+                detective_ok = len(graphs.get("GraphList", [])) > 0
+                detective_status = (
+                    "COMPLIANT" if detective_ok else "NON_COMPLIANT"
+                )
+                detective_evidence = (
+                    f"{len(graphs.get('GraphList', []))} Detective graph(s) enabled"
+                    if graphs.get("GraphList")
+                    else "Amazon Detective not enabled"
+                )
+            except Exception:
+                detective_ok = False
+                detective_status = "NON_COMPLIANT"
+                detective_evidence = "Unable to verify Detective"
+
+            # Check EventBridge for correlation
+            try:
+                rules = self.connector.client.events.list_rules()
+                security_rules = [
+                    r
+                    for r in rules.get("Rules", [])
+                    if "security" in r.get("Name", "").lower()
+                    or "alert" in r.get("Name", "").lower()
+                ]
+                eventbridge_ok = len(security_rules) > 0
+                eb_status = (
+                    "COMPLIANT" if eventbridge_ok else "NON_COMPLIANT"
+                )
+                eb_evidence = (
+                    f"{len(security_rules)} security-related EventBridge rules configured"
+                    if security_rules
+                    else "No security event routing rules found"
+                )
+            except Exception:
+                eventbridge_ok = False
+                eb_status = "NON_COMPLIANT"
+                eb_evidence = "Unable to verify EventBridge rules"
+
+            services_correlation = sum([guardduty_ok, detective_ok, eventbridge_ok])
+            bp03_status = (
+                "COMPLIANT"
+                if services_correlation >= 2
+                else "NON_COMPLIANT"
+            )
+
             findings.append(
                 {
-                    "bp": "SEC04-BP01",
-                    "status": "WARNING",
-                    "finding": "No IAM roles found for service identities",
-                    "severity": "MEDIUM",
-                    "remediation": "Create IAM roles for EC2, Lambda, and other AWS services",
+                    "bp": "SEC04-BP03",
+                    "status": bp03_status,
+                    "finding": f"Alert correlation and enrichment - {services_correlation}/3 systems configured",
+                    "severity": "HIGH",
+                    "risk": "Without correlation, patterns and attack chains cannot be detected",
+                    "remediation": "Enable GuardDuty, Amazon Detective, and implement EventBridge rules for threat intelligence integration",
+                    "evidence": f"GuardDuty: {gd_status} | Detective: {detective_status} | EventBridge: {eb_status}",
                 }
             )
-            score -= 5
 
-        # SEC04-BP02: Usar instancia perfiles de IAM
-        findings.append(
-            {
-                "bp": "SEC04-BP02",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify EC2 instances use IAM instance profiles (not embedded credentials)",
-                "severity": "MEDIUM",
-            }
-        )
+        except Exception as e:
+            logger.error(f"[SEC04-BP03] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC04-BP03",
+                    "Unable to evaluate alert correlation",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
 
-        # SEC04-BP03: Gestionar credenciales de máquina
-        findings.append(
-            {
-                "bp": "SEC04-BP03",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify no hardcoded credentials in application code or container images",
-                "severity": "HIGH",
-            }
-        )
+        # SEC04-BP04: Iniciar remediación para recursos no conformes
+        logger.info("[SEC04-BP04] Evaluating automated remediation...")
+        try:
+            config_remediation_ok = False
+            ssm_automation_ok = False
+            lambda_remediation_ok = False
 
-        # SEC04-BP04: Usar AssumeRole para acceso entre cuentas
-        findings.append(
-            {
-                "bp": "SEC04-BP04",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify cross-account access uses STS AssumeRole",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check AWS Config Remediation
+            try:
+                config_rules = self.connector.client.config.describe_config_rules()
+                rules_with_remediation = [
+                    r
+                    for r in config_rules.get("ConfigRules", [])
+                    if r.get("Source", {}).get("SourceIdentifier")
+                    and "remediation" in str(r).lower()
+                ]
+                config_remediation_ok = len(rules_with_remediation) > 0
+                config_rem_status = (
+                    "COMPLIANT" if config_remediation_ok else "NON_COMPLIANT"
+                )
+                config_rem_evidence = (
+                    f"{len(rules_with_remediation)} AWS Config rules with auto-remediation"
+                    if rules_with_remediation
+                    else "No auto-remediation rules configured"
+                )
+            except Exception:
+                config_remediation_ok = False
+                config_rem_status = "NON_COMPLIANT"
+                config_rem_evidence = "Unable to verify Config remediation"
 
-        # SEC04-BP05: Usar Secrets Manager
-        findings.append(
-            {
-                "bp": "SEC04-BP05",
-                "status": "PENDING_REVIEW",
-                "finding": "Use AWS Secrets Manager for managing database and API credentials",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check Systems Manager Automation
+            try:
+                ssm_docs = self.connector.client.ssm.list_documents()
+                automation_docs = [
+                    d
+                    for d in ssm_docs.get("DocumentIdentifiers", [])
+                    if "Automation" in d.get("DocumentType", "")
+                ]
+                ssm_automation_ok = len(automation_docs) > 0
+                ssm_status = (
+                    "COMPLIANT" if ssm_automation_ok else "NON_COMPLIANT"
+                )
+                ssm_evidence = (
+                    f"{len(automation_docs)} SSM Automation documents defined"
+                    if automation_docs
+                    else "No automation documents found"
+                )
+            except Exception:
+                ssm_automation_ok = False
+                ssm_status = "NON_COMPLIANT"
+                ssm_evidence = "Unable to verify SSM Automation"
 
-        # SEC04-BP06: Auditar acceso de máquina
-        findings.append(
-            {
-                "bp": "SEC04-BP06",
-                "status": "PENDING_REVIEW",
-                "finding": "Ensure CloudTrail logs machine identity access and API calls",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check Lambda for remediation functions
+            try:
+                lambdas = self.connector.client.awslambda.list_functions()
+                remediation_lambdas = [
+                    f
+                    for f in lambdas.get("Functions", [])
+                    if "remediat" in f.get("FunctionName", "").lower()
+                    or "remedi" in f.get("FunctionName", "").lower()
+                ]
+                lambda_remediation_ok = len(remediation_lambdas) > 0
+                lambda_status = (
+                    "COMPLIANT" if lambda_remediation_ok else "NON_COMPLIANT"
+                )
+                lambda_evidence = (
+                    f"{len(remediation_lambdas)} Lambda remediation functions"
+                    if remediation_lambdas
+                    else "No Lambda remediation functions found"
+                )
+            except Exception:
+                lambda_remediation_ok = False
+                lambda_status = "NON_COMPLIANT"
+                lambda_evidence = "Unable to verify Lambda remediation"
+
+            remediation_mechanisms = sum(
+                [config_remediation_ok, ssm_automation_ok, lambda_remediation_ok]
+            )
+            bp04_status = (
+                "COMPLIANT"
+                if remediation_mechanisms >= 2
+                else "NON_COMPLIANT"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC04-BP04",
+                    "status": bp04_status,
+                    "finding": f"Automated remediation for non-compliant resources - {remediation_mechanisms}/3 systems in place",
+                    "severity": "HIGH",
+                    "risk": "Manual remediation delays increase exposure window and may miss violations",
+                    "remediation": "Implement AWS Config auto-remediation, SSM Automation documents, and Lambda-based response functions",
+                    "evidence": f"Config Remediation: {config_rem_status} | SSM Automation: {ssm_status} | Lambda: {lambda_status}",
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"[SEC04-BP04] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC04-BP04",
+                    "Unable to evaluate automated remediation",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # Normalize all findings
+        findings = [self._normalize_finding(f) for f in findings]
 
         return {
             "question_id": "SEC04",
-            "question": "Gestión de identidades de máquinas",
+            "question": "Detección - ¿Cómo se detectan e investigan los eventos de seguridad?",
             "findings": findings,
             "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
     def evaluate_sec05(self) -> Dict[str, Any]:
-        """SEC05: ¿Cómo gestiona los permisos?"""
+        """SEC05: Protección de infraestructura - ¿Cómo protege los recursos de red? (4 BPs)"""
         findings = []
+        primary_region = (
+            self.connector.regions[0] if self.connector.regions else "us-east-1"
+        )
 
-        # Get IAM policies and roles
+        # SEC05-BP01: Crear capas de red
+        logger.info("[SEC05-BP01] Evaluating network layering...")
         try:
-            policies = self.connector.get_iam_policies()
-            self.connector.get_iam_users()
-            self.connector.get_iam_roles()
-        except Exception as e:
-            logger.error(f"Error getting IAM policies: {str(e)}")
-            policies = []
+            ec2_client = self.connector._get_ec2_client(primary_region)
+            vpcs = ec2_client.describe_vpcs()
+            vpc_count = len(vpcs.get("Vpcs", []))
+            
+            multi_tier_vpcs = 0
+            transit_gateways_found = False
+            vpc_peering_found = False
+            privatelink_found = False
+            public_subnets = 0
+            private_subnets = 0
+            internet_gateways_count = 0
+            nat_gateways_count = 0
+            client_vpn_count = 0
+            site_to_site_vpn_count = 0
+            alb_internet_facing = 0
+            alb_internal = 0
+            cloudfront_distributions = 0
 
-        # SEC05-BP01: Usar principio de menor privilegio
-        if policies and len(policies) > 0:
+            for vpc in vpcs.get("Vpcs", []):
+                vpc_id = vpc["VpcId"]
+                # Check for multi-tier setup (public and private subnets)
+                try:
+                    subnets = ec2_client.describe_subnets(
+                        Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+                    )
+                    if len(subnets.get("Subnets", [])) >= 2:
+                        multi_tier_vpcs += 1
+                    for subnet in subnets.get("Subnets", []):
+                        if subnet.get("MapPublicIpOnLaunch"):
+                            public_subnets += 1
+                        else:
+                            private_subnets += 1
+                except Exception:
+                    pass
+
+            # Check for Transit Gateway
+            try:
+                tgws = ec2_client.describe_transit_gateways()
+                transit_gateways_found = len(tgws.get("TransitGateways", [])) > 0
+            except Exception:
+                pass
+
+            # Check for VPC Peering
+            try:
+                pcx = ec2_client.describe_vpc_peering_connections()
+                vpc_peering_found = len(pcx.get("VpcPeeringConnections", [])) > 0
+            except Exception:
+                pass
+
+            # Check for PrivateLink
+            try:
+                endpoints = ec2_client.describe_vpc_endpoints()
+                privatelink_found = len(endpoints.get("VpcEndpoints", [])) > 0
+            except Exception:
+                pass
+
+            # Check Internet Gateways
+            try:
+                igws = ec2_client.describe_internet_gateways()
+                internet_gateways_count = len(igws.get("InternetGateways", []))
+            except Exception:
+                internet_gateways_count = 0
+
+            # Check NAT Gateways
+            try:
+                nat_gws = ec2_client.describe_nat_gateways()
+                nat_gateways_count = len(nat_gws.get("NatGateways", []))
+            except Exception:
+                nat_gateways_count = 0
+
+            # Check Client VPN endpoints
+            try:
+                client_vpn = ec2_client.describe_client_vpn_endpoints()
+                client_vpn_count = len(client_vpn.get("ClientVpnEndpoints", []))
+            except Exception:
+                client_vpn_count = 0
+
+            # Check Site-to-Site VPN connections
+            try:
+                vpn_connections = ec2_client.describe_vpn_connections()
+                site_to_site_vpn_count = len(vpn_connections.get("VpnConnections", []))
+            except Exception:
+                site_to_site_vpn_count = 0
+
+            # Check ALB/NLB schemes
+            try:
+                elbv2 = self.connector.client.elbv2.describe_load_balancers()
+                for lb in elbv2.get("LoadBalancers", []):
+                    if lb.get("Scheme") == "internet-facing":
+                        alb_internet_facing += 1
+                    else:
+                        alb_internal += 1
+            except Exception:
+                alb_internet_facing = 0
+                alb_internal = 0
+
+            # Check CloudFront distributions
+            try:
+                cfd = self.connector.client.cloudfront.list_distributions()
+                cloudfront_distributions = len(
+                    cfd.get("DistributionList", {}).get("Items", [])
+                )
+            except Exception:
+                cloudfront_distributions = 0
+
+            network_mechanisms = sum(
+                [
+                    multi_tier_vpcs > 0,
+                    transit_gateways_found,
+                    vpc_peering_found,
+                    privatelink_found,
+                    (public_subnets > 0 and private_subnets > 0),
+                    internet_gateways_count > 0,
+                    nat_gateways_count > 0,
+                    (client_vpn_count + site_to_site_vpn_count) > 0,
+                    alb_internal > 0,
+                    cloudfront_distributions > 0,
+                ]
+            )
+            
+            bp01_status = (
+                "COMPLIANT"
+                if multi_tier_vpcs > 0 and network_mechanisms >= 3
+                else "NON_COMPLIANT"
+                if vpc_count == 0
+                else "PARTIAL"
+            )
+
             findings.append(
                 {
                     "bp": "SEC05-BP01",
-                    "status": "PENDING_REVIEW",
-                    "finding": f"{len(policies)} custom-managed policies found",
-                    "severity": "MEDIUM",
-                    "detail": "Review policies for overly permissive statements",
+                    "status": bp01_status,
+                    "finding": f"Network layering - {multi_tier_vpcs}/{vpc_count} VPCs with multi-tier architecture",
+                    "severity": "HIGH",
+                    "risk": "Flat network architectures cannot properly segregate security domains",
+                    "remediation": "Implement public/private subnet segregation, Transit Gateway for hub-and-spoke, and PrivateLink for service access",
+                    "evidence": (
+                        f"Multi-tier VPCs: {multi_tier_vpcs}/{vpc_count} | Public subnets: {public_subnets} | Private subnets: {private_subnets} | "
+                        f"IGW: {internet_gateways_count} | NAT GWs: {nat_gateways_count} | Transit Gateway: {transit_gateways_found} | "
+                        f"VPC Peering: {vpc_peering_found} | PrivateLink: {privatelink_found} | "
+                        f"ALB/NLB internet-facing: {alb_internet_facing} | ALB/NLB internal: {alb_internal} | "
+                        f"VPNs (client/site-to-site): {client_vpn_count}/{site_to_site_vpn_count} | CloudFront: {cloudfront_distributions}"
+                    ),
                 }
             )
 
-        # SEC05-BP02: Usar permisos basados en atributos (ABAC)
-        findings.append(
-            {
-                "bp": "SEC05-BP02",
-                "status": "PENDING_REVIEW",
-                "finding": "Consider using ABAC (Attribute-Based Access Control) for scalable permissions",
-                "severity": "MEDIUM",
-            }
-        )
+        except Exception as e:
+            logger.error(f"[SEC05-BP01] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC05-BP01",
+                    "Unable to evaluate network layering",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
 
-        # SEC05-BP03: Usar Access Analyzer
-        findings.append(
-            {
-                "bp": "SEC05-BP03",
-                "status": "PENDING_REVIEW",
-                "finding": "Enable IAM Access Analyzer to validate policy compliance",
-                "severity": "MEDIUM",
-                "remediation": "Use Access Analyzer to detect overly permissive policies",
-            }
-        )
+        # SEC05-BP02: Controle el flujo de tráfico dentro de capas de red
+        logger.info("[SEC05-BP02] Evaluating traffic flow control...")
+        try:
+            sgs_with_restrictions = 0
+            nacls_configured = 0
+            network_firewall_ok = False
+            waf_ok = False
+            open_critical_sgs = 0
+            nacl_deny_rules = 0
+            public_route_tables = 0
+            alb_public_count = 0
 
-        # SEC05-BP04: Usar SCP para límites de organización
-        findings.append(
-            {
-                "bp": "SEC05-BP04",
-                "status": "PENDING_REVIEW",
-                "finding": "Implement SCPs (Service Control Policies) at organization level",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check Security Groups
+            try:
+                sgs = self.connector.client.ec2.describe_security_groups()
+                total_sgs = len(sgs.get("SecurityGroups", []))
+                
+                # Count SGs with restricted inbound rules (not 0.0.0.0/0 on critical ports)
+                for sg in sgs.get("SecurityGroups", []):
+                    restricted = True
+                    for rule in sg.get("IpPermissions", []):
+                        if rule.get("IpRanges"):
+                            for ip_range in rule.get("IpRanges", []):
+                                if ip_range.get("CidrIp") == "0.0.0.0/0":
+                                    # Critical ports are 22, 3306, 5432, 1433
+                                    if rule.get("FromPort") in [22, 3306, 5432, 1433]:
+                                        restricted = False
+                                        open_critical_sgs += 1
+                                        break
+                    if restricted:
+                        sgs_with_restrictions += 1
 
-        # SEC05-BP05: Usar permission boundaries
-        findings.append(
-            {
-                "bp": "SEC05-BP05",
-                "status": "PENDING_REVIEW",
-                "finding": "Use IAM Permission Boundaries to limit maximum permissions",
-                "severity": "MEDIUM",
-            }
-        )
+                sg_status = f"{sgs_with_restrictions}/{total_sgs} security groups properly restricted"
+            except Exception:
+                sg_status = "Unable to verify"
+                sgs_with_restrictions = 0
 
-        # SEC05-BP06: Auditar cambios de permisos
-        findings.append(
-            {
-                "bp": "SEC05-BP06",
-                "status": "PENDING_REVIEW",
-                "finding": "CloudTrail must log all IAM policy changes",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check NACLs
+            try:
+                nacls = self.connector.client.ec2.describe_network_acls()
+                total_nacls = len(nacls.get("NetworkAcls", []))
+                # Count non-default NACLs as configured
+                nacls_configured = sum(
+                    1
+                    for n in nacls.get("NetworkAcls", [])
+                    if not n.get("IsDefault", False)
+                )
+                nacl_deny_rules = sum(
+                    1
+                    for n in nacls.get("NetworkAcls", [])
+                    for entry in n.get("Entries", [])
+                    if entry.get("RuleAction") == "deny"
+                )
+                nacl_status = (
+                    f"{nacls_configured} custom NACLs configured"
+                    if nacls_configured > 0
+                    else "Using default NACLs"
+                )
+            except Exception:
+                nacl_status = "Unable to verify"
+                nacls_configured = 0
 
-        # SEC05-BP07: Revocar permisos no usados
-        findings.append(
-            {
-                "bp": "SEC05-BP07",
-                "status": "PENDING_REVIEW",
-                "finding": "Use Access Advisor to identify and remove unused permissions",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check Network Firewall
+            try:
+                nfw = self.connector.client.network_firewall.list_firewalls()
+                network_firewall_ok = len(nfw.get("Firewalls", [])) > 0
+                nfw_status = (
+                    f"{len(nfw.get('Firewalls', []))} Network Firewall(s) configured"
+                    if network_firewall_ok
+                    else "Network Firewall not configured"
+                )
+            except Exception:
+                nfw_status = "Unable to verify"
+
+            # Check WAF
+            try:
+                wafs = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL")
+                waf_ok = len(wafs.get("WebACLs", [])) > 0
+                waf_status = (
+                    f"{len(wafs.get('WebACLs', []))} WAF Web ACLs configured"
+                    if waf_ok
+                    else "WAF not configured"
+                )
+            except Exception:
+                waf_status = "Unable to verify"
+                waf_ok = False
+
+            # Check public routes to Internet Gateway
+            try:
+                route_tables = self.connector.client.ec2.describe_route_tables()
+                public_route_tables = sum(
+                    1
+                    for rt in route_tables.get("RouteTables", [])
+                    for r in rt.get("Routes", [])
+                    if r.get("DestinationCidrBlock") == "0.0.0.0/0"
+                    and r.get("GatewayId", "").startswith("igw-")
+                )
+            except Exception:
+                public_route_tables = 0
+
+            # Check internet-facing ALBs
+            try:
+                elbv2 = self.connector.client.elbv2.describe_load_balancers()
+                alb_public_count = sum(
+                    1
+                    for lb in elbv2.get("LoadBalancers", [])
+                    if lb.get("Scheme") == "internet-facing"
+                )
+            except Exception:
+                alb_public_count = 0
+
+            flow_control_mechanisms = sum(
+                [
+                    sgs_with_restrictions > 0,
+                    nacls_configured > 0,
+                    network_firewall_ok,
+                    waf_ok,
+                    nacl_deny_rules > 0,
+                ]
+            )
+            bp02_status = (
+                "COMPLIANT"
+                if flow_control_mechanisms >= 2 and open_critical_sgs == 0
+                else "NON_COMPLIANT"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC05-BP02",
+                    "status": bp02_status,
+                    "finding": f"Traffic flow control - {flow_control_mechanisms}/4 control mechanisms in place",
+                    "severity": "CRITICAL",
+                    "risk": "Without traffic control, lateral movement and data exfiltration become possible",
+                    "remediation": "Implement restrictive Security Groups, Network ACLs, Network Firewall, and WAF rules",
+                    "evidence": (
+                        f"SGs: {sg_status} | Open critical SGs: {open_critical_sgs} | "
+                        f"NACLs: {nacl_status} (deny rules: {nacl_deny_rules}) | "
+                        f"Network Firewall: {nfw_status} | WAF: {waf_status} | "
+                        f"Public route tables: {public_route_tables} | Internet-facing ALBs: {alb_public_count}"
+                    ),
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"[SEC05-BP02] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC05-BP02",
+                    "Unable to evaluate traffic flow control",
+                    "CRITICAL",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC05-BP03: Implementar protección basada en inspección
+        logger.info("[SEC05-BP03] Evaluating inspection-based protection...")
+        try:
+            guardduty_ok = False
+            shield_ok = False
+            inspector_ok = False
+            waf_rules_ok = False
+            waf_assoc_ok = False
+            cloudfront_waf_ok = False
+            waf_assoc_details = "N/D"
+            waf_rules_status = "N/D"
+
+            # Check GuardDuty (analyzes VPC Flow Logs)
+            try:
+                detectors = self.connector.get_guardduty_detectors(primary_region)
+                guardduty_ok = len(detectors) > 0
+                gd_status = (
+                    f"{len(detectors)} GuardDuty detector(s) analyzing traffic"
+                    if guardduty_ok
+                    else "GuardDuty not enabled"
+                )
+            except Exception:
+                gd_status = "Unable to verify GuardDuty"
+
+            # Check Shield Advanced
+            try:
+                subscription = self.connector.client.shield.describe_subscription()
+                shield_ok = subscription.get("Subscription", {}).get("SubscriptionState") == "Active"
+                shield_status = (
+                    "AWS Shield Advanced enabled"
+                    if shield_ok
+                    else "Only AWS Shield Standard (free tier)"
+                )
+            except Exception:
+                shield_status = "Unable to verify Shield"
+
+            # Check Inspector
+            try:
+                assessments = self.connector.client.inspector.list_assessment_templates()
+                inspector_ok = (
+                    len(assessments.get("assessmentTemplateArns", [])) > 0
+                )
+                inspector_status = (
+                    f"{len(assessments.get('assessmentTemplateArns', []))} assessment templates"
+                    if inspector_ok
+                    else "Amazon Inspector not configured"
+                )
+            except Exception:
+                inspector_status = "Unable to verify Inspector"
+                inspector_ok = False
+
+            # Check WAF Rule Groups
+            try:
+                rule_groups = self.connector.client.wafv2.list_rule_groups(Scope="REGIONAL")
+                waf_rules_ok = len(rule_groups.get("RuleGroups", [])) > 0
+                waf_rules_status = (
+                    f"{len(rule_groups.get('RuleGroups', []))} WAF rule groups (SQL injection, XSS protection)"
+                    if waf_rules_ok
+                    else "WAF rule groups not configured"
+                )
+                regional_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get("WebACLs", [])
+                cloudfront_acls = self.connector.client.wafv2.list_web_acls(Scope="CLOUDFRONT").get("WebACLs", [])
+                cloudfront_waf_ok = len(cloudfront_acls) > 0
+
+                assoc_total = 0
+                assoc_alb = 0
+                assoc_api = 0
+                assoc_cf = 0
+
+                for acl in regional_acls:
+                    try:
+                        resources = self.connector.client.wafv2.list_resources_for_web_acl(
+                            WebACLArn=acl.get("ARN"), ResourceType="APPLICATION_LOAD_BALANCER"
+                        ).get("ResourceArns", [])
+                        assoc_alb += len(resources)
+                        assoc_total += len(resources)
+                    except Exception:
+                        pass
+                    try:
+                        resources = self.connector.client.wafv2.list_resources_for_web_acl(
+                            WebACLArn=acl.get("ARN"), ResourceType="API_GATEWAY"
+                        ).get("ResourceArns", [])
+                        assoc_api += len(resources)
+                        assoc_total += len(resources)
+                    except Exception:
+                        pass
+
+                for acl in cloudfront_acls:
+                    try:
+                        resources = self.connector.client.wafv2.list_resources_for_web_acl(
+                            WebACLArn=acl.get("ARN"), ResourceType="CLOUDFRONT"
+                        ).get("ResourceArns", [])
+                        assoc_cf += len(resources)
+                        assoc_total += len(resources)
+                    except Exception:
+                        pass
+
+                waf_assoc_ok = assoc_total > 0
+                waf_assoc_details = (
+                    f"WAF associations - ALB: {assoc_alb}, API Gateway: {assoc_api}, CloudFront: {assoc_cf}"
+                )
+            except Exception:
+                waf_rules_status = "Unable to verify"
+                waf_rules_ok = False
+
+            inspection_mechanisms = sum(
+                [guardduty_ok, shield_ok, inspector_ok, waf_rules_ok, waf_assoc_ok, cloudfront_waf_ok]
+            )
+            bp03_status = (
+                "COMPLIANT"
+                if inspection_mechanisms >= 3
+                else "NON_COMPLIANT"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC05-BP03",
+                    "status": bp03_status,
+                    "finding": f"Inspection-based protection - {inspection_mechanisms}/4 inspection systems active",
+                    "severity": "HIGH",
+                    "risk": "Without deep packet inspection, application-layer attacks (SQL injection, XSS) may bypass network controls",
+                    "remediation": "Enable GuardDuty, AWS Shield Advanced, Amazon Inspector, and configure WAF rule groups",
+                    "evidence": f"GuardDuty: {gd_status} | Shield: {shield_status} | Inspector: {inspector_status} | WAF Rules: {waf_rules_status} | {waf_assoc_details} | CloudFront WAF: {cloudfront_waf_ok}",
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"[SEC05-BP03] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC05-BP03",
+                    "Unable to evaluate inspection-based protection",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC05-BP04: Automatice la protección de red
+        logger.info("[SEC05-BP04] Evaluating automated network protection...")
+        try:
+            config_network_rules_ok = False
+            cloudformation_iac_ok = False
+            eventbridge_automation_ok = False
+            firewall_manager_ok = False
+            waf_logging_ok = False
+            fms_status = "N/D"
+            waf_logging_status = "N/D"
+
+            # Check AWS Config for network compliance rules
+            try:
+                config_rules = self.connector.client.config.describe_config_rules()
+                network_rules = [
+                    r
+                    for r in config_rules.get("ConfigRules", [])
+                    if any(
+                        keyword in str(r).lower()
+                        for keyword in [
+                            "security",
+                            "network",
+                            "vpc",
+                            "nacl",
+                            "sg",
+                        ]
+                    )
+                ]
+                config_network_rules_ok = len(network_rules) > 0
+                config_status = (
+                    f"{len(network_rules)} network compliance rules"
+                    if config_network_rules_ok
+                    else "No network compliance rules"
+                )
+            except Exception:
+                config_status = "Unable to verify"
+
+            # Check for CloudFormation IaC
+            try:
+                stacks = self.connector.client.cloudformation.list_stacks()
+                network_stacks = [
+                    s
+                    for s in stacks.get("StackSummaries", [])
+                    if "network" in s.get("StackName", "").lower()
+                    and s.get("StackStatus") != "DELETE_COMPLETE"
+                ]
+                cloudformation_iac_ok = len(network_stacks) > 0
+                cf_status = (
+                    f"{len(network_stacks)} network infrastructure stacks"
+                    if cloudformation_iac_ok
+                    else "No IaC network stacks found"
+                )
+            except Exception:
+                cf_status = "Unable to verify"
+
+            # Check EventBridge for network automation
+            try:
+                rules = self.connector.client.events.list_rules()
+                network_rules = [
+                    r
+                    for r in rules.get("Rules", [])
+                    if any(
+                        keyword in r.get("Name", "").lower()
+                        for keyword in ["network", "sg", "nacl", "vpc"]
+                    )
+                ]
+                eventbridge_automation_ok = len(network_rules) > 0
+                eb_status = (
+                    f"{len(network_rules)} network automation rules"
+                    if eventbridge_automation_ok
+                    else "No network automation rules"
+                )
+            except Exception:
+                eb_status = "Unable to verify"
+
+            # Check Firewall Manager policies
+            try:
+                fms_policies = self.connector.client.fms.list_policies()
+                firewall_manager_ok = len(fms_policies.get("PolicyList", [])) > 0
+                fms_status = (
+                    f"{len(fms_policies.get('PolicyList', []))} Firewall Manager policies"
+                    if firewall_manager_ok
+                    else "No Firewall Manager policies"
+                )
+            except Exception:
+                fms_status = "Unable to verify"
+
+            # Check WAF logging configuration
+            try:
+                web_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get("WebACLs", [])
+                waf_logging_ok = False
+                for acl in web_acls:
+                    try:
+                        logging_cfg = self.connector.client.wafv2.get_logging_configuration(
+                            ResourceArn=acl.get("ARN")
+                        )
+                        if logging_cfg.get("LoggingConfiguration"):
+                            waf_logging_ok = True
+                            break
+                    except Exception:
+                        continue
+                waf_logging_status = "WAF logging configured" if waf_logging_ok else "WAF logging not configured"
+            except Exception:
+                waf_logging_status = "Unable to verify"
+
+            automation_mechanisms = sum(
+                [
+                    config_network_rules_ok,
+                    cloudformation_iac_ok,
+                    eventbridge_automation_ok,
+                    firewall_manager_ok,
+                    waf_logging_ok,
+                ]
+            )
+            bp04_status = (
+                "COMPLIANT"
+                if automation_mechanisms >= 3
+                else "NON_COMPLIANT"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC05-BP04",
+                    "status": bp04_status,
+                    "finding": f"Automated network protection - {automation_mechanisms}/3 automation mechanisms in place",
+                    "severity": "HIGH",
+                    "risk": "Manual network configuration is error-prone and cannot respond quickly to threats",
+                    "remediation": "Implement AWS Config network rules, CloudFormation/CDK for network IaC, and EventBridge for automated responses",
+                    "evidence": f"Config Rules: {config_status} | CloudFormation: {cf_status} | EventBridge: {eb_status} | Firewall Manager: {fms_status} | WAF Logging: {waf_logging_status}",
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"[SEC05-BP04] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC05-BP04",
+                    "Unable to evaluate automated network protection",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # Normalize all findings
+        findings = [self._normalize_finding(f) for f in findings]
 
         return {
             "question_id": "SEC05",
-            "question": "Gestión de permisos",
+            "question": "Protección de infraestructura - ¿Cómo protege los recursos de red?",
             "findings": findings,
             "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 4,
         }
 
     def evaluate_sec06(self) -> Dict[str, Any]:
-        """SEC06: ¿Cómo detecta y investiga eventos de seguridad?"""
+        """SEC06: Protección de infraestructura - ¿Cómo protege sus recursos computacionales? (5 BPs)"""
         findings = []
-        score = 100
+        primary_region = (
+            self.connector.regions[0] if self.connector.regions else "us-east-1"
+        )
 
-        # Get CloudTrail status and GuardDuty detectors
+        # SEC06-BP01: Realizar gestión de vulnerabilidades
+        logger.info("[SEC06-BP01] Evaluating vulnerability management...")
         try:
-            primary_region = (
-                self.connector.regions[0] if self.connector.regions else "us-east-1"
-            )
-            trails = self.connector.get_cloudtrail_trails(primary_region)
-            config_status = self.connector.get_config_status(primary_region)
-            guardduty_detectors = self.connector.get_guardduty_detectors(primary_region)
-        except Exception as e:
-            logger.error(f"Error getting detection services status: {str(e)}")
-            trails = []
-            config_status = {}
-            guardduty_detectors = []
+            inspector_ok = False
+            patch_manager_ok = False
+            ecr_scanning_ok = False
+            security_hub_vuln_ok = False
+            ecs_clusters_count = 0
+            eks_clusters_count = 0
 
-        # SEC06-BP01: CloudTrail - Event logging
-        if trails and any(t.get("is_logging", False) for t in trails):
-            findings.append(
-                {
-                    "bp": "SEC06-BP01",
-                    "status": "COMPLIANT",
-                    "finding": "CloudTrail is actively logging",
-                    "severity": "NONE",
-                }
+            # Check Amazon Inspector
+            try:
+                assessments = self.connector.client.inspector.list_assessment_templates()
+                inspector_ok = (
+                    len(assessments.get("assessmentTemplateArns", [])) > 0
+                )
+                inspector_status = (
+                    f"{len(assessments.get('assessmentTemplateArns', []))} assessment templates"
+                    if inspector_ok
+                    else "Amazon Inspector not configured"
+                )
+            except Exception:
+                inspector_status = "Unable to verify Inspector"
+
+            # Check Systems Manager Patch Manager
+            try:
+                baselines = self.connector.client.ssm.describe_patch_baselines()
+                patch_manager_ok = (
+                    len(baselines.get("BaselineIdentities", [])) > 0
+                )
+                patch_status = (
+                    f"{len(baselines.get('BaselineIdentities', []))} patch baselines defined"
+                    if patch_manager_ok
+                    else "Patch Manager not configured"
+                )
+            except Exception:
+                patch_status = "Unable to verify Patch Manager"
+
+            # Check ECR Image Scanning
+            try:
+                repos = self.connector.client.ecr.describe_repositories()
+                scanning_repos = [
+                    r
+                    for r in repos.get("repositories", [])
+                    if r.get("imageScanningConfiguration", {}).get("scanOnPush", False)
+                ]
+                ecr_scanning_ok = len(scanning_repos) > 0
+                ecr_status = (
+                    f"{len(scanning_repos)} ECR repos with scan-on-push enabled"
+                    if ecr_scanning_ok
+                    else "ECR image scanning not configured"
+                )
+            except Exception:
+                ecr_status = "Unable to verify ECR scanning"
+
+            # Check Security Hub for vulnerability findings
+            try:
+                sh_hub = self.connector.client.securityhub.describe_hub()
+                security_hub_vuln_ok = True
+                sh_vuln_status = "Security Hub configured for vulnerability aggregation"
+            except Exception:
+                security_hub_vuln_ok = False
+                sh_vuln_status = "Security Hub not enabled"
+
+            # Check ECS/EKS presence for vulnerability coverage context
+            try:
+                ecs_clusters = self.connector.client.ecs.list_clusters()
+                ecs_clusters_count = len(ecs_clusters.get("clusterArns", []))
+            except Exception:
+                ecs_clusters_count = 0
+
+            try:
+                eks_clusters = self.connector.client.eks.list_clusters()
+                eks_clusters_count = len(eks_clusters.get("clusters", []))
+            except Exception:
+                eks_clusters_count = 0
+
+            vuln_mgmt_mechanisms = sum(
+                [inspector_ok, patch_manager_ok, ecr_scanning_ok, security_hub_vuln_ok]
             )
-        else:
-            score -= 20
+            bp01_status = (
+                "COMPLIANT"
+                if vuln_mgmt_mechanisms >= 2
+                else "NON_COMPLIANT"
+            )
+
             findings.append(
                 {
                     "bp": "SEC06-BP01",
-                    "status": "NON_COMPLIANT",
-                    "finding": "CloudTrail not configured or not logging",
+                    "status": bp01_status,
+                    "finding": f"Vulnerability management - {vuln_mgmt_mechanisms}/4 systems in place",
                     "severity": "CRITICAL",
-                    "remediation": "Enable CloudTrail organization trail with multi-region logging",
+                    "risk": "Unpatched systems are easy targets for exploitation",
+                    "remediation": "Implement Amazon Inspector assessments, Patch Manager baselines, ECR image scanning, and Security Hub aggregation",
+                    "evidence": f"Inspector: {inspector_status} | Patch Manager: {patch_status} | ECR: {ecr_status} | Security Hub: {sh_vuln_status} | ECS clusters: {ecs_clusters_count} | EKS clusters: {eks_clusters_count}",
                 }
             )
 
-        # SEC06-BP02: AWS Config - Resource inventory and compliance
-        if config_status.get("recording"):
+        except Exception as e:
+            logger.error(f"[SEC06-BP01] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC06-BP01",
+                    "Unable to evaluate vulnerability management",
+                    "CRITICAL",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC06-BP02: Computación de provisión a partir de imágenes endurecidas
+        logger.info("[SEC06-BP02] Evaluating hardened compute provisioning...")
+        try:
+            ec2_amis_ok = False
+            image_builder_ok = False
+            ecs_hardening_ok = False
+            lambda_hardening_ok = False
+            ebs_encryption_ok = False
+            ebs_encryption_default = False
+            encrypted_volume_pct = 0
+            gp3_volume_pct = 0
+            ecs_readonly_root_ok = False
+            ecs_checked_defs = 0
+            eks_bottlerocket_ok = False
+            eks_nodegroups_checked = 0
+
+            # Check EC2 AMI hardening (golden images)
+            try:
+                amis = self.connector.client.ec2.describe_images(Owners=["self"])
+                golden_amis = [
+                    a
+                    for a in amis.get("Images", [])
+                    if "golden" in a.get("Name", "").lower()
+                    or "hardened" in a.get("Name", "").lower()
+                    or "base" in a.get("Name", "").lower()
+                ]
+                ec2_amis_ok = len(golden_amis) > 0
+                ami_status = (
+                    f"{len(golden_amis)} golden/hardened AMIs available"
+                    if golden_amis
+                    else "No hardened AMIs found"
+                )
+            except Exception:
+                ami_status = "Unable to verify AMIs"
+
+            # Check Image Builder
+            try:
+                pipelines = self.connector.client.imagebuilder.list_image_pipelines()
+                image_builder_ok = (
+                    len(pipelines.get("imagePipelineList", [])) > 0
+                )
+                ib_status = (
+                    f"{len(pipelines.get('imagePipelineList', []))} image building pipelines"
+                    if image_builder_ok
+                    else "Image Builder not configured"
+                )
+            except Exception:
+                ib_status = "Unable to verify Image Builder"
+
+            # Check ECS task definitions for security baseline
+            try:
+                task_defs = self.connector.client.ecs.list_task_definitions()
+                hardened_tasks = [
+                    t
+                    for t in task_defs.get("taskDefinitionArns", [])
+                    if "hardened" in t.lower() or "prod" in t.lower()
+                ]
+                ecs_hardening_ok = len(hardened_tasks) > 0
+                ecs_status = (
+                    f"{len(hardened_tasks)} hardened task definitions"
+                    if hardened_tasks
+                    else "ECS hardening baseline not evident"
+                )
+            except Exception:
+                ecs_status = "Unable to verify ECS hardening"
+
+            # Check Lambda function encryption and VPC
+            try:
+                lambdas = self.connector.client.awslambda.list_functions()
+                secure_lambdas = [
+                    f
+                    for f in lambdas.get("Functions", [])
+                    if f.get("VpcConfig", {}).get("SubnetIds")
+                    and f.get("KMSKeyArn")
+                ]
+                lambda_hardening_ok = (
+                    len(secure_lambdas) / max(len(lambdas.get("Functions", [])), 1)
+                ) > 0.5
+                lambda_status = (
+                    f"{len(secure_lambdas)}/{len(lambdas.get('Functions', []))} Lambda functions with VPC + KMS encryption"
+                    if lambdas.get("Functions")
+                    else "No Lambda functions"
+                )
+            except Exception:
+                lambda_status = "Unable to verify Lambda hardening"
+
+            # Check EBS encryption and storage types
+            try:
+                ebs_encryption_default = self.connector.client.ec2.get_ebs_encryption_by_default().get("EbsEncryptionByDefault", False)
+            except Exception:
+                ebs_encryption_default = False
+
+            try:
+                volumes = self.connector.client.ec2.describe_volumes(MaxResults=500)
+                all_vols = volumes.get("Volumes", [])
+                total_vols = len(all_vols)
+                if total_vols > 0:
+                    encrypted_vols = [v for v in all_vols if v.get("Encrypted")]
+                    gp3_vols = [v for v in all_vols if v.get("VolumeType") == "gp3"]
+                    encrypted_volume_pct = (len(encrypted_vols) / total_vols) * 100
+                    gp3_volume_pct = (len(gp3_vols) / total_vols) * 100
+                    ebs_encryption_ok = encrypted_volume_pct >= 90 or ebs_encryption_default
+                else:
+                    ebs_encryption_ok = True
+            except Exception:
+                ebs_encryption_ok = False
+
+            # Check ECS task definitions for hardened settings
+            try:
+                task_defs = self.connector.client.ecs.list_task_definitions(sort="DESC")
+                for td_arn in task_defs.get("taskDefinitionArns", [])[:20]:
+                    ecs_checked_defs += 1
+                    try:
+                        td = self.connector.client.ecs.describe_task_definition(taskDefinition=td_arn)
+                        for cdef in td.get("taskDefinition", {}).get("containerDefinitions", []):
+                            if cdef.get("readonlyRootFilesystem"):
+                                ecs_readonly_root_ok = True
+                                break
+                        if ecs_readonly_root_ok:
+                            break
+                    except Exception:
+                        continue
+            except Exception:
+                ecs_readonly_root_ok = False
+
+            # Check EKS nodegroups for hardened AMIs (Bottlerocket)
+            try:
+                clusters = self.connector.client.eks.list_clusters().get("clusters", [])
+                for cluster_name in clusters:
+                    nodegroups = self.connector.client.eks.list_nodegroups(clusterName=cluster_name).get("nodegroups", [])
+                    for ng in nodegroups:
+                        eks_nodegroups_checked += 1
+                        try:
+                            ng_desc = self.connector.client.eks.describe_nodegroup(clusterName=cluster_name, nodegroupName=ng)
+                            ami_type = ng_desc.get("nodegroup", {}).get("amiType", "")
+                            if "BOTTLEROCKET" in ami_type:
+                                eks_bottlerocket_ok = True
+                                break
+                        except Exception:
+                            continue
+                    if eks_bottlerocket_ok:
+                        break
+            except Exception:
+                eks_bottlerocket_ok = False
+
+            hardened_compute = sum(
+                [
+                    ec2_amis_ok,
+                    image_builder_ok,
+                    ecs_hardening_ok,
+                    lambda_hardening_ok,
+                    ebs_encryption_ok,
+                    ecs_readonly_root_ok,
+                    eks_bottlerocket_ok,
+                ]
+            )
+            bp02_status = (
+                "COMPLIANT"
+                if hardened_compute >= 3
+                else "NON_COMPLIANT"
+            )
+
             findings.append(
                 {
                     "bp": "SEC06-BP02",
-                    "status": "COMPLIANT",
-                    "finding": "AWS Config is recording resource changes",
-                    "severity": "NONE",
-                }
-            )
-        else:
-            score -= 15
-            findings.append(
-                {
-                    "bp": "SEC06-BP02",
-                    "status": "NON_COMPLIANT",
-                    "finding": "AWS Config not recording",
+                    "status": bp02_status,
+                    "finding": f"Hardened compute provisioning - {hardened_compute}/4 mechanisms in place",
                     "severity": "HIGH",
-                    "remediation": "Enable AWS Config recorder and aggregator",
+                    "risk": "Provisioning from uncontrolled/non-hardened images introduces security vulnerabilities",
+                    "remediation": "Implement golden AMIs, AWS Image Builder pipelines, ECS hardening baselines, and Lambda security controls",
+                    "evidence": (
+                        f"EC2 AMIs: {ami_status} | Image Builder: {ib_status} | ECS: {ecs_status} | Lambda: {lambda_status} | "
+                        f"EBS encryption default: {ebs_encryption_default} | Encrypted volumes: {encrypted_volume_pct:.0f}% | "
+                        f"gp3 volumes: {gp3_volume_pct:.0f}% | ECS read-only rootfs: {ecs_readonly_root_ok} (checked {ecs_checked_defs}) | "
+                        f"EKS Bottlerocket nodegroups: {eks_bottlerocket_ok} (checked {eks_nodegroups_checked})"
+                    ),
                 }
             )
 
-        # SEC06-BP03: GuardDuty - Threat detection
-        if guardduty_detectors and len(guardduty_detectors) > 0:
+        except Exception as e:
+            logger.error(f"[SEC06-BP02] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC06-BP02",
+                    "Unable to evaluate hardened compute provisioning",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC06-BP03: Reducir la gestión manual y el acceso interactivo
+        logger.info("[SEC06-BP03] Evaluating reduction of manual access...")
+        try:
+            session_manager_ok = False
+            ssm_run_command_ok = False
+            codedeploy_ok = False
+            serverless_ok = False
+            ssm_managed_coverage_ok = False
+            ecs_exec_ok = False
+            eks_private_endpoint_ok = False
+            managed_instances = 0
+            running_instances = 0
+            ecs_exec_services = 0
+            ecs_services_checked = 0
+            eks_clusters_checked = 0
+
+            # Check Systems Manager Session Manager
+            try:
+                # Check if Session Manager document exists and is enabled
+                docs = self.connector.client.ssm.list_documents(
+                    Filters=[{"Key": "DocumentType", "Values": ["Session"]}]
+                )
+                session_manager_ok = (
+                    len(docs.get("DocumentIdentifiers", [])) > 0
+                )
+                sm_status = (
+                    "Systems Manager Session Manager configured"
+                    if session_manager_ok
+                    else "Session Manager not configured"
+                )
+            except Exception:
+                sm_status = "Unable to verify Session Manager"
+
+            # Check Systems Manager Run Command usage
+            try:
+                commands = self.connector.client.ssm.list_command_invocations()
+                ssm_run_command_ok = (
+                    len(commands.get("CommandInvocations", [])) > 0
+                )
+                run_cmd_status = (
+                    f"{len(commands.get('CommandInvocations', []))} Run Command invocations detected"
+                    if ssm_run_command_ok
+                    else "Run Command not in use"
+                )
+            except Exception:
+                run_cmd_status = "Unable to verify Run Command"
+
+            # Check CodeDeploy for automated deployments
+            try:
+                applications = self.connector.client.codedeploy.list_applications()
+                codedeploy_ok = (
+                    len(applications.get("applications", [])) > 0
+                )
+                cd_status = (
+                    f"{len(applications.get('applications', []))} CodeDeploy applications"
+                    if codedeploy_ok
+                    else "CodeDeploy not configured"
+                )
+            except Exception:
+                cd_status = "Unable to verify CodeDeploy"
+
+            # Check Lambda for serverless automation
+            try:
+                lambdas = self.connector.client.awslambda.list_functions()
+                automation_lambdas = [
+                    f
+                    for f in lambdas.get("Functions", [])
+                    if any(
+                        keyword in f.get("FunctionName", "").lower()
+                        for keyword in [
+                            "automat",
+                            "deploy",
+                            "respons",
+                            "handler",
+                        ]
+                    )
+                ]
+                serverless_ok = len(automation_lambdas) > 0
+                lambda_auto_status = (
+                    f"{len(automation_lambdas)} Lambda automation functions"
+                    if serverless_ok
+                    else "No serverless automation detected"
+                )
+            except Exception:
+                lambda_auto_status = "Unable to verify Lambda automation"
+
+            # Check SSM managed instance coverage (reduce interactive access)
+            try:
+                ec2_instances = self.connector.client.ec2.describe_instances(
+                    Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
+                )
+                running_instances = sum(
+                    len(r.get("Instances", [])) for r in ec2_instances.get("Reservations", [])
+                )
+            except Exception:
+                running_instances = 0
+
+            try:
+                ssm_instances = self.connector.client.ssm.describe_instance_information()
+                managed_instances = len(ssm_instances.get("InstanceInformationList", []))
+                if running_instances == 0:
+                    ssm_managed_coverage_ok = True
+                else:
+                    ssm_managed_coverage_ok = (managed_instances / running_instances) >= 0.5
+            except Exception:
+                ssm_managed_coverage_ok = False
+
+            # Check ECS Exec usage
+            try:
+                clusters = self.connector.client.ecs.list_clusters().get("clusterArns", [])
+                for cluster_arn in clusters[:5]:
+                    services = self.connector.client.ecs.list_services(cluster=cluster_arn).get("serviceArns", [])
+                    for svc_arn in services[:20]:
+                        ecs_services_checked += 1
+                        try:
+                            svc = self.connector.client.ecs.describe_services(cluster=cluster_arn, services=[svc_arn])
+                            for s in svc.get("services", []):
+                                if s.get("enableExecuteCommand"):
+                                    ecs_exec_services += 1
+                                    ecs_exec_ok = True
+                                    break
+                        except Exception:
+                            continue
+                    if ecs_exec_ok:
+                        break
+            except Exception:
+                ecs_exec_ok = False
+
+            # Check EKS private endpoint access
+            try:
+                clusters = self.connector.client.eks.list_clusters().get("clusters", [])
+                for cluster_name in clusters:
+                    eks_clusters_checked += 1
+                    try:
+                        cluster = self.connector.client.eks.describe_cluster(name=cluster_name)
+                        vpc_cfg = cluster.get("cluster", {}).get("resourcesVpcConfig", {})
+                        if vpc_cfg.get("endpointPublicAccess") is False:
+                            eks_private_endpoint_ok = True
+                            break
+                    except Exception:
+                        continue
+            except Exception:
+                eks_private_endpoint_ok = False
+
+            manual_access_reduction = sum(
+                [
+                    session_manager_ok,
+                    ssm_run_command_ok,
+                    codedeploy_ok,
+                    serverless_ok,
+                    ssm_managed_coverage_ok,
+                    ecs_exec_ok,
+                    eks_private_endpoint_ok,
+                ]
+            )
+            bp03_status = (
+                "COMPLIANT"
+                if manual_access_reduction >= 4
+                else "NON_COMPLIANT"
+                if manual_access_reduction == 0
+                else "PARTIAL"
+            )
+
             findings.append(
                 {
                     "bp": "SEC06-BP03",
-                    "status": "COMPLIANT",
-                    "finding": f"{len(guardduty_detectors)} GuardDuty detectors enabled",
-                    "severity": "NONE",
+                    "status": bp03_status,
+                    "finding": f"Reduced manual access - {manual_access_reduction}/4 automation mechanisms in place",
+                    "severity": "HIGH",
+                    "risk": "Interactive access and manual configuration increase human error risk and compliance violations",
+                    "remediation": "Implement Session Manager, Run Command, CodeDeploy, and Lambda-based automation to eliminate manual access",
+                    "evidence": (
+                        f"Session Manager: {sm_status} | Run Command: {run_cmd_status} | CodeDeploy: {cd_status} | "
+                        f"Lambda: {lambda_auto_status} | SSM managed instances: {managed_instances}/{running_instances} | "
+                        f"ECS Exec enabled services: {ecs_exec_services} (checked {ecs_services_checked}) | "
+                        f"EKS private endpoint: {eks_private_endpoint_ok} (checked {eks_clusters_checked})"
+                    ),
                 }
             )
-        else:
+
+        except Exception as e:
+            logger.error(f"[SEC06-BP03] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC06-BP03",
+                    "Unable to evaluate reduction of manual access",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # SEC06-BP04: Validar la integridad del software
+        logger.info("[SEC06-BP04] Evaluating software integrity validation...")
+        try:
+            aws_signer_ok = False
+            lambda_signing_ok = False
+            ecr_signing_ok = False
+
+            # Check AWS Signer
+            try:
+                signing_profiles = self.connector.client.signer.list_signing_profiles()
+                aws_signer_ok = (
+                    len(signing_profiles.get("profiles", [])) > 0
+                )
+                signer_status = (
+                    f"{len(signing_profiles.get('profiles', []))} signing profiles configured"
+                    if aws_signer_ok
+                    else "AWS Signer not configured"
+                )
+            except Exception:
+                signer_status = "Unable to verify AWS Signer"
+
+            # Check Lambda code signing
+            try:
+                lambdas = self.connector.client.awslambda.list_functions()
+                signed_lambdas = [
+                    f
+                    for f in lambdas.get("Functions", [])
+                    if f.get("CodeSigningConfig")
+                ]
+                lambda_signing_ok = len(signed_lambdas) > 0
+                lambda_sign_status = (
+                    f"{len(signed_lambdas)}/{len(lambdas.get('Functions', []))} Lambda functions with code signing"
+                    if signed_lambdas
+                    else "Lambda code signing not enabled"
+                )
+            except Exception:
+                lambda_sign_status = "Unable to verify Lambda signing"
+
+            # Check ECR image signing
+            try:
+                repos = self.connector.client.ecr.describe_repositories()
+                repos_with_signing = [
+                    r
+                    for r in repos.get("repositories", [])
+                    if r.get("encryptionConfiguration", {}).get("encryptionType") == "KMS"
+                ]
+                ecr_signing_ok = len(repos_with_signing) > 0
+                ecr_sign_status = (
+                    f"{len(repos_with_signing)} ECR repos with content trust/encryption"
+                    if repos_with_signing
+                    else "ECR image signing not configured"
+                )
+            except Exception:
+                ecr_sign_status = "Unable to verify ECR signing"
+
+            integrity_mechanisms = sum(
+                [aws_signer_ok, lambda_signing_ok, ecr_signing_ok]
+            )
+            bp04_status = (
+                "COMPLIANT"
+                if integrity_mechanisms >= 2
+                else "NON_COMPLIANT"
+            )
+
             findings.append(
                 {
-                    "bp": "SEC06-BP03",
-                    "status": "NON_COMPLIANT",
-                    "finding": "GuardDuty not enabled",
+                    "bp": "SEC06-BP04",
+                    "status": bp04_status,
+                    "finding": f"Software integrity validation - {integrity_mechanisms}/3 signing mechanisms in place",
                     "severity": "HIGH",
-                    "remediation": "Enable GuardDuty for threat detection",
+                    "risk": "Without code signing, malicious code could be injected during deployment",
+                    "remediation": "Implement AWS Signer for all artifacts, Lambda code signing, and ECR image signing/trust policies",
+                    "evidence": f"AWS Signer: {signer_status} | Lambda: {lambda_sign_status} | ECR: {ecr_sign_status}",
                 }
             )
-            score -= 10
 
-        # SEC06-BP04: SecurityHub - Centralized findings
-        findings.append(
-            {
-                "bp": "SEC06-BP04",
-                "status": "PENDING_REVIEW",
-                "finding": "Verify AWS Security Hub is enabled for centralized finding aggregation",
-                "severity": "MEDIUM",
-            }
-        )
+        except Exception as e:
+            logger.error(f"[SEC06-BP04] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC06-BP04",
+                    "Unable to evaluate software integrity validation",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
 
-        # SEC06-BP05: EventBridge/SNS - Alert routing
-        findings.append(
-            {
-                "bp": "SEC06-BP05",
-                "status": "PENDING_REVIEW",
-                "finding": "Configure EventBridge rules to route security findings to SIEM/SOC",
-                "severity": "MEDIUM",
-            }
-        )
+        # SEC06-BP05: Automatice la protección informática
+        logger.info("[SEC06-BP05] Evaluating automated compute protection...")
+        try:
+            config_compute_rules_ok = False
+            auto_scaling_ok = False
+            cloudwatch_automation_ok = False
+            security_hub_automation_ok = False
 
-        # SEC06-BP06: CloudWatch - Monitoring and alerting
-        findings.append(
-            {
-                "bp": "SEC06-BP06",
-                "status": "PENDING_REVIEW",
-                "finding": "Configure CloudWatch Logs for CloudTrail and VPC Flow Logs analysis",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check AWS Config for compute compliance
+            try:
+                config_rules = self.connector.client.config.describe_config_rules()
+                compute_rules = [
+                    r
+                    for r in config_rules.get("ConfigRules", [])
+                    if any(
+                        keyword in str(r).lower()
+                        for keyword in [
+                            "ec2",
+                            "lambda",
+                            "ecs",
+                            "compute",
+                            "instance",
+                        ]
+                    )
+                ]
+                config_compute_rules_ok = len(compute_rules) > 0
+                config_compute_status = (
+                    f"{len(compute_rules)} compute compliance rules"
+                    if compute_rules
+                    else "No compute compliance rules"
+                )
+            except Exception:
+                config_compute_status = "Unable to verify Config rules"
 
-        # SEC06-BP07: Incident response automation
-        findings.append(
-            {
-                "bp": "SEC06-BP07",
-                "status": "PENDING_REVIEW",
-                "finding": "Implement automated response workflows using Lambda/Systems Manager",
-                "severity": "MEDIUM",
-            }
-        )
+            # Check Auto Scaling
+            try:
+                asg_groups = self.connector.client.autoscaling.describe_auto_scaling_groups()
+                auto_scaling_ok = (
+                    len(asg_groups.get("AutoScalingGroups", [])) > 0
+                )
+                asg_status = (
+                    f"{len(asg_groups.get('AutoScalingGroups', []))} Auto Scaling Groups"
+                    if auto_scaling_ok
+                    else "No Auto Scaling configured"
+                )
+            except Exception:
+                asg_status = "Unable to verify Auto Scaling"
+
+            # Check CloudWatch for compute monitoring
+            try:
+                alarms = self.connector.client.cloudwatch.describe_alarms()
+                compute_alarms = [
+                    a
+                    for a in alarms.get("MetricAlarms", [])
+                    if any(
+                        keyword in a.get("MetricName", "").lower()
+                        for keyword in ["cpu", "memory", "disk", "network"]
+                    )
+                ]
+                cloudwatch_automation_ok = len(compute_alarms) > 0
+                cw_status = (
+                    f"{len(compute_alarms)} compute monitoring alarms"
+                    if compute_alarms
+                    else "No compute monitoring alarms"
+                )
+            except Exception:
+                cw_status = "Unable to verify CloudWatch alarms"
+
+            # Check Security Hub for automated response
+            try:
+                hub_info = self.connector.client.securityhub.describe_hub()
+                security_hub_automation_ok = True
+                sh_automation_status = "Security Hub configured for automated responses"
+            except Exception:
+                security_hub_automation_ok = False
+                sh_automation_status = "Security Hub not enabled"
+
+            compute_automation = sum(
+                [
+                    config_compute_rules_ok,
+                    auto_scaling_ok,
+                    cloudwatch_automation_ok,
+                    security_hub_automation_ok,
+                ]
+            )
+            bp05_status = (
+                "COMPLIANT"
+                if compute_automation >= 3
+                else "NON_COMPLIANT"
+            )
+
+            findings.append(
+                {
+                    "bp": "SEC06-BP05",
+                    "status": bp05_status,
+                    "finding": f"Automated compute protection - {compute_automation}/4 automation systems in place",
+                    "severity": "HIGH",
+                    "risk": "Without automation, compute resources cannot respond quickly to threats or scale securely",
+                    "remediation": "Implement AWS Config compute rules, Auto Scaling policies, CloudWatch monitoring/alarms, and Security Hub automation",
+                    "evidence": f"Config: {config_compute_status} | Auto Scaling: {asg_status} | CloudWatch: {cw_status} | Security Hub: {sh_automation_status}",
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"[SEC06-BP05] Error: {str(e)}", exc_info=True)
+            findings.append(
+                self._create_pending_finding(
+                    "SEC06-BP05",
+                    "Unable to evaluate automated compute protection",
+                    "HIGH",
+                    f"Error during evaluation: {str(e)[:100]}",
+                )
+            )
+
+        # Normalize all findings
+        findings = [self._normalize_finding(f) for f in findings]
 
         return {
             "question_id": "SEC06",
-            "question": "Detección e investigación de eventos",
+            "question": "Protección de infraestructura - ¿Cómo protege sus recursos computacionales?",
             "findings": findings,
             "score": self._calculate_score_from_findings(findings),
             "bps_evaluated": 5,

@@ -10,6 +10,44 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 _dynamo_resource = None
 
 
+class _AWSClientProxy:
+    """Lazy boto3 client proxy for AWSConnector."""
+
+    _SERVICE_ALIASES = {
+        "awslambda": "lambda",
+        "network_firewall": "network-firewall",
+    }
+
+    def __init__(self, connector: "AWSConnector"):
+        self._connector = connector
+        self._clients: Dict[tuple, Any] = {}
+
+    def _get_region(self) -> str:
+        return self._connector.regions[0] if self._connector.regions else "us-east-1"
+
+    def _get_client(self, service_name: str, region: str | None = None):
+        region_name = region or self._get_region()
+        cache_key = (service_name, region_name)
+        if cache_key not in self._clients:
+            self._clients[cache_key] = boto3.client(
+                service_name,
+                aws_access_key_id=self._connector.access_key_id,
+                aws_secret_access_key=self._connector.secret_access_key,
+                aws_session_token=self._connector.session_token,
+                region_name=region_name,
+                config=boto3.session.Config(
+                    connect_timeout=30,
+                    read_timeout=120,
+                    retries={"max_attempts": 3, "mode": "adaptive"},
+                ),
+            )
+        return self._clients[cache_key]
+
+    def __getattr__(self, name: str):
+        service_name = self._SERVICE_ALIASES.get(name, name)
+        return self._get_client(service_name)
+
+
 def _get_resource():
     global _dynamo_resource
     if _dynamo_resource is None:
@@ -66,6 +104,7 @@ class AWSConnector:
         self.sns_clients = {}
         self.logs_clients = {}
         self.organizations_client = None
+        self.client = _AWSClientProxy(self)
 
     def validate_credentials(self):
         """Validate AWS credentials using STS"""

@@ -13,6 +13,7 @@ SEC02_BP_SERVICES = {
             "sso",  # AWS IAM Identity Center
             "cognito",  # Amazon Cognito user pools
             "ds",  # AWS Directory Service
+            "apigateway",  # API authentication methods
             "cloudtrail",  # Authentication event logging
             "cloudwatch",  # Failed login alarms
         ],
@@ -47,6 +48,14 @@ SEC02_BP_SERVICES = {
                 "ds:fine-grained-password-policies",
                 "ds:account-lockout-policies",
                 "ds:kerberos-settings",
+            ],
+            "apigateway": [
+                "apigateway:authorizers",
+                "apigateway:iam-authentication",
+                "apigateway:cognito-authorizers",
+                "apigateway:lambda-authorizers",
+                "apigateway:usage-plans",
+                "apigateway:api-keys",
             ],
             "cloudtrail": [
                 "cloudtrail:trails",

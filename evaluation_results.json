@@ -1,0 +1,618 @@
+{
+  "success": true,
+  "evaluation": {
+    "id": "security-eval-eeeb559b-fdef-4431-9d54-5c2bf9956920",
+    "account_id": "304670146615",
+    "account_arn": "arn:aws:sts::304670146615:assumed-role/AWSReservedSSO_AdministratorAccess_27a64d2301df86a1/aamazo",
+    "regions": [
+      "us-east-2"
+    ],
+    "pillar": "Security",
+    "timestamp": "2026-02-04T09:48:33.021154",
+    "overall_score": 44.45,
+    "total_questions": 11,
+    "total_best_practices": 63,
+    "questions_evaluated": [
+      {
+        "question_id": "SEC01",
+        "question": "Fundamentos de seguridad - Operaci\u00f3n segura",
+        "findings": [
+          {
+            "bp": "SEC01-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "AWS Organizations not configured - using single account",
+            "severity": "HIGH",
+            "risk": "Single account limits isolation, blast radius control, and centralized governance",
+            "remediation": "Enable AWS Organizations and implement multi-account strategy with Control Tower, SSO, and RAM for resource sharing",
+            "evidence": "Services checked: organizations, control-tower, ram, sso, iam. No organization structure detected."
+          },
+          {
+            "bp": "SEC01-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "No account separation - single account architecture",
+            "severity": "HIGH",
+            "risk": "All workloads share same security boundary and resource limits",
+            "remediation": "Enable AWS Organizations and Control Tower to separate workloads by environment, team, or data classification",
+            "evidence": "Services checked: organizations, control-tower. Single account detected."
+          },
+          {
+            "bp": "SEC01-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "AWS account security insufficient (50% of services enabled)",
+            "severity": "HIGH",
+            "risk": "Account lacks foundational security controls for threat detection and audit",
+            "remediation": "Enable missing services: IAM strong password policy, GuardDuty, Security Hub, Config, and CloudTrail",
+            "evidence": "Services: iam, guardduty, securityhub, config, cloudtrail. Checks: \u2713 IAM password policy; \u2713 GuardDuty enabled; \u2717 AWS Config not recording; \u2717 CloudTrail not logging"
+          },
+          {
+            "bp": "SEC01-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "AWS Config not enabled - cannot validate security controls",
+            "severity": "HIGH",
+            "risk": "Without Config, compliance state cannot be continuously validated",
+            "remediation": "Enable AWS Config with Config Rules and/or Security Hub standards for control validation",
+            "evidence": "Services: config, securityhub, audit-manager. No active Config recorders found."
+          },
+          {
+            "bp": "SEC01-BP05",
+            "status": "COMPLIANT",
+            "finding": "Threat intelligence configured (GuardDuty) with 14 findings",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "Services: securityhub, guardduty, inspector, detective, trusted-advisor. Active services: GuardDuty. 1 detector(s)."
+          },
+          {
+            "bp": "SEC01-BP06",
+            "status": "NON_COMPLIANT",
+            "finding": "Security automation insufficient (0% configured)",
+            "severity": "HIGH",
+            "risk": "Cannot automate testing, responses, or remediation of security issues",
+            "remediation": "Enable Config with remediation rules, CloudTrail for audit, and consider Lambda for custom automation",
+            "evidence": "Services: config, securityhub, lambda, systems-manager. Checks: \u2717 Config not recording; \u2717 CloudTrail not logging"
+          },
+          {
+            "bp": "SEC01-BP07",
+            "status": "COMPLIANT",
+            "finding": "Risk identification enabled with GuardDuty (14 findings for prioritization)",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "Services: securityhub, guardduty, inspector, access-analyzer. GuardDuty active for threat-based risk prioritization."
+          },
+          {
+            "bp": "SEC01-BP08",
+            "status": "COMPLIANT",
+            "finding": "Security recommendations configured via GuardDuty",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "Services: securityhub, trusted-advisor, config, inspector. Active: GuardDuty. Recommendations available."
+          }
+        ],
+        "score": 37,
+        "bps_evaluated": 8
+      },
+      {
+        "question_id": "SEC02",
+        "question": "Autenticaci\u00f3n de personas y m\u00e1quinas",
+        "findings": [
+          {
+            "bp": "SEC02-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "34 users without MFA but with active access keys",
+            "severity": "CRITICAL",
+            "risk": "Compromised credentials can lead to full account access",
+            "remediation": "Enforce MFA for all users with console or API access",
+            "evidence": "andres.acevedo, devops, etraime, juan.patino, reuth.onate | No API Gateways found"
+          },
+          {
+            "bp": "SEC02-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "36 long-term access keys detected",
+            "severity": "HIGH",
+            "risk": "Long-term credentials increase risk if compromised",
+            "remediation": "Use STS AssumeRole for temporary credentials instead of long-term keys",
+            "evidence": "36 active access keys found"
+          },
+          {
+            "bp": "SEC02-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "9 of 10 secrets without automatic rotation",
+            "severity": "MEDIUM",
+            "risk": "Non-rotated secrets increase compromise window",
+            "remediation": "Enable automatic rotation for all secrets in Secrets Manager",
+            "evidence": "9 secrets need rotation enabled"
+          },
+          {
+            "bp": "SEC02-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "Centralized identity provider not fully implemented",
+            "severity": "MEDIUM",
+            "risk": "Many IAM users or VPN auth without federation indicate weak centralized identity",
+            "remediation": "Use AWS IAM Identity Center (SSO) or federate with corporate identity provider; configure Client VPN with federated/directory authentication",
+            "evidence": "IAM users: 43 | No Client VPN endpoints found"
+          },
+          {
+            "bp": "SEC02-BP05",
+            "status": "NON_COMPLIANT",
+            "finding": "35 access keys older than 90 days need rotation",
+            "severity": "MEDIUM",
+            "risk": "Old credentials increase compromise risk",
+            "remediation": "Rotate all access keys every 90 days maximum",
+            "evidence": "35 of 36 active keys are older than 90 days"
+          },
+          {
+            "bp": "SEC02-BP06",
+            "status": "NON_COMPLIANT",
+            "finding": "36 users have directly attached policies",
+            "severity": "MEDIUM",
+            "risk": "Direct policy attachment makes permission management difficult",
+            "remediation": "Use IAM groups for permission management, not direct user policies",
+            "evidence": "36 users with direct policies"
+          }
+        ],
+        "score": 0,
+        "bps_evaluated": 6
+      },
+      {
+        "question_id": "SEC03",
+        "question": "Gesti\u00f3n de identidad y acceso - Permisos",
+        "findings": [
+          {
+            "bp": "SEC03-BP01",
+            "status": "COMPLIANT",
+            "finding": "Access requirements documented through IAM policies",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "Reviewing 5 services: AWS IAM, AWS Organizations, AWS SSO (Identity Center)..."
+          },
+          {
+            "bp": "SEC03-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "2 users with overly permissive policies",
+            "severity": "CRITICAL",
+            "risk": "Overly broad permissions increase blast radius of compromised credentials",
+            "remediation": "Implement least privilege: use specific resource ARNs and actions",
+            "evidence": "2 users with admin or wildcard policies detected | EKS clusters: 0 | No API Gateways found"
+          },
+          {
+            "bp": "SEC03-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "No break-glass emergency access roles configured",
+            "severity": "CRITICAL",
+            "risk": "Lack of emergency procedures could delay critical incident response",
+            "remediation": "Create documented emergency access procedures with break-glass roles",
+            "evidence": "No roles with 'break' or 'emergency' in name detected - create break-glass role"
+          },
+          {
+            "bp": "SEC03-BP04",
+            "status": "COMPLIANT",
+            "finding": "Permission reduction process active - no long-term inactive users detected",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "All 43 active users have recent activity (< 90 days)"
+          },
+          {
+            "bp": "SEC03-BP05",
+            "status": "NON_COMPLIANT",
+            "finding": "No permission boundaries defined for organizational access control",
+            "severity": "HIGH",
+            "risk": "Missing boundaries allow unauthorized cross-account access and permission creep",
+            "remediation": "Implement IAM permission boundaries on all users/roles",
+            "evidence": "No users have permission boundaries configured - implement boundary policy"
+          },
+          {
+            "bp": "SEC03-BP06",
+            "status": "NON_COMPLIANT",
+            "finding": "41 users without MFA - proper lifecycle management needed",
+            "severity": "HIGH",
+            "risk": "Users without MFA can be easily compromised, violating lifecycle controls",
+            "remediation": "Implement automated provisioning/deprovisioning with MFA requirements",
+            "evidence": "41 users lacking MFA: andres.acevedo, andres.montoya, audit-user"
+          },
+          {
+            "bp": "SEC03-BP07",
+            "status": "COMPLIANT",
+            "finding": "No cross-account roles detected or properly isolated",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "No cross-account access roles found among 100 total roles | Public EC2: 2 | Public RDS: 0 | Internet-facing ALB/NLB: 3 | API Gateways: 0 | CloudFront distributions: 3"
+          },
+          {
+            "bp": "SEC03-BP08",
+            "status": "NON_COMPLIANT",
+            "finding": "AWS Organizations not enabled for secure intra-organization resource sharing",
+            "severity": "MEDIUM",
+            "risk": "Improperly shared resources could expose sensitive data",
+            "remediation": "Enable AWS Organizations and use AWS Resource Access Manager (RAM) for controlled resource sharing",
+            "evidence": "Organizations not configured - unable to enforce secure resource sharing policies"
+          },
+          {
+            "bp": "SEC03-BP09",
+            "status": "COMPLIANT",
+            "finding": "No third-party access roles detected or properly restricted",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "No third-party access roles found among 100 total roles"
+          }
+        ],
+        "score": 44,
+        "bps_evaluated": 9
+      },
+      {
+        "question_id": "SEC04",
+        "question": "Detecci\u00f3n - \u00bfC\u00f3mo se detectan e investigan los eventos de seguridad?",
+        "findings": [
+          {
+            "bp": "SEC04-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "Unable to evaluate logging configuration",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "Error during evaluation: unsupported operand type(s) for +: 'int' and 'list'"
+          },
+          {
+            "bp": "SEC04-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Centralized log and metric storage - 1/3 mechanisms in place",
+            "severity": "HIGH",
+            "risk": "Without centralized storage, logs may be deleted or modified after compromise",
+            "remediation": "Implement AWS Security Hub, centralized S3 bucket for logs, and organization-level CloudTrail trails",
+            "evidence": "Security Hub: NON_COMPLIANT | S3 Logs: COMPLIANT | Org Trails: NON_COMPLIANT"
+          },
+          {
+            "bp": "SEC04-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "Alert correlation and enrichment - 1/3 systems configured",
+            "severity": "HIGH",
+            "risk": "Without correlation, patterns and attack chains cannot be detected",
+            "remediation": "Enable GuardDuty, Amazon Detective, and implement EventBridge rules for threat intelligence integration",
+            "evidence": "GuardDuty: COMPLIANT | Detective: NON_COMPLIANT | EventBridge: NON_COMPLIANT"
+          },
+          {
+            "bp": "SEC04-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "Automated remediation for non-compliant resources - 1/3 systems in place",
+            "severity": "HIGH",
+            "risk": "Manual remediation delays increase exposure window and may miss violations",
+            "remediation": "Implement AWS Config auto-remediation, SSM Automation documents, and Lambda-based response functions",
+            "evidence": "Config Remediation: NON_COMPLIANT | SSM Automation: COMPLIANT | Lambda: NON_COMPLIANT"
+          }
+        ],
+        "score": 0,
+        "bps_evaluated": 4
+      },
+      {
+        "question_id": "SEC05",
+        "question": "Protecci\u00f3n de infraestructura - \u00bfC\u00f3mo protege los recursos de red?",
+        "findings": [
+          {
+            "bp": "SEC05-BP01",
+            "status": "COMPLIANT",
+            "finding": "Network layering - 2/2 VPCs with multi-tier architecture",
+            "severity": "HIGH",
+            "risk": "Flat network architectures cannot properly segregate security domains",
+            "remediation": "Implement public/private subnet segregation, Transit Gateway for hub-and-spoke, and PrivateLink for service access",
+            "evidence": "Multi-tier VPCs: 2/2 | Public subnets: 1 | Private subnets: 23 | IGW: 2 | NAT GWs: 1 | Transit Gateway: False | VPC Peering: False | PrivateLink: True | ALB/NLB internet-facing: 3 | ALB/NLB internal: 0 | VPNs (client/site-to-site): 0/0 | CloudFront: 3"
+          },
+          {
+            "bp": "SEC05-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Traffic flow control - 4/4 control mechanisms in place",
+            "severity": "CRITICAL",
+            "risk": "Without traffic control, lateral movement and data exfiltration become possible",
+            "remediation": "Implement restrictive Security Groups, Network ACLs, Network Firewall, and WAF rules",
+            "evidence": "SGs: 22/28 security groups properly restricted | Open critical SGs: 6 | NACLs: 2 custom NACLs configured (deny rules: 8) | Network Firewall: Network Firewall not configured | WAF: 1 WAF Web ACLs configured | Public route tables: 5 | Internet-facing ALBs: 3"
+          },
+          {
+            "bp": "SEC05-BP03",
+            "status": "NON_COMPLIANT",
+            "finding": "Inspection-based protection - 1/4 inspection systems active",
+            "severity": "HIGH",
+            "risk": "Without deep packet inspection, application-layer attacks (SQL injection, XSS) may bypass network controls",
+            "remediation": "Enable GuardDuty, AWS Shield Advanced, Amazon Inspector, and configure WAF rule groups",
+            "evidence": "GuardDuty: 1 GuardDuty detector(s) analyzing traffic | Shield: Unable to verify Shield | Inspector: Amazon Inspector not configured | WAF Rules: Unable to verify | N/D | CloudFront WAF: False"
+          },
+          {
+            "bp": "SEC05-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "Automated network protection - 1/3 automation mechanisms in place",
+            "severity": "HIGH",
+            "risk": "Manual network configuration is error-prone and cannot respond quickly to threats",
+            "remediation": "Implement AWS Config network rules, CloudFormation/CDK for network IaC, and EventBridge for automated responses",
+            "evidence": "Config Rules: No network compliance rules | CloudFormation: No IaC network stacks found | EventBridge: 1 network automation rules | Firewall Manager: Unable to verify | WAF Logging: WAF logging not configured"
+          }
+        ],
+        "score": 25,
+        "bps_evaluated": 4
+      },
+      {
+        "question_id": "SEC06",
+        "question": "Protecci\u00f3n de infraestructura - \u00bfC\u00f3mo protege sus recursos computacionales?",
+        "findings": [
+          {
+            "bp": "SEC06-BP01",
+            "status": "NON_COMPLIANT",
+            "finding": "Vulnerability management - 1/4 systems in place",
+            "severity": "CRITICAL",
+            "risk": "Unpatched systems are easy targets for exploitation",
+            "remediation": "Implement Amazon Inspector assessments, Patch Manager baselines, ECR image scanning, and Security Hub aggregation",
+            "evidence": "Inspector: Amazon Inspector not configured | Patch Manager: 17 patch baselines defined | ECR: ECR image scanning not configured | Security Hub: Security Hub not enabled | ECS clusters: 0 | EKS clusters: 0"
+          },
+          {
+            "bp": "SEC06-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Hardened compute provisioning - 1/4 mechanisms in place",
+            "severity": "HIGH",
+            "risk": "Provisioning from uncontrolled/non-hardened images introduces security vulnerabilities",
+            "remediation": "Implement golden AMIs, AWS Image Builder pipelines, ECS hardening baselines, and Lambda security controls",
+            "evidence": "EC2 AMIs: No hardened AMIs found | Image Builder: 1 image building pipelines | ECS: ECS hardening baseline not evident | Lambda: 0/1 Lambda functions with VPC + KMS encryption | EBS encryption default: False | Encrypted volumes: 0% | gp3 volumes: 18% | ECS read-only rootfs: False (checked 0) | EKS Bottlerocket nodegroups: False (checked 0)"
+          },
+          {
+            "bp": "SEC06-BP03",
+            "status": "PARTIAL",
+            "finding": "Reduced manual access - 3/4 automation mechanisms in place",
+            "severity": "HIGH",
+            "risk": "Interactive access and manual configuration increase human error risk and compliance violations",
+            "remediation": "Implement Session Manager, Run Command, CodeDeploy, and Lambda-based automation to eliminate manual access",
+            "evidence": "Session Manager: Systems Manager Session Manager configured | Run Command: 50 Run Command invocations detected | CodeDeploy: CodeDeploy not configured | Lambda: No serverless automation detected | SSM managed instances: 8/8 | ECS Exec enabled services: 0 (checked 0) | EKS private endpoint: False (checked 0)"
+          },
+          {
+            "bp": "SEC06-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "Software integrity validation - 0/3 signing mechanisms in place",
+            "severity": "HIGH",
+            "risk": "Without code signing, malicious code could be injected during deployment",
+            "remediation": "Implement AWS Signer for all artifacts, Lambda code signing, and ECR image signing/trust policies",
+            "evidence": "AWS Signer: AWS Signer not configured | Lambda: Lambda code signing not enabled | ECR: ECR image signing not configured"
+          },
+          {
+            "bp": "SEC06-BP05",
+            "status": "NON_COMPLIANT",
+            "finding": "Automated compute protection - 2/4 automation systems in place",
+            "severity": "HIGH",
+            "risk": "Without automation, compute resources cannot respond quickly to threats or scale securely",
+            "remediation": "Implement AWS Config compute rules, Auto Scaling policies, CloudWatch monitoring/alarms, and Security Hub automation",
+            "evidence": "Config: No compute compliance rules | Auto Scaling: 2 Auto Scaling Groups | CloudWatch: 10 compute monitoring alarms | Security Hub: Security Hub not enabled"
+          }
+        ],
+        "score": 0,
+        "bps_evaluated": 5
+      },
+      {
+        "question_id": "SEC07",
+        "question": "Clasificaci\u00f3n de datos",
+        "findings": [
+          {
+            "bp": "SEC07-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "27 S3 buckets found - verify data classification tags",
+            "severity": "MEDIUM",
+            "risk": "Unclassified data cannot be properly protected",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "27 buckets require classification review"
+          },
+          {
+            "bp": "SEC07-BP02",
+            "status": "COMPLIANT",
+            "finding": "All 27 S3 buckets have encryption enabled",
+            "severity": "NONE",
+            "risk": "N/D",
+            "remediation": "N/D",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC07-BP03",
+            "status": "PENDING_REVIEW",
+            "finding": "Verify Amazon Macie is enabled for automated data discovery and classification",
+            "severity": "MEDIUM",
+            "risk": "Manual classification is error-prone and incomplete",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC07-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "24 of 27 buckets without versioning",
+            "severity": "MEDIUM",
+            "risk": "Data can be permanently lost or deleted without versioning",
+            "remediation": "Enable versioning on all S3 buckets to protect against accidental deletion",
+            "evidence": "24 buckets need versioning"
+          }
+        ],
+        "score": 50,
+        "bps_evaluated": 4
+      },
+      {
+        "question_id": "SEC08",
+        "question": "Protecci\u00f3n de datos en reposo",
+        "findings": [
+          {
+            "bp": "SEC08-BP01",
+            "status": "COMPLIANT",
+            "finding": "12 KMS keys configured for encryption",
+            "severity": "NONE",
+            "evidence": "KMS keys in use for encryption management",
+            "risk": "N/D",
+            "remediation": "N/D"
+          },
+          {
+            "bp": "SEC08-BP02",
+            "status": "NON_COMPLIANT",
+            "finding": "Unencrypted resources: 11 EBS volumes",
+            "severity": "CRITICAL",
+            "risk": "Unencrypted data at rest can be accessed if storage is compromised",
+            "remediation": "Enable encryption at rest for all S3 buckets, EBS volumes, and RDS instances",
+            "evidence": "11 EBS volumes"
+          },
+          {
+            "bp": "SEC08-BP03",
+            "status": "PENDING_REVIEW",
+            "finding": "Verify AWS Config rules enforce encryption requirements automatically",
+            "severity": "MEDIUM",
+            "risk": "Manual enforcement is unreliable and slow",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC08-BP04",
+            "status": "NON_COMPLIANT",
+            "finding": "7 of 27 S3 buckets without public access block",
+            "severity": "HIGH",
+            "risk": "Buckets can be accidentally made public",
+            "remediation": "Enable S3 Block Public Access for all buckets",
+            "evidence": "admintrainme, cf-templates-8dery2efaxdr-us-east-2, elasticbeanstalk-us-east-1-304670146615, elasticbeanstalk-us-east-2-304670146615, live-transmission-logs"
+          }
+        ],
+        "score": 33,
+        "bps_evaluated": 4
+      },
+      {
+        "question_id": "SEC09",
+        "question": "Protecci\u00f3n de datos en tr\u00e1nsito",
+        "findings": [
+          {
+            "bp": "SEC09-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "Verify AWS Certificate Manager (ACM) is used for SSL/TLS certificates",
+            "severity": "MEDIUM",
+            "risk": "Self-managed certificates are difficult to rotate and expire",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC09-BP02",
+            "status": "PENDING_REVIEW",
+            "finding": "Verify 27 S3 buckets enforce HTTPS-only access via bucket policy",
+            "severity": "HIGH",
+            "risk": "Unencrypted data in transit can be intercepted",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "27 buckets require HTTPS enforcement verification"
+          },
+          {
+            "bp": "SEC09-BP03",
+            "status": "PENDING_REVIEW",
+            "finding": "2 VPC(s) found - verify VPN or TLS used for all network communications",
+            "severity": "HIGH",
+            "risk": "Unauthenticated network traffic can be spoofed or intercepted",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "2 VPCs require network authentication review"
+          }
+        ],
+        "score": 100,
+        "bps_evaluated": 3
+      },
+      {
+        "question_id": "SEC10",
+        "question": "Anticipaci\u00f3n, respuesta y recuperaci\u00f3n ante incidentes",
+        "findings": [
+          {
+            "bp": "SEC10-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "Establish and test incident response plan",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC10-BP02",
+            "status": "PENDING_REVIEW",
+            "finding": "Enable AWS Backup for automated data protection",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC10-BP03",
+            "status": "PENDING_REVIEW",
+            "finding": "Implement multi-region backup strategy",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC10-BP04",
+            "status": "PENDING_REVIEW",
+            "finding": "Test disaster recovery procedures regularly",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC10-BP05",
+            "status": "PENDING_REVIEW",
+            "finding": "Define RTO and RPO targets for critical workloads",
+            "severity": "MEDIUM",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC10-BP06",
+            "status": "PENDING_REVIEW",
+            "finding": "Implement automated incident response workflows",
+            "severity": "MEDIUM",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          }
+        ],
+        "score": 100,
+        "bps_evaluated": 8
+      },
+      {
+        "question_id": "SEC11",
+        "question": "Cumplimiento normativo y auditor\u00eda",
+        "findings": [
+          {
+            "bp": "SEC11-BP01",
+            "status": "PENDING_REVIEW",
+            "finding": "Use AWS Artifact to access compliance reports and agreements",
+            "severity": "MEDIUM",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC11-BP02",
+            "status": "PENDING_REVIEW",
+            "finding": "Use AWS Config Rules to verify compliance with standards (HIPAA, PCI-DSS, etc.)",
+            "severity": "MEDIUM",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          },
+          {
+            "bp": "SEC11-BP03",
+            "status": "PENDING_REVIEW",
+            "finding": "Implement audit logging and maintain immutable logs for compliance",
+            "severity": "HIGH",
+            "risk": "N/D",
+            "remediation": "Requiere verificaci\u00f3n manual",
+            "evidence": "N/D"
+          }
+        ],
+        "score": 100,
+        "bps_evaluated": 8
+      }
+    ]
+  },
+  "summary": {
+    "total_findings": 56,
+    "critical": 6,
+    "high": 27,
+    "medium": 14,
+    "score": 44.45,
+    "bps_evaluated": 63
+  }
+}
