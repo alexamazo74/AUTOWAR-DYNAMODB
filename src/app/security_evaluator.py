@@ -448,7 +448,6 @@ class SecurityPillarEvaluator:
         compliant_count = 0
         non_compliant_count = 0
         pending_count = 0
-        total_bps = 8
         primary_region = (
             self.connector.regions[0] if self.connector.regions else "us-east-1"
         )
@@ -1258,7 +1257,7 @@ class SecurityPillarEvaluator:
                     {
                         "bp": "SEC02-BP04",
                         "status": "COMPLIANT",
-                        "finding": f"Centralized identity provider likely in place",
+                        "finding": "Centralized identity provider likely in place",
                         "severity": "NONE",
                         "risk": "N/D",
                         "remediation": "N/D",
@@ -1942,7 +1941,7 @@ class SecurityPillarEvaluator:
             cloudtrail_status = (
                 "COMPLIANT" if cloudtrail_ok else "NON_COMPLIANT"
             )
-            cloudtrail_evidence = (
+            (
                 f"{len([t for t in trails if t.get('is_logging')])} logging trails found with multi-region support"
                 if trails
                 else "No CloudTrail trails configured"
@@ -1956,14 +1955,11 @@ class SecurityPillarEvaluator:
                 cloudwatch_status = (
                     "COMPLIANT" if cloudwatch_logs_ok else "NON_COMPLIANT"
                 )
-                cloudwatch_evidence = (
-                    f"{log_group_count} CloudWatch Log Groups configured"
-                )
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking CloudWatch Logs: {str(e)}")
                 cloudwatch_logs_ok = False
                 cloudwatch_status = "PENDING_REVIEW"
-                cloudwatch_evidence = f"Unable to verify: {str(e)[:50]}"
+                f"Unable to verify: {str(e)[:50]}"
 
             # Check AWS Config
             try:
@@ -1972,16 +1968,11 @@ class SecurityPillarEvaluator:
                 config_state = (
                     "COMPLIANT" if config_ok else "NON_COMPLIANT"
                 )
-                config_evidence = (
-                    "AWS Config recording enabled"
-                    if config_ok
-                    else "AWS Config not recording"
-                )
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking AWS Config: {str(e)}")
                 config_ok = False
                 config_state = "PENDING_REVIEW"
-                config_evidence = f"Unable to verify: {str(e)[:50]}"
+                f"Unable to verify: {str(e)[:50]}"
 
             # Check VPC Flow Logs
             try:
@@ -2005,13 +1996,10 @@ class SecurityPillarEvaluator:
                 vpc_flow_status = (
                     "COMPLIANT" if vpc_flow_logs_ok else "NON_COMPLIANT"
                 )
-                vpc_flow_evidence = (
-                    f"{vpcs_with_flow_logs}/{vpc_count} VPCs have Flow Logs configured"
-                )
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking VPC Flow Logs: {str(e)}")
                 vpc_flow_status = "PENDING_REVIEW"
-                vpc_flow_evidence = f"Unable to verify: {str(e)[:50]}"
+                f"Unable to verify: {str(e)[:50]}"
 
             # Overall BP01 status
             services_enabled = sum(
@@ -2057,14 +2045,12 @@ class SecurityPillarEvaluator:
 
             # Check Security Hub
             try:
-                sh_hub = self.connector.client.securityhub.describe_hub()
+                self.connector.client.securityhub.describe_hub()
                 security_hub_ok = True
                 sh_status = "COMPLIANT"
-                sh_evidence = "AWS Security Hub enabled"
             except Exception:
                 security_hub_ok = False
                 sh_status = "NON_COMPLIANT"
-                sh_evidence = "AWS Security Hub not enabled"
 
             # Check for centralized S3 logging bucket
             try:
@@ -2078,7 +2064,7 @@ class SecurityPillarEvaluator:
                 s3_status = (
                     "COMPLIANT" if centralized_storage_ok else "NON_COMPLIANT"
                 )
-                s3_evidence = (
+                (
                     f"{len(log_buckets)} S3 buckets for log storage identified"
                     if log_buckets
                     else "No dedicated log storage buckets found"
@@ -2086,7 +2072,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 centralized_storage_ok = False
                 s3_status = "NON_COMPLIANT"
-                s3_evidence = "Unable to verify S3 log storage"
 
             # Check for organization-level trails
             try:
@@ -2095,15 +2080,9 @@ class SecurityPillarEvaluator:
                 org_status = (
                     "COMPLIANT" if org_trails_ok else "NON_COMPLIANT"
                 )
-                org_evidence = (
-                    "Organization-level CloudTrail trail configured"
-                    if org_trails_ok
-                    else "No organization-level trails found"
-                )
             except Exception:
                 org_trails_ok = False
                 org_status = "NON_COMPLIANT"
-                org_evidence = "Unable to verify organization trails"
 
             services_centralized = sum(
                 [security_hub_ok, centralized_storage_ok, org_trails_ok]
@@ -2151,7 +2130,7 @@ class SecurityPillarEvaluator:
                 gd_status = (
                     "COMPLIANT" if guardduty_ok else "NON_COMPLIANT"
                 )
-                gd_evidence = (
+                (
                     f"{len(detectors)} GuardDuty detector(s) enabled"
                     if detectors
                     else "GuardDuty not enabled"
@@ -2159,7 +2138,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 guardduty_ok = False
                 gd_status = "NON_COMPLIANT"
-                gd_evidence = "Unable to verify GuardDuty"
 
             # Check Detective
             try:
@@ -2168,7 +2146,7 @@ class SecurityPillarEvaluator:
                 detective_status = (
                     "COMPLIANT" if detective_ok else "NON_COMPLIANT"
                 )
-                detective_evidence = (
+                (
                     f"{len(graphs.get('GraphList', []))} Detective graph(s) enabled"
                     if graphs.get("GraphList")
                     else "Amazon Detective not enabled"
@@ -2176,7 +2154,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 detective_ok = False
                 detective_status = "NON_COMPLIANT"
-                detective_evidence = "Unable to verify Detective"
 
             # Check EventBridge for correlation
             try:
@@ -2191,7 +2168,7 @@ class SecurityPillarEvaluator:
                 eb_status = (
                     "COMPLIANT" if eventbridge_ok else "NON_COMPLIANT"
                 )
-                eb_evidence = (
+                (
                     f"{len(security_rules)} security-related EventBridge rules configured"
                     if security_rules
                     else "No security event routing rules found"
@@ -2199,7 +2176,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 eventbridge_ok = False
                 eb_status = "NON_COMPLIANT"
-                eb_evidence = "Unable to verify EventBridge rules"
 
             services_correlation = sum([guardduty_ok, detective_ok, eventbridge_ok])
             bp03_status = (
@@ -2251,7 +2227,7 @@ class SecurityPillarEvaluator:
                 config_rem_status = (
                     "COMPLIANT" if config_remediation_ok else "NON_COMPLIANT"
                 )
-                config_rem_evidence = (
+                (
                     f"{len(rules_with_remediation)} AWS Config rules with auto-remediation"
                     if rules_with_remediation
                     else "No auto-remediation rules configured"
@@ -2259,7 +2235,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 config_remediation_ok = False
                 config_rem_status = "NON_COMPLIANT"
-                config_rem_evidence = "Unable to verify Config remediation"
 
             # Check Systems Manager Automation
             try:
@@ -2273,7 +2248,7 @@ class SecurityPillarEvaluator:
                 ssm_status = (
                     "COMPLIANT" if ssm_automation_ok else "NON_COMPLIANT"
                 )
-                ssm_evidence = (
+                (
                     f"{len(automation_docs)} SSM Automation documents defined"
                     if automation_docs
                     else "No automation documents found"
@@ -2281,7 +2256,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 ssm_automation_ok = False
                 ssm_status = "NON_COMPLIANT"
-                ssm_evidence = "Unable to verify SSM Automation"
 
             # Check Lambda for remediation functions
             try:
@@ -2296,7 +2270,7 @@ class SecurityPillarEvaluator:
                 lambda_status = (
                     "COMPLIANT" if lambda_remediation_ok else "NON_COMPLIANT"
                 )
-                lambda_evidence = (
+                (
                     f"{len(remediation_lambdas)} Lambda remediation functions"
                     if remediation_lambdas
                     else "No Lambda remediation functions found"
@@ -2304,7 +2278,6 @@ class SecurityPillarEvaluator:
             except Exception:
                 lambda_remediation_ok = False
                 lambda_status = "NON_COMPLIANT"
-                lambda_evidence = "Unable to verify Lambda remediation"
 
             remediation_mechanisms = sum(
                 [config_remediation_ok, ssm_automation_ok, lambda_remediation_ok]
@@ -2556,7 +2529,7 @@ class SecurityPillarEvaluator:
             # Check NACLs
             try:
                 nacls = self.connector.client.ec2.describe_network_acls()
-                total_nacls = len(nacls.get("NetworkAcls", []))
+                len(nacls.get("NetworkAcls", []))
                 # Count non-default NACLs as configured
                 nacls_configured = sum(
                     1
@@ -2964,7 +2937,7 @@ class SecurityPillarEvaluator:
     def evaluate_sec06(self) -> Dict[str, Any]:
         """SEC06: Protección de infraestructura - ¿Cómo protege sus recursos computacionales? (5 BPs)"""
         findings = []
-        primary_region = (
+        (
             self.connector.regions[0] if self.connector.regions else "us-east-1"
         )
 
@@ -3025,7 +2998,7 @@ class SecurityPillarEvaluator:
 
             # Check Security Hub for vulnerability findings
             try:
-                sh_hub = self.connector.client.securityhub.describe_hub()
+                self.connector.client.securityhub.describe_hub()
                 security_hub_vuln_ok = True
                 sh_vuln_status = "Security Hub configured for vulnerability aggregation"
             except Exception:
@@ -3615,7 +3588,7 @@ class SecurityPillarEvaluator:
 
             # Check Security Hub for automated response
             try:
-                hub_info = self.connector.client.securityhub.describe_hub()
+                self.connector.client.securityhub.describe_hub()
                 security_hub_automation_ok = True
                 sh_automation_status = "Security Hub configured for automated responses"
             except Exception:
