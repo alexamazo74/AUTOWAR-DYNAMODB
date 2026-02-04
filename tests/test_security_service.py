@@ -100,9 +100,7 @@ class TestSecurityService:
         result = security_service.get_security_evaluation("eval-1", "SEC01")
         assert result is None
 
-    def test_list_security_evaluations_for_evaluation(
-        self, security_service, dynamodb_resource
-    ):
+    def test_list_security_evaluations_for_evaluation(self, security_service, dynamodb_resource):
         # Put test items
         table = dynamodb_resource.Table("autowar-waf-questions")
         table.put_item(

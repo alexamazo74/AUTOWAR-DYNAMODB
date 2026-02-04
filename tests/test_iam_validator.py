@@ -16,9 +16,7 @@ def test_iam_password_policy_and_root_mfa(monkeypatch):
 
     import src.app.validators.iam_validators as imod
 
-    monkeypatch.setattr(
-        imod, "boto3", type("B", (), {"client": lambda service_name: FakeIAM()})
-    )
+    monkeypatch.setattr(imod, "boto3", type("B", (), {"client": lambda service_name: FakeIAM()}))
 
     pwd_validator = imod.IAMPasswordPolicyValidator()
     res1 = pwd_validator.run(name=None)

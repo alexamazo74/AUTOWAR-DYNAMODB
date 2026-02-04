@@ -42,9 +42,7 @@ def test_assume_role_refresh(monkeypatch):
     import src.lambdas.credentials_maintenance as lam
 
     # monkeypatch dynamo resource
-    monkeypatch.setattr(
-        lam, "dynamo", type("D", (), {"Table": lambda name: fake_table})
-    )
+    monkeypatch.setattr(lam, "dynamo", type("D", (), {"Table": lambda name: fake_table}))
 
     # monkeypatch assume_role from credentials_manager
     def fake_assume(role_arn, session_name, external_id=None, duration_seconds=3600):

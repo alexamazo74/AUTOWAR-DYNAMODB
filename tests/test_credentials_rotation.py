@@ -60,9 +60,7 @@ def test_credentials_maintenance_rotation(monkeypatch):
             self.keys = []
 
         def create_access_key(self, UserName):
-            ak = {
-                "AccessKey": {"AccessKeyId": "NEWKEY", "SecretAccessKey": "NEWSECRET"}
-            }
+            ak = {"AccessKey": {"AccessKeyId": "NEWKEY", "SecretAccessKey": "NEWSECRET"}}
             self.keys.append({"AccessKeyId": "NEWKEY"})
             return ak
 

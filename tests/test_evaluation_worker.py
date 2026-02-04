@@ -11,11 +11,7 @@ def test_evaluation_worker_processes_message(monkeypatch):
         "region": "us-east-1",
     }
 
-    event = {
-        "Records": [
-            {"body": json.dumps({"evaluationId": "ev-1", "item": evaluation_item})}
-        ]
-    }
+    event = {"Records": [{"body": json.dumps({"evaluationId": "ev-1", "item": evaluation_item})}]}
 
     # Fake dynamo tables
     class FakeTable:
@@ -47,9 +43,7 @@ def test_evaluation_worker_processes_message(monkeypatch):
             (),
             {
                 "Table": lambda name: (
-                    fake_eval_table
-                    if name == "autowar-evaluations"
-                    else fake_evidence_table
+                    fake_eval_table if name == "autowar-evaluations" else fake_evidence_table
                 )
             },
         ),

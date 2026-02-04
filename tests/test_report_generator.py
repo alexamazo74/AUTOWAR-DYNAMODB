@@ -19,9 +19,7 @@ def test_report_generator_puts_report_and_updates_table(monkeypatch):
                 }
             }
 
-        def update_item(
-            self, Key=None, UpdateExpression=None, ExpressionAttributeValues=None
-        ):
+        def update_item(self, Key=None, UpdateExpression=None, ExpressionAttributeValues=None):
             self.items[Key["id"]] = ExpressionAttributeValues
 
     class FakeS3:
@@ -65,9 +63,7 @@ def test_report_generator_puts_report_and_updates_table(monkeypatch):
     monkeypatch.setattr(
         rg,
         "httpx",
-        type(
-            "H", (), {"post": lambda url, json, timeout: FakeResp(b"%PDF-1.4 fakepdf")}
-        ),
+        type("H", (), {"post": lambda url, json, timeout: FakeResp(b"%PDF-1.4 fakepdf")}),
     )
 
     res = rg.handler(event, {})
