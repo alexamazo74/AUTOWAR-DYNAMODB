@@ -15,7 +15,7 @@ SEC04_SERVICES = {
             "AWS X-Ray",
             "Application Load Balancer",
             "Amazon RDS",
-            "AWS Lambda"
+            "AWS Lambda",
         ],
         "resources": [
             "Management events enabled",
@@ -25,8 +25,8 @@ SEC04_SERVICES = {
             "Log groups with retention policies",
             "Configuration recording",
             "VPC Flow Logs (VPC, Subnet, ENI level)",
-            "Service tracing and sampling"
-        ]
+            "Service tracing and sampling",
+        ],
     },
     "SEC04-BP02": {
         "name": "Capture logs, findings, and metrics in standardized locations",
@@ -37,7 +37,7 @@ SEC04_SERVICES = {
             "Amazon Kinesis",
             "AWS Organizations",
             "Amazon OpenSearch Service",
-            "AWS Glue"
+            "AWS Glue",
         ],
         "resources": [
             "Security standards enabled",
@@ -46,8 +46,8 @@ SEC04_SERVICES = {
             "Organization trails",
             "Finding format standardization",
             "Cross-account log aggregation",
-            "Lifecycle policies for logs"
-        ]
+            "Lifecycle policies for logs",
+        ],
     },
     "SEC04-BP03": {
         "name": "Correlate and enrich security alerts",
@@ -58,7 +58,7 @@ SEC04_SERVICES = {
             "Amazon EventBridge",
             "AWS Lambda",
             "Amazon DynamoDB",
-            "Amazon SNS"
+            "Amazon SNS",
         ],
         "resources": [
             "Threat detection enabled",
@@ -67,8 +67,8 @@ SEC04_SERVICES = {
             "Custom insights for patterns",
             "Event pattern matching",
             "Threat intelligence storage",
-            "Alert notification topics"
-        ]
+            "Alert notification topics",
+        ],
     },
     "SEC04-BP04": {
         "name": "Initiate remediation for non-compliant resources",
@@ -78,7 +78,7 @@ SEC04_SERVICES = {
             "AWS Security Hub",
             "AWS Lambda",
             "Amazon EventBridge",
-            "AWS Step Functions"
+            "AWS Step Functions",
         ],
         "resources": [
             "Auto-remediation rules",
@@ -86,9 +86,9 @@ SEC04_SERVICES = {
             "Custom actions",
             "Remediation workflows",
             "Error handling states",
-            "Execution history"
-        ]
-    }
+            "Execution history",
+        ],
+    },
 }
 
 # SEC05: Network Protection - Services and resources to review
@@ -106,7 +106,7 @@ SEC05_SERVICES = {
             "Amazon ECS",
             "Amazon EKS",
             "Elastic Load Balancing (ALB/NLB)",
-            "Amazon CloudFront"
+            "Amazon CloudFront",
         ],
         "resources": [
             "Multi-tier architecture",
@@ -120,8 +120,8 @@ SEC05_SERVICES = {
             "ALB/NLB scheme (internet-facing/internal)",
             "CloudFront origin protection (OAC/OAI)",
             "Service discovery namespaces",
-            "ECS/EKS VPC and service networking"
-        ]
+            "ECS/EKS VPC and service networking",
+        ],
     },
     "SEC05-BP02": {
         "name": "Control traffic flow within network layers",
@@ -132,9 +132,8 @@ SEC05_SERVICES = {
             "Route Tables",
             "NAT Gateways",
             "AWS WAF",
-            "Elastic Load Balancing (ALB/NLB)"
-            "Amazon ECS",
-            "Amazon EKS"
+            "Elastic Load Balancing (ALB/NLB)" "Amazon ECS",
+            "Amazon EKS",
         ],
         "resources": [
             "Inbound/outbound rules",
@@ -149,8 +148,8 @@ SEC05_SERVICES = {
             "Egress filtering and NAT routing",
             "VPN authorization rules and route propagation",
             "ECS/EKS task/pod security group controls",
-            "Kubernetes network policies"
-        ]
+            "Kubernetes network policies",
+        ],
     },
     "SEC05-BP03": {
         "name": "Implement inspection-based protection",
@@ -163,7 +162,7 @@ SEC05_SERVICES = {
             "Third-party NGFW/IDS",
             "Elastic Load Balancing (ALB/NLB)",
             "Amazon CloudFront",
-            "Amazon API Gateway"
+            "Amazon API Gateway",
         ],
         "resources": [
             "Deep packet inspection rules",
@@ -175,8 +174,8 @@ SEC05_SERVICES = {
             "WAF managed rule groups",
             "Rate-based rules and bot control",
             "WAF logging and sampled requests",
-            "WAF association with ALB/CloudFront/API Gateway"
-        ]
+            "WAF association with ALB/CloudFront/API Gateway",
+        ],
     },
     "SEC05-BP04": {
         "name": "Automate network protection",
@@ -190,7 +189,7 @@ SEC05_SERVICES = {
             "AWS Firewall Manager",
             "AWS WAF",
             "Amazon CloudFront",
-            "Amazon API Gateway"
+            "Amazon API Gateway",
         ],
         "resources": [
             "Network security compliance rules",
@@ -201,9 +200,9 @@ SEC05_SERVICES = {
             "Drift detection",
             "Automated WAF policy enforcement",
             "Managed rule group updates",
-            "Centralized WAF/Shield policies"
-        ]
-    }
+            "Centralized WAF/Shield policies",
+        ],
+    },
 }
 
 # SEC06: Compute Protection - Services and resources to review
@@ -218,7 +217,7 @@ SEC06_SERVICES = {
             "Amazon ECS",
             "Amazon EKS",
             "AWS Security Hub",
-            "Third-party vulnerability scanners"
+            "Third-party vulnerability scanners",
         ],
         "resources": [
             "EC2 instance assessments",
@@ -228,8 +227,8 @@ SEC06_SERVICES = {
             "Patch compliance tracking",
             "Software inventory tracking",
             "ECS task definition image scan status",
-            "EKS node patching and add-on updates"
-        ]
+            "EKS node patching and add-on updates",
+        ],
     },
     "SEC06-BP02": {
         "name": "Provision compute from hardened images",
@@ -239,7 +238,7 @@ SEC06_SERVICES = {
             "Amazon ECS",
             "Amazon EKS",
             "AWS Lambda",
-            "AWS Batch"
+            "AWS Batch",
         ],
         "resources": [
             "AMI hardening standards",
@@ -250,8 +249,8 @@ SEC06_SERVICES = {
             "Runtime environment security",
             "EBS encryption at launch",
             "Block device mappings and volume types",
-            "Base image provenance and signing"
-        ]
+            "Base image provenance and signing",
+        ],
     },
     "SEC06-BP03": {
         "name": "Reduce manual management and interactive access",
@@ -261,7 +260,7 @@ SEC06_SERVICES = {
             "AWS Systems Manager Automation",
             "AWS CodeDeploy",
             "Amazon ECS/EKS",
-            "AWS Lambda"
+            "AWS Lambda",
         ],
         "resources": [
             "Shell access replacement",
@@ -272,8 +271,8 @@ SEC06_SERVICES = {
             "Event-driven execution",
             "SSM-only access policies",
             "SSH/RDP restriction and bastion controls",
-            "ECS Exec and kubectl access controls"
-        ]
+            "ECS Exec and kubectl access controls",
+        ],
     },
     "SEC06-BP04": {
         "name": "Validate software integrity",
@@ -283,7 +282,7 @@ SEC06_SERVICES = {
             "Amazon ECR",
             "AWS Systems Manager",
             "AWS CloudFormation",
-            "Third-party tools"
+            "Third-party tools",
         ],
         "resources": [
             "Code signing profiles",
@@ -291,8 +290,8 @@ SEC06_SERVICES = {
             "Image signing",
             "Document integrity validation",
             "Checksum validation",
-            "Digital signatures"
-        ]
+            "Digital signatures",
+        ],
     },
     "SEC06-BP05": {
         "name": "Automate compute protection",
@@ -302,7 +301,7 @@ SEC06_SERVICES = {
             "AWS Auto Scaling",
             "AWS Systems Manager",
             "Amazon EventBridge",
-            "AWS Security Hub"
+            "AWS Security Hub",
         ],
         "resources": [
             "Compute compliance rules",
@@ -310,9 +309,9 @@ SEC06_SERVICES = {
             "Alarm configurations",
             "Patch automation",
             "Compliance automation",
-            "Workflow automation"
-        ]
-    }
+            "Workflow automation",
+        ],
+    },
 }
 
 # Metrics and KPIs to monitor
@@ -321,26 +320,26 @@ SECURITY_METRICS = {
         "Mean time to detection (MTTD)",
         "False positive rate",
         "Alert volume trends",
-        "Coverage percentage"
+        "Coverage percentage",
     ],
     "network_security": [
         "Traffic flow compliance",
         "Blocked connection attempts",
         "DDoS mitigation effectiveness",
-        "Network segmentation compliance"
+        "Network segmentation compliance",
     ],
     "compute_security": [
         "Vulnerability remediation time",
         "Patch compliance rate",
         "Image hardening compliance",
-        "Automated response success rate"
+        "Automated response success rate",
     ],
     "operational_efficiency": [
         "Manual intervention reduction",
         "Automation success rate",
         "Mean time to remediation (MTTR)",
-        "Cost per security event"
-    ]
+        "Cost per security event",
+    ],
 }
 
 

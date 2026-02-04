@@ -49,9 +49,7 @@ class SecurityPillarEvaluator:
             "evidence": evidence,
         }
 
-    def _create_no_resources_finding(
-        self, bp: str, finding: str, reason: str
-    ) -> Dict[str, Any]:
+    def _create_no_resources_finding(self, bp: str, finding: str, reason: str) -> Dict[str, Any]:
         """Create a finding when no resources/services are found"""
         return {
             "bp": bp,
@@ -101,9 +99,7 @@ class SecurityPillarEvaluator:
 
         return finding
 
-    def _normalize_findings_list(
-        self, findings: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _normalize_findings_list(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Normalize all findings in a list"""
         return [self._normalize_finding(f) for f in findings]
 
@@ -137,7 +133,7 @@ class SecurityPillarEvaluator:
     def get_security_metrics(self) -> Dict[str, Any]:
         """
         Calculate security metrics and KPIs across all evaluated sections.
-        
+
         Returns:
             {
                 "detection_metrics": {...},
@@ -148,14 +144,14 @@ class SecurityPillarEvaluator:
             }
         """
         from datetime import datetime
-        
+
         logger.info("[METRICS] Calculating security metrics and KPIs...")
-        
+
         try:
             # Evaluate all sections to get current state
             all_results = self.evaluate_all()
             questions = all_results.get("questions", [])
-            
+
             # Initialize metrics
             metrics = {
                 "detection_metrics": self._calculate_detection_metrics(questions),
@@ -170,19 +166,27 @@ class SecurityPillarEvaluator:
                         for q in questions
                     ),
                     "non_compliant_count": sum(
-                        len([f for f in q.get("findings", []) if f.get("status") == "NON_COMPLIANT"])
+                        len(
+                            [f for f in q.get("findings", []) if f.get("status") == "NON_COMPLIANT"]
+                        )
                         for q in questions
                     ),
                     "pending_count": sum(
-                        len([f for f in q.get("findings", []) if f.get("status") == "PENDING_REVIEW"])
+                        len(
+                            [
+                                f
+                                for f in q.get("findings", [])
+                                if f.get("status") == "PENDING_REVIEW"
+                            ]
+                        )
                         for q in questions
                     ),
                 },
                 "timestamp": datetime.now().isoformat(),
             }
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error(f"[METRICS] Error calculating metrics: {str(e)}", exc_info=True)
             return {
@@ -195,13 +199,13 @@ class SecurityPillarEvaluator:
         # Find SEC04 findings
         sec04 = next((q for q in questions if q.get("question_id") == "SEC04"), {})
         findings = sec04.get("findings", [])
-        
+
         compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
         non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
-        
+
         # Calculate MTTD (simulated - would require historical data)
         # Calculate false positive rate (simulated - would require historical data)
-        
+
         return {
             "coverage_percentage": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
             "detection_services_enabled": compliant,
@@ -215,32 +219,40 @@ class SecurityPillarEvaluator:
         """Calculate network security metrics (SEC05)"""
         sec05 = next((q for q in questions if q.get("question_id") == "SEC05"), {})
         findings = sec05.get("findings", [])
-        
+
         compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
         non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
-        
+
         return {
-            "network_segmentation_compliance": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "network_segmentation_compliance": round(
+                (compliant / max(compliant + non_compliant, 1)) * 100, 2
+            ),
             "traffic_flow_controls_enabled": compliant,
             "inspection_systems_active": "Evaluate findings for specific counts",
             "blocked_connection_attempts": "N/D (requires flow log analysis)",
             "ddos_mitigation_effectiveness": "N/D (requires attack data)",
-            "network_segmentation_score": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "network_segmentation_score": round(
+                (compliant / max(compliant + non_compliant, 1)) * 100, 2
+            ),
         }
 
     def _calculate_compute_metrics(self, questions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Calculate compute security metrics (SEC06)"""
         sec06 = next((q for q in questions if q.get("question_id") == "SEC06"), {})
         findings = sec06.get("findings", [])
-        
+
         compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
         non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
-        
+
         return {
             "vulnerability_remediation_rate": "N/D (requires time-series data)",
-            "patch_compliance_rate": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "patch_compliance_rate": round(
+                (compliant / max(compliant + non_compliant, 1)) * 100, 2
+            ),
             "image_hardening_compliance": compliant,
-            "automated_response_success_rate": round((compliant / max(compliant + non_compliant, 1)) * 100, 2),
+            "automated_response_success_rate": round(
+                (compliant / max(compliant + non_compliant, 1)) * 100, 2
+            ),
             "manual_access_reduction": "Evaluate Session Manager and Run Command usage",
             "code_signing_compliance": "Evaluate AWS Signer and Lambda signing policies",
         }
@@ -250,12 +262,12 @@ class SecurityPillarEvaluator:
         all_findings = []
         for q in questions:
             all_findings.extend(q.get("findings", []))
-        
+
         compliant = len([f for f in all_findings if f.get("status") == "COMPLIANT"])
         non_compliant = len([f for f in all_findings if f.get("status") == "NON_COMPLIANT"])
-        
+
         total_bps = compliant + non_compliant
-        
+
         return {
             "manual_intervention_reduction": "Evaluate automation functions count",
             "automation_success_rate": round((compliant / max(total_bps, 1)) * 100, 2),
@@ -268,7 +280,7 @@ class SecurityPillarEvaluator:
     def get_security_kpis(self) -> Dict[str, Any]:
         """
         Get Key Performance Indicators for security posture.
-        
+
         Returns:
             {
                 "critical_findings": {...},
@@ -278,30 +290,32 @@ class SecurityPillarEvaluator:
             }
         """
         from datetime import datetime
-        
+
         logger.info("[KPIs] Calculating security KPIs...")
-        
+
         try:
             all_results = self.evaluate_all()
             questions = all_results.get("questions", [])
-            
+
             all_findings = []
             for q in questions:
                 all_findings.extend(q.get("findings", []))
-            
+
             # Count findings by severity and status
             critical_findings = [
-                f for f in all_findings 
+                f
+                for f in all_findings
                 if f.get("severity") == "CRITICAL" and f.get("status") == "NON_COMPLIANT"
             ]
             high_findings = [
-                f for f in all_findings 
+                f
+                for f in all_findings
                 if f.get("severity") == "HIGH" and f.get("status") == "NON_COMPLIANT"
             ]
-            
+
             compliant_bps = len([f for f in all_findings if f.get("status") == "COMPLIANT"])
             non_compliant_bps = len([f for f in all_findings if f.get("status") == "NON_COMPLIANT"])
-            
+
             kpis = {
                 "critical_findings": {
                     "count": len(critical_findings),
@@ -320,9 +334,7 @@ class SecurityPillarEvaluator:
                 },
                 "high_findings": {
                     "count": len(high_findings),
-                    "percentage": round(
-                        (len(high_findings) / max(len(all_findings), 1)) * 100, 2
-                    ),
+                    "percentage": round((len(high_findings) / max(len(all_findings), 1)) * 100, 2),
                 },
                 "compliance_score": {
                     "overall": round(
@@ -332,16 +344,25 @@ class SecurityPillarEvaluator:
                     "trending": "Requires historical data",
                 },
                 "risk_indicators": {
-                    "high_risk_bps": len([f for f in all_findings if f.get("severity") in ["CRITICAL", "HIGH"] and f.get("status") == "NON_COMPLIANT"]),
-                    "unaddressed_findings": len([f for f in all_findings if f.get("status") == "PENDING_REVIEW"]),
+                    "high_risk_bps": len(
+                        [
+                            f
+                            for f in all_findings
+                            if f.get("severity") in ["CRITICAL", "HIGH"]
+                            and f.get("status") == "NON_COMPLIANT"
+                        ]
+                    ),
+                    "unaddressed_findings": len(
+                        [f for f in all_findings if f.get("status") == "PENDING_REVIEW"]
+                    ),
                     "remediation_priority": self._determine_remediation_priority(all_findings),
                 },
                 "recommendations": self._generate_security_recommendations(all_findings),
                 "timestamp": datetime.now().isoformat(),
             }
-            
+
             return kpis
-            
+
         except Exception as e:
             logger.error(f"[KPIs] Error calculating KPIs: {str(e)}", exc_info=True)
             return {
@@ -355,81 +376,104 @@ class SecurityPillarEvaluator:
         for q in questions:
             question_id = q.get("question_id", "UNKNOWN")
             findings = q.get("findings", [])
-            
+
             compliant = len([f for f in findings if f.get("status") == "COMPLIANT"])
             non_compliant = len([f for f in findings if f.get("status") == "NON_COMPLIANT"])
-            
+
             total = compliant + non_compliant
             score = round((compliant / total * 100), 2) if total > 0 else 100
-            
+
             scores[question_id] = {
                 "score": score,
                 "compliant_bps": compliant,
                 "non_compliant_bps": non_compliant,
             }
-        
+
         return scores
 
-    def _determine_remediation_priority(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _determine_remediation_priority(
+        self, findings: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Determine which BPs should be remediated first"""
         # Sort by severity and compliance status
         critical_non_compliant = [
-            f for f in findings 
+            f
+            for f in findings
             if f.get("severity") == "CRITICAL" and f.get("status") == "NON_COMPLIANT"
         ]
         high_non_compliant = [
-            f for f in findings 
+            f
+            for f in findings
             if f.get("severity") == "HIGH" and f.get("status") == "NON_COMPLIANT"
         ]
-        
+
         priority_list = []
         for f in critical_non_compliant[:5]:
-            priority_list.append({
-                "bp": f.get("bp"),
-                "priority": "CRITICAL",
-                "remediation": f.get("remediation", "N/D"),
-            })
-        
+            priority_list.append(
+                {
+                    "bp": f.get("bp"),
+                    "priority": "CRITICAL",
+                    "remediation": f.get("remediation", "N/D"),
+                }
+            )
+
         for f in high_non_compliant[:5]:
-            priority_list.append({
-                "bp": f.get("bp"),
-                "priority": "HIGH",
-                "remediation": f.get("remediation", "N/D"),
-            })
-        
+            priority_list.append(
+                {
+                    "bp": f.get("bp"),
+                    "priority": "HIGH",
+                    "remediation": f.get("remediation", "N/D"),
+                }
+            )
+
         return priority_list
 
     def _generate_security_recommendations(self, findings: List[Dict[str, Any]]) -> List[str]:
         """Generate actionable security recommendations"""
         recommendations = []
-        
+
         # Check for logging gaps
         logging_bps = [f for f in findings if "log" in f.get("bp", "").lower()]
         if logging_bps and any(f.get("status") == "NON_COMPLIANT" for f in logging_bps):
-            recommendations.append("Priority: Enable comprehensive logging across CloudTrail, CloudWatch, and VPC Flow Logs")
-        
+            recommendations.append(
+                "Priority: Enable comprehensive logging across CloudTrail, CloudWatch, and VPC Flow Logs"
+            )
+
         # Check for encryption issues
         encryption_bps = [f for f in findings if "encrypt" in f.get("finding", "").lower()]
         if encryption_bps:
             recommendations.append("Ensure all data in transit and at rest is encrypted with KMS")
-        
+
         # Check for access control issues
-        access_bps = [f for f in findings if "access" in f.get("bp", "").lower() or "permission" in f.get("bp", "").lower()]
+        access_bps = [
+            f
+            for f in findings
+            if "access" in f.get("bp", "").lower() or "permission" in f.get("bp", "").lower()
+        ]
         if access_bps and any(f.get("status") == "NON_COMPLIANT" for f in access_bps):
-            recommendations.append("Review and implement least privilege access controls across all resources")
-        
+            recommendations.append(
+                "Review and implement least privilege access controls across all resources"
+            )
+
         # Check for automation
         automation_bps = [f for f in findings if "automat" in f.get("finding", "").lower()]
         if not automation_bps:
-            recommendations.append("Implement automated security responses using Lambda, EventBridge, and Systems Manager")
-        
-        # Check for monitoring
-        monitoring_bps = [f for f in findings if "monitor" in f.get("finding", "").lower() or "alert" in f.get("finding", "").lower()]
-        if not monitoring_bps:
-            recommendations.append("Configure CloudWatch alarms and Security Hub custom insights for threat detection")
-        
-        return recommendations[:10]  # Return top 10 recommendations
+            recommendations.append(
+                "Implement automated security responses using Lambda, EventBridge, and Systems Manager"
+            )
 
+        # Check for monitoring
+        monitoring_bps = [
+            f
+            for f in findings
+            if "monitor" in f.get("finding", "").lower() or "alert" in f.get("finding", "").lower()
+        ]
+        if not monitoring_bps:
+            recommendations.append(
+                "Configure CloudWatch alarms and Security Hub custom insights for threat detection"
+            )
+
+        return recommendations[:10]  # Return top 10 recommendations
 
     def evaluate_sec01(self) -> Dict[str, Any]:
         """SEC01: ¿Cómo opera usted su carga de trabajo de forma segura? (8 BPs)
@@ -448,9 +492,7 @@ class SecurityPillarEvaluator:
         compliant_count = 0
         non_compliant_count = 0
         pending_count = 0
-        primary_region = (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
 
         # SEC01-BP01: Operate workload securely
         # Services: Organizations, Control Tower, RAM, SSO, IAM
@@ -640,9 +682,7 @@ class SecurityPillarEvaluator:
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
                 evidence_reason = f"Access denied - insufficient IAM permissions to check IAM, GuardDuty, Config, or CloudTrail: {error_msg[:100]}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
-                evidence_reason = (
-                    f"Request timeout while querying AWS services: {error_msg[:100]}"
-                )
+                evidence_reason = f"Request timeout while querying AWS services: {error_msg[:100]}"
             else:
                 evidence_reason = f"Error querying services: {error_msg[:150]}"
             findings.append(
@@ -711,9 +751,7 @@ class SecurityPillarEvaluator:
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
                 evidence_reason = f"Access denied - insufficient IAM permissions for AWS Config: {error_msg[:100]}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
-                evidence_reason = (
-                    f"Request timeout querying AWS Config: {error_msg[:100]}"
-                )
+                evidence_reason = f"Request timeout querying AWS Config: {error_msg[:100]}"
             else:
                 evidence_reason = f"Error querying AWS Config: {error_msg[:150]}"
             findings.append(
@@ -843,9 +881,7 @@ class SecurityPillarEvaluator:
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
                 evidence_reason = f"Access denied - insufficient IAM permissions for Config or CloudTrail: {error_msg[:100]}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
-                evidence_reason = (
-                    f"Request timeout querying automation services: {error_msg[:100]}"
-                )
+                evidence_reason = f"Request timeout querying automation services: {error_msg[:100]}"
             else:
                 evidence_reason = f"Error querying Config/CloudTrail: {error_msg[:150]}"
             findings.append(
@@ -954,7 +990,9 @@ class SecurityPillarEvaluator:
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
                 evidence_reason = f"Access denied - insufficient IAM permissions for Config or GuardDuty: {error_msg[:100]}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
-                evidence_reason = f"Request timeout querying recommendation services: {error_msg[:100]}"
+                evidence_reason = (
+                    f"Request timeout querying recommendation services: {error_msg[:100]}"
+                )
             else:
                 evidence_reason = f"Error querying Config/GuardDuty: {error_msg[:150]}"
             findings.append(
@@ -995,7 +1033,9 @@ class SecurityPillarEvaluator:
         if users_error:
             error_msg = users_error
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
-                evidence_reason = f"Access denied - insufficient IAM permissions to list users: {error_msg}"
+                evidence_reason = (
+                    f"Access denied - insufficient IAM permissions to list users: {error_msg}"
+                )
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
                 evidence_reason = f"Request timeout while querying IAM: {error_msg}"
             else:
@@ -1138,9 +1178,7 @@ class SecurityPillarEvaluator:
 
         # SEC02-BP03: Almacenar y utilizar secretos de forma segura
         try:
-            primary_region = (
-                self.connector.regions[0] if self.connector.regions else "us-east-1"
-            )
+            primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
             secrets = self.connector.get_secrets(primary_region)
             if secrets:
                 non_rotated = [s for s in secrets if not s.get("rotation_enabled")]
@@ -1186,9 +1224,7 @@ class SecurityPillarEvaluator:
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
                 evidence = f"Access denied - insufficient IAM permissions: {error_msg}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
-                evidence = (
-                    f"Request timeout while querying Secrets Manager: {error_msg}"
-                )
+                evidence = f"Request timeout while querying Secrets Manager: {error_msg}"
             else:
                 evidence = f"Error querying Secrets Manager: {error_msg}"
             logger.error(f"Error checking secrets: {str(e)}")
@@ -1205,9 +1241,7 @@ class SecurityPillarEvaluator:
         if users_error:
             error_msg = users_error
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
-                evidence_reason = (
-                    f"Access denied - insufficient IAM permissions: {error_msg}"
-                )
+                evidence_reason = f"Access denied - insufficient IAM permissions: {error_msg}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
                 evidence_reason = f"Request timeout while querying IAM: {error_msg}"
             else:
@@ -1230,11 +1264,16 @@ class SecurityPillarEvaluator:
                 client_vpn_total = len(endpoints)
                 for ep in endpoints:
                     for auth in ep.get("AuthenticationOptions", []):
-                        if auth.get("Type") in ["directory-service-authentication", "federated-authentication"]:
+                        if auth.get("Type") in [
+                            "directory-service-authentication",
+                            "federated-authentication",
+                        ]:
                             client_vpn_federated += 1
                             break
                 if client_vpn_total > 0:
-                    client_vpn_auth_status = f"Client VPN federated auth: {client_vpn_federated}/{client_vpn_total}"
+                    client_vpn_auth_status = (
+                        f"Client VPN federated auth: {client_vpn_federated}/{client_vpn_total}"
+                    )
             except Exception:
                 client_vpn_auth_status = "Unable to verify Client VPN authentication"
 
@@ -1269,9 +1308,7 @@ class SecurityPillarEvaluator:
         if users_error:
             error_msg = users_error
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
-                evidence_reason = (
-                    f"Access denied - insufficient IAM permissions: {error_msg}"
-                )
+                evidence_reason = f"Access denied - insufficient IAM permissions: {error_msg}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
                 evidence_reason = f"Request timeout while querying IAM: {error_msg}"
             else:
@@ -1358,9 +1395,7 @@ class SecurityPillarEvaluator:
         if users_error:
             error_msg = users_error
             if "AccessDenied" in error_msg or "UnauthorizedOperation" in error_msg:
-                evidence_reason = (
-                    f"Access denied - insufficient IAM permissions: {error_msg}"
-                )
+                evidence_reason = f"Access denied - insufficient IAM permissions: {error_msg}"
             elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
                 evidence_reason = f"Request timeout while querying IAM: {error_msg}"
             else:
@@ -1374,9 +1409,7 @@ class SecurityPillarEvaluator:
                 )
             )
         else:
-            user_with_direct_policies = [
-                u for u in users if len(u.get("policies", [])) > 0
-            ]
+            user_with_direct_policies = [u for u in users if len(u.get("policies", [])) > 0]
             if user_with_direct_policies:
                 score -= 5
                 findings.append(
@@ -1470,8 +1503,7 @@ class SecurityPillarEvaluator:
                 u
                 for u in users
                 if any(
-                    "admin" in p.get("name", "").lower()
-                    or "*" in p.get("name", "").lower()
+                    "admin" in p.get("name", "").lower() or "*" in p.get("name", "").lower()
                     for p in u.get("policies", [])
                 )
             ]
@@ -1479,9 +1511,7 @@ class SecurityPillarEvaluator:
             apis_with_policies = 0
             apis_checked = 0
             try:
-                eks_clusters = len(
-                    self.connector.client.eks.list_clusters().get("clusters", [])
-                )
+                eks_clusters = len(self.connector.client.eks.list_clusters().get("clusters", []))
             except Exception:
                 eks_clusters = 0
 
@@ -1545,8 +1575,7 @@ class SecurityPillarEvaluator:
         breakglass_roles = [
             r
             for r in roles
-            if "break" in r.get("name", "").lower()
-            or "emergency" in r.get("name", "").lower()
+            if "break" in r.get("name", "").lower() or "emergency" in r.get("name", "").lower()
         ]
 
         if breakglass_roles:
@@ -1584,9 +1613,7 @@ class SecurityPillarEvaluator:
             last_login = user.get("last_login")
             if last_login:
                 try:
-                    login_date = datetime.fromisoformat(
-                        last_login.replace("Z", "+00:00")
-                    )
+                    login_date = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
                     days_inactive = (datetime.now(timezone.utc) - login_date).days
                     if days_inactive > 90:
                         inactive_console_users.append(
@@ -1626,9 +1653,7 @@ class SecurityPillarEvaluator:
 
         # SEC03-BP05: Defina barreras de permisos para su organización
         # Check for permission boundaries implementation on users
-        users_with_boundaries = [
-            u for u in users if u.get("permission_boundary") is not None
-        ]
+        users_with_boundaries = [u for u in users if u.get("permission_boundary") is not None]
 
         if len(users_with_boundaries) > 0:
             boundary_coverage = (len(users_with_boundaries) / max(len(users), 1)) * 100
@@ -1694,9 +1719,7 @@ class SecurityPillarEvaluator:
         # SEC03-BP07: Analizar el acceso público y entre cuentas
         # Check for cross-account roles and trust relationships
         cross_account_roles = [
-            r
-            for r in roles
-            if r.get("trust_policy") and "AWS" in r.get("trust_policy", "")
+            r for r in roles if r.get("trust_policy") and "AWS" in r.get("trust_policy", "")
         ]
 
         public_ec2_instances = 0
@@ -1721,9 +1744,7 @@ class SecurityPillarEvaluator:
         try:
             rds_instances = self.connector.client.rds.describe_db_instances()
             public_rds_instances = sum(
-                1
-                for db in rds_instances.get("DBInstances", [])
-                if db.get("PubliclyAccessible")
+                1 for db in rds_instances.get("DBInstances", []) if db.get("PubliclyAccessible")
             )
         except Exception:
             public_rds_instances = 0
@@ -1731,9 +1752,7 @@ class SecurityPillarEvaluator:
         try:
             elbv2 = self.connector.client.elbv2.describe_load_balancers()
             public_albs = sum(
-                1
-                for lb in elbv2.get("LoadBalancers", [])
-                if lb.get("Scheme") == "internet-facing"
+                1 for lb in elbv2.get("LoadBalancers", []) if lb.get("Scheme") == "internet-facing"
             )
         except Exception:
             public_albs = 0
@@ -1752,9 +1771,7 @@ class SecurityPillarEvaluator:
 
         try:
             cfd = self.connector.client.cloudfront.list_distributions()
-            cloudfront_distributions = len(
-                cfd.get("DistributionList", {}).get("Items", [])
-            )
+            cloudfront_distributions = len(cfd.get("DistributionList", {}).get("Items", []))
         except Exception:
             cloudfront_distributions = 0
 
@@ -1766,9 +1783,7 @@ class SecurityPillarEvaluator:
 
         if cross_account_roles:
             external_id_count = sum(
-                1
-                for r in cross_account_roles
-                if "ExternalId" in r.get("trust_policy", "")
+                1 for r in cross_account_roles if "ExternalId" in r.get("trust_policy", "")
             )
             if external_id_count == len(cross_account_roles):
                 findings.append(
@@ -1804,7 +1819,7 @@ class SecurityPillarEvaluator:
                     "severity": "NONE",
                     "risk": "N/D",
                     "remediation": "N/D",
-                        "evidence": f"No cross-account access roles found among {len(roles)} total roles | {public_access_summary}",
+                    "evidence": f"No cross-account access roles found among {len(roles)} total roles | {public_access_summary}",
                 }
             )
 
@@ -1860,9 +1875,7 @@ class SecurityPillarEvaluator:
 
         if third_party_roles:
             external_id_count = sum(
-                1
-                for r in third_party_roles
-                if "ExternalId" in r.get("trust_policy", "")
+                1 for r in third_party_roles if "ExternalId" in r.get("trust_policy", "")
             )
             mfa_count = sum(
                 1
@@ -1919,9 +1932,7 @@ class SecurityPillarEvaluator:
     def evaluate_sec04(self) -> Dict[str, Any]:
         """SEC04: Detección - ¿Cómo se detectan e investigan los eventos de seguridad? (4 BPs)"""
         findings = []
-        primary_region = (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
 
         # SEC04-BP01: Configurar el servicio y el registro de aplicaciones
         logger.info("[SEC04-BP01] Evaluating logging configuration...")
@@ -1938,9 +1949,7 @@ class SecurityPillarEvaluator:
                 and any(t.get("is_logging", False) for t in trails)
                 and any(t.get("multi_region", False) for t in trails)
             )
-            cloudtrail_status = (
-                "COMPLIANT" if cloudtrail_ok else "NON_COMPLIANT"
-            )
+            cloudtrail_status = "COMPLIANT" if cloudtrail_ok else "NON_COMPLIANT"
             (
                 f"{len([t for t in trails if t.get('is_logging')])} logging trails found with multi-region support"
                 if trails
@@ -1952,9 +1961,7 @@ class SecurityPillarEvaluator:
                 log_groups = self.connector.get_log_groups(primary_region)
                 log_group_count = len(log_groups)
                 cloudwatch_logs_ok = log_group_count > 0
-                cloudwatch_status = (
-                    "COMPLIANT" if cloudwatch_logs_ok else "NON_COMPLIANT"
-                )
+                cloudwatch_status = "COMPLIANT" if cloudwatch_logs_ok else "NON_COMPLIANT"
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking CloudWatch Logs: {str(e)}")
                 cloudwatch_logs_ok = False
@@ -1965,9 +1972,7 @@ class SecurityPillarEvaluator:
             try:
                 config_status = self.connector.get_config_status(primary_region)
                 config_ok = config_status.get("recording", False)
-                config_state = (
-                    "COMPLIANT" if config_ok else "NON_COMPLIANT"
-                )
+                config_state = "COMPLIANT" if config_ok else "NON_COMPLIANT"
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking AWS Config: {str(e)}")
                 config_ok = False
@@ -1990,27 +1995,21 @@ class SecurityPillarEvaluator:
                     except Exception:
                         pass
 
-                vpc_flow_logs_ok = (
-                    vpcs_with_flow_logs > 0 and vpc_flow_logs_ok is False
-                ) or (vpc_count == vpcs_with_flow_logs)
-                vpc_flow_status = (
-                    "COMPLIANT" if vpc_flow_logs_ok else "NON_COMPLIANT"
+                vpc_flow_logs_ok = (vpcs_with_flow_logs > 0 and vpc_flow_logs_ok is False) or (
+                    vpc_count == vpcs_with_flow_logs
                 )
+                vpc_flow_status = "COMPLIANT" if vpc_flow_logs_ok else "NON_COMPLIANT"
             except Exception as e:
                 logger.warning(f"[SEC04-BP01] Error checking VPC Flow Logs: {str(e)}")
                 vpc_flow_status = "PENDING_REVIEW"
                 f"Unable to verify: {str(e)[:50]}"
 
             # Overall BP01 status
-            services_enabled = sum(
-                [cloudtrail_ok, cloudwatch_logs_ok, config_ok, vpc_flow_logs_ok]
-            )
+            services_enabled = sum([cloudtrail_ok, cloudwatch_logs_ok, config_ok, vpc_flow_logs_ok])
             bp01_status = (
                 "COMPLIANT"
                 if services_enabled >= 3
-                else "NON_COMPLIANT"
-                if services_enabled == 0
-                else "PARTIAL"
+                else "NON_COMPLIANT" if services_enabled == 0 else "PARTIAL"
             )
 
             findings.append(
@@ -2056,14 +2055,10 @@ class SecurityPillarEvaluator:
             try:
                 buckets = self.connector.client.s3.list_buckets()
                 log_buckets = [
-                    b
-                    for b in buckets.get("Buckets", [])
-                    if "log" in b.get("Name", "").lower()
+                    b for b in buckets.get("Buckets", []) if "log" in b.get("Name", "").lower()
                 ]
                 centralized_storage_ok = len(log_buckets) > 0
-                s3_status = (
-                    "COMPLIANT" if centralized_storage_ok else "NON_COMPLIANT"
-                )
+                s3_status = "COMPLIANT" if centralized_storage_ok else "NON_COMPLIANT"
                 (
                     f"{len(log_buckets)} S3 buckets for log storage identified"
                     if log_buckets
@@ -2077,21 +2072,13 @@ class SecurityPillarEvaluator:
             try:
                 all_trails = self.connector.get_cloudtrail_trails(primary_region)
                 org_trails_ok = any(t.get("is_organization_trail", False) for t in all_trails)
-                org_status = (
-                    "COMPLIANT" if org_trails_ok else "NON_COMPLIANT"
-                )
+                org_status = "COMPLIANT" if org_trails_ok else "NON_COMPLIANT"
             except Exception:
                 org_trails_ok = False
                 org_status = "NON_COMPLIANT"
 
-            services_centralized = sum(
-                [security_hub_ok, centralized_storage_ok, org_trails_ok]
-            )
-            bp02_status = (
-                "COMPLIANT"
-                if services_centralized >= 2
-                else "NON_COMPLIANT"
-            )
+            services_centralized = sum([security_hub_ok, centralized_storage_ok, org_trails_ok])
+            bp02_status = "COMPLIANT" if services_centralized >= 2 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -2127,9 +2114,7 @@ class SecurityPillarEvaluator:
             try:
                 detectors = self.connector.get_guardduty_detectors(primary_region)
                 guardduty_ok = len(detectors) > 0
-                gd_status = (
-                    "COMPLIANT" if guardduty_ok else "NON_COMPLIANT"
-                )
+                gd_status = "COMPLIANT" if guardduty_ok else "NON_COMPLIANT"
                 (
                     f"{len(detectors)} GuardDuty detector(s) enabled"
                     if detectors
@@ -2143,9 +2128,7 @@ class SecurityPillarEvaluator:
             try:
                 graphs = self.connector.client.detective.list_graphs()
                 detective_ok = len(graphs.get("GraphList", [])) > 0
-                detective_status = (
-                    "COMPLIANT" if detective_ok else "NON_COMPLIANT"
-                )
+                detective_status = "COMPLIANT" if detective_ok else "NON_COMPLIANT"
                 (
                     f"{len(graphs.get('GraphList', []))} Detective graph(s) enabled"
                     if graphs.get("GraphList")
@@ -2165,9 +2148,7 @@ class SecurityPillarEvaluator:
                     or "alert" in r.get("Name", "").lower()
                 ]
                 eventbridge_ok = len(security_rules) > 0
-                eb_status = (
-                    "COMPLIANT" if eventbridge_ok else "NON_COMPLIANT"
-                )
+                eb_status = "COMPLIANT" if eventbridge_ok else "NON_COMPLIANT"
                 (
                     f"{len(security_rules)} security-related EventBridge rules configured"
                     if security_rules
@@ -2178,11 +2159,7 @@ class SecurityPillarEvaluator:
                 eb_status = "NON_COMPLIANT"
 
             services_correlation = sum([guardduty_ok, detective_ok, eventbridge_ok])
-            bp03_status = (
-                "COMPLIANT"
-                if services_correlation >= 2
-                else "NON_COMPLIANT"
-            )
+            bp03_status = "COMPLIANT" if services_correlation >= 2 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -2224,9 +2201,7 @@ class SecurityPillarEvaluator:
                     and "remediation" in str(r).lower()
                 ]
                 config_remediation_ok = len(rules_with_remediation) > 0
-                config_rem_status = (
-                    "COMPLIANT" if config_remediation_ok else "NON_COMPLIANT"
-                )
+                config_rem_status = "COMPLIANT" if config_remediation_ok else "NON_COMPLIANT"
                 (
                     f"{len(rules_with_remediation)} AWS Config rules with auto-remediation"
                     if rules_with_remediation
@@ -2245,9 +2220,7 @@ class SecurityPillarEvaluator:
                     if "Automation" in d.get("DocumentType", "")
                 ]
                 ssm_automation_ok = len(automation_docs) > 0
-                ssm_status = (
-                    "COMPLIANT" if ssm_automation_ok else "NON_COMPLIANT"
-                )
+                ssm_status = "COMPLIANT" if ssm_automation_ok else "NON_COMPLIANT"
                 (
                     f"{len(automation_docs)} SSM Automation documents defined"
                     if automation_docs
@@ -2267,9 +2240,7 @@ class SecurityPillarEvaluator:
                     or "remedi" in f.get("FunctionName", "").lower()
                 ]
                 lambda_remediation_ok = len(remediation_lambdas) > 0
-                lambda_status = (
-                    "COMPLIANT" if lambda_remediation_ok else "NON_COMPLIANT"
-                )
+                lambda_status = "COMPLIANT" if lambda_remediation_ok else "NON_COMPLIANT"
                 (
                     f"{len(remediation_lambdas)} Lambda remediation functions"
                     if remediation_lambdas
@@ -2282,11 +2253,7 @@ class SecurityPillarEvaluator:
             remediation_mechanisms = sum(
                 [config_remediation_ok, ssm_automation_ok, lambda_remediation_ok]
             )
-            bp04_status = (
-                "COMPLIANT"
-                if remediation_mechanisms >= 2
-                else "NON_COMPLIANT"
-            )
+            bp04_status = "COMPLIANT" if remediation_mechanisms >= 2 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -2325,9 +2292,7 @@ class SecurityPillarEvaluator:
     def evaluate_sec05(self) -> Dict[str, Any]:
         """SEC05: Protección de infraestructura - ¿Cómo protege los recursos de red? (4 BPs)"""
         findings = []
-        primary_region = (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
 
         # SEC05-BP01: Crear capas de red
         logger.info("[SEC05-BP01] Evaluating network layering...")
@@ -2335,7 +2300,7 @@ class SecurityPillarEvaluator:
             ec2_client = self.connector._get_ec2_client(primary_region)
             vpcs = ec2_client.describe_vpcs()
             vpc_count = len(vpcs.get("Vpcs", []))
-            
+
             multi_tier_vpcs = 0
             transit_gateways_found = False
             vpc_peering_found = False
@@ -2431,9 +2396,7 @@ class SecurityPillarEvaluator:
             # Check CloudFront distributions
             try:
                 cfd = self.connector.client.cloudfront.list_distributions()
-                cloudfront_distributions = len(
-                    cfd.get("DistributionList", {}).get("Items", [])
-                )
+                cloudfront_distributions = len(cfd.get("DistributionList", {}).get("Items", []))
             except Exception:
                 cloudfront_distributions = 0
 
@@ -2451,13 +2414,11 @@ class SecurityPillarEvaluator:
                     cloudfront_distributions > 0,
                 ]
             )
-            
+
             bp01_status = (
                 "COMPLIANT"
                 if multi_tier_vpcs > 0 and network_mechanisms >= 3
-                else "NON_COMPLIANT"
-                if vpc_count == 0
-                else "PARTIAL"
+                else "NON_COMPLIANT" if vpc_count == 0 else "PARTIAL"
             )
 
             findings.append(
@@ -2505,7 +2466,7 @@ class SecurityPillarEvaluator:
             try:
                 sgs = self.connector.client.ec2.describe_security_groups()
                 total_sgs = len(sgs.get("SecurityGroups", []))
-                
+
                 # Count SGs with restricted inbound rules (not 0.0.0.0/0 on critical ports)
                 for sg in sgs.get("SecurityGroups", []):
                     restricted = True
@@ -2521,7 +2482,9 @@ class SecurityPillarEvaluator:
                     if restricted:
                         sgs_with_restrictions += 1
 
-                sg_status = f"{sgs_with_restrictions}/{total_sgs} security groups properly restricted"
+                sg_status = (
+                    f"{sgs_with_restrictions}/{total_sgs} security groups properly restricted"
+                )
             except Exception:
                 sg_status = "Unable to verify"
                 sgs_with_restrictions = 0
@@ -2532,9 +2495,7 @@ class SecurityPillarEvaluator:
                 len(nacls.get("NetworkAcls", []))
                 # Count non-default NACLs as configured
                 nacls_configured = sum(
-                    1
-                    for n in nacls.get("NetworkAcls", [])
-                    if not n.get("IsDefault", False)
+                    1 for n in nacls.get("NetworkAcls", []) if not n.get("IsDefault", False)
                 )
                 nacl_deny_rules = sum(
                     1
@@ -2670,7 +2631,9 @@ class SecurityPillarEvaluator:
             # Check Shield Advanced
             try:
                 subscription = self.connector.client.shield.describe_subscription()
-                shield_ok = subscription.get("Subscription", {}).get("SubscriptionState") == "Active"
+                shield_ok = (
+                    subscription.get("Subscription", {}).get("SubscriptionState") == "Active"
+                )
                 shield_status = (
                     "AWS Shield Advanced enabled"
                     if shield_ok
@@ -2682,9 +2645,7 @@ class SecurityPillarEvaluator:
             # Check Inspector
             try:
                 assessments = self.connector.client.inspector.list_assessment_templates()
-                inspector_ok = (
-                    len(assessments.get("assessmentTemplateArns", [])) > 0
-                )
+                inspector_ok = len(assessments.get("assessmentTemplateArns", [])) > 0
                 inspector_status = (
                     f"{len(assessments.get('assessmentTemplateArns', []))} assessment templates"
                     if inspector_ok
@@ -2703,8 +2664,12 @@ class SecurityPillarEvaluator:
                     if waf_rules_ok
                     else "WAF rule groups not configured"
                 )
-                regional_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get("WebACLs", [])
-                cloudfront_acls = self.connector.client.wafv2.list_web_acls(Scope="CLOUDFRONT").get("WebACLs", [])
+                regional_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get(
+                    "WebACLs", []
+                )
+                cloudfront_acls = self.connector.client.wafv2.list_web_acls(Scope="CLOUDFRONT").get(
+                    "WebACLs", []
+                )
                 cloudfront_waf_ok = len(cloudfront_acls) > 0
 
                 assoc_total = 0
@@ -2741,21 +2706,22 @@ class SecurityPillarEvaluator:
                         pass
 
                 waf_assoc_ok = assoc_total > 0
-                waf_assoc_details = (
-                    f"WAF associations - ALB: {assoc_alb}, API Gateway: {assoc_api}, CloudFront: {assoc_cf}"
-                )
+                waf_assoc_details = f"WAF associations - ALB: {assoc_alb}, API Gateway: {assoc_api}, CloudFront: {assoc_cf}"
             except Exception:
                 waf_rules_status = "Unable to verify"
                 waf_rules_ok = False
 
             inspection_mechanisms = sum(
-                [guardduty_ok, shield_ok, inspector_ok, waf_rules_ok, waf_assoc_ok, cloudfront_waf_ok]
+                [
+                    guardduty_ok,
+                    shield_ok,
+                    inspector_ok,
+                    waf_rules_ok,
+                    waf_assoc_ok,
+                    cloudfront_waf_ok,
+                ]
             )
-            bp03_status = (
-                "COMPLIANT"
-                if inspection_mechanisms >= 3
-                else "NON_COMPLIANT"
-            )
+            bp03_status = "COMPLIANT" if inspection_mechanisms >= 3 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -2869,7 +2835,9 @@ class SecurityPillarEvaluator:
 
             # Check WAF logging configuration
             try:
-                web_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get("WebACLs", [])
+                web_acls = self.connector.client.wafv2.list_web_acls(Scope="REGIONAL").get(
+                    "WebACLs", []
+                )
                 waf_logging_ok = False
                 for acl in web_acls:
                     try:
@@ -2881,7 +2849,9 @@ class SecurityPillarEvaluator:
                             break
                     except Exception:
                         continue
-                waf_logging_status = "WAF logging configured" if waf_logging_ok else "WAF logging not configured"
+                waf_logging_status = (
+                    "WAF logging configured" if waf_logging_ok else "WAF logging not configured"
+                )
             except Exception:
                 waf_logging_status = "Unable to verify"
 
@@ -2894,11 +2864,7 @@ class SecurityPillarEvaluator:
                     waf_logging_ok,
                 ]
             )
-            bp04_status = (
-                "COMPLIANT"
-                if automation_mechanisms >= 3
-                else "NON_COMPLIANT"
-            )
+            bp04_status = "COMPLIANT" if automation_mechanisms >= 3 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -2937,9 +2903,7 @@ class SecurityPillarEvaluator:
     def evaluate_sec06(self) -> Dict[str, Any]:
         """SEC06: Protección de infraestructura - ¿Cómo protege sus recursos computacionales? (5 BPs)"""
         findings = []
-        (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        (self.connector.regions[0] if self.connector.regions else "us-east-1")
 
         # SEC06-BP01: Realizar gestión de vulnerabilidades
         logger.info("[SEC06-BP01] Evaluating vulnerability management...")
@@ -2954,9 +2918,7 @@ class SecurityPillarEvaluator:
             # Check Amazon Inspector
             try:
                 assessments = self.connector.client.inspector.list_assessment_templates()
-                inspector_ok = (
-                    len(assessments.get("assessmentTemplateArns", [])) > 0
-                )
+                inspector_ok = len(assessments.get("assessmentTemplateArns", [])) > 0
                 inspector_status = (
                     f"{len(assessments.get('assessmentTemplateArns', []))} assessment templates"
                     if inspector_ok
@@ -2968,9 +2930,7 @@ class SecurityPillarEvaluator:
             # Check Systems Manager Patch Manager
             try:
                 baselines = self.connector.client.ssm.describe_patch_baselines()
-                patch_manager_ok = (
-                    len(baselines.get("BaselineIdentities", [])) > 0
-                )
+                patch_manager_ok = len(baselines.get("BaselineIdentities", [])) > 0
                 patch_status = (
                     f"{len(baselines.get('BaselineIdentities', []))} patch baselines defined"
                     if patch_manager_ok
@@ -3021,11 +2981,7 @@ class SecurityPillarEvaluator:
             vuln_mgmt_mechanisms = sum(
                 [inspector_ok, patch_manager_ok, ecr_scanning_ok, security_hub_vuln_ok]
             )
-            bp01_status = (
-                "COMPLIANT"
-                if vuln_mgmt_mechanisms >= 2
-                else "NON_COMPLIANT"
-            )
+            bp01_status = "COMPLIANT" if vuln_mgmt_mechanisms >= 2 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -3088,9 +3044,7 @@ class SecurityPillarEvaluator:
             # Check Image Builder
             try:
                 pipelines = self.connector.client.imagebuilder.list_image_pipelines()
-                image_builder_ok = (
-                    len(pipelines.get("imagePipelineList", [])) > 0
-                )
+                image_builder_ok = len(pipelines.get("imagePipelineList", [])) > 0
                 ib_status = (
                     f"{len(pipelines.get('imagePipelineList', []))} image building pipelines"
                     if image_builder_ok
@@ -3122,8 +3076,7 @@ class SecurityPillarEvaluator:
                 secure_lambdas = [
                     f
                     for f in lambdas.get("Functions", [])
-                    if f.get("VpcConfig", {}).get("SubnetIds")
-                    and f.get("KMSKeyArn")
+                    if f.get("VpcConfig", {}).get("SubnetIds") and f.get("KMSKeyArn")
                 ]
                 lambda_hardening_ok = (
                     len(secure_lambdas) / max(len(lambdas.get("Functions", [])), 1)
@@ -3138,7 +3091,11 @@ class SecurityPillarEvaluator:
 
             # Check EBS encryption and storage types
             try:
-                ebs_encryption_default = self.connector.client.ec2.get_ebs_encryption_by_default().get("EbsEncryptionByDefault", False)
+                ebs_encryption_default = (
+                    self.connector.client.ec2.get_ebs_encryption_by_default().get(
+                        "EbsEncryptionByDefault", False
+                    )
+                )
             except Exception:
                 ebs_encryption_default = False
 
@@ -3163,7 +3120,9 @@ class SecurityPillarEvaluator:
                 for td_arn in task_defs.get("taskDefinitionArns", [])[:20]:
                     ecs_checked_defs += 1
                     try:
-                        td = self.connector.client.ecs.describe_task_definition(taskDefinition=td_arn)
+                        td = self.connector.client.ecs.describe_task_definition(
+                            taskDefinition=td_arn
+                        )
                         for cdef in td.get("taskDefinition", {}).get("containerDefinitions", []):
                             if cdef.get("readonlyRootFilesystem"):
                                 ecs_readonly_root_ok = True
@@ -3179,11 +3138,15 @@ class SecurityPillarEvaluator:
             try:
                 clusters = self.connector.client.eks.list_clusters().get("clusters", [])
                 for cluster_name in clusters:
-                    nodegroups = self.connector.client.eks.list_nodegroups(clusterName=cluster_name).get("nodegroups", [])
+                    nodegroups = self.connector.client.eks.list_nodegroups(
+                        clusterName=cluster_name
+                    ).get("nodegroups", [])
                     for ng in nodegroups:
                         eks_nodegroups_checked += 1
                         try:
-                            ng_desc = self.connector.client.eks.describe_nodegroup(clusterName=cluster_name, nodegroupName=ng)
+                            ng_desc = self.connector.client.eks.describe_nodegroup(
+                                clusterName=cluster_name, nodegroupName=ng
+                            )
                             ami_type = ng_desc.get("nodegroup", {}).get("amiType", "")
                             if "BOTTLEROCKET" in ami_type:
                                 eks_bottlerocket_ok = True
@@ -3206,11 +3169,7 @@ class SecurityPillarEvaluator:
                     eks_bottlerocket_ok,
                 ]
             )
-            bp02_status = (
-                "COMPLIANT"
-                if hardened_compute >= 3
-                else "NON_COMPLIANT"
-            )
+            bp02_status = "COMPLIANT" if hardened_compute >= 3 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -3262,9 +3221,7 @@ class SecurityPillarEvaluator:
                 docs = self.connector.client.ssm.list_documents(
                     Filters=[{"Key": "DocumentType", "Values": ["Session"]}]
                 )
-                session_manager_ok = (
-                    len(docs.get("DocumentIdentifiers", [])) > 0
-                )
+                session_manager_ok = len(docs.get("DocumentIdentifiers", [])) > 0
                 sm_status = (
                     "Systems Manager Session Manager configured"
                     if session_manager_ok
@@ -3276,9 +3233,7 @@ class SecurityPillarEvaluator:
             # Check Systems Manager Run Command usage
             try:
                 commands = self.connector.client.ssm.list_command_invocations()
-                ssm_run_command_ok = (
-                    len(commands.get("CommandInvocations", [])) > 0
-                )
+                ssm_run_command_ok = len(commands.get("CommandInvocations", [])) > 0
                 run_cmd_status = (
                     f"{len(commands.get('CommandInvocations', []))} Run Command invocations detected"
                     if ssm_run_command_ok
@@ -3290,9 +3245,7 @@ class SecurityPillarEvaluator:
             # Check CodeDeploy for automated deployments
             try:
                 applications = self.connector.client.codedeploy.list_applications()
-                codedeploy_ok = (
-                    len(applications.get("applications", [])) > 0
-                )
+                codedeploy_ok = len(applications.get("applications", [])) > 0
                 cd_status = (
                     f"{len(applications.get('applications', []))} CodeDeploy applications"
                     if codedeploy_ok
@@ -3351,11 +3304,15 @@ class SecurityPillarEvaluator:
             try:
                 clusters = self.connector.client.ecs.list_clusters().get("clusterArns", [])
                 for cluster_arn in clusters[:5]:
-                    services = self.connector.client.ecs.list_services(cluster=cluster_arn).get("serviceArns", [])
+                    services = self.connector.client.ecs.list_services(cluster=cluster_arn).get(
+                        "serviceArns", []
+                    )
                     for svc_arn in services[:20]:
                         ecs_services_checked += 1
                         try:
-                            svc = self.connector.client.ecs.describe_services(cluster=cluster_arn, services=[svc_arn])
+                            svc = self.connector.client.ecs.describe_services(
+                                cluster=cluster_arn, services=[svc_arn]
+                            )
                             for s in svc.get("services", []):
                                 if s.get("enableExecuteCommand"):
                                     ecs_exec_services += 1
@@ -3398,9 +3355,7 @@ class SecurityPillarEvaluator:
             bp03_status = (
                 "COMPLIANT"
                 if manual_access_reduction >= 4
-                else "NON_COMPLIANT"
-                if manual_access_reduction == 0
-                else "PARTIAL"
+                else "NON_COMPLIANT" if manual_access_reduction == 0 else "PARTIAL"
             )
 
             findings.append(
@@ -3441,9 +3396,7 @@ class SecurityPillarEvaluator:
             # Check AWS Signer
             try:
                 signing_profiles = self.connector.client.signer.list_signing_profiles()
-                aws_signer_ok = (
-                    len(signing_profiles.get("profiles", [])) > 0
-                )
+                aws_signer_ok = len(signing_profiles.get("profiles", [])) > 0
                 signer_status = (
                     f"{len(signing_profiles.get('profiles', []))} signing profiles configured"
                     if aws_signer_ok
@@ -3456,9 +3409,7 @@ class SecurityPillarEvaluator:
             try:
                 lambdas = self.connector.client.awslambda.list_functions()
                 signed_lambdas = [
-                    f
-                    for f in lambdas.get("Functions", [])
-                    if f.get("CodeSigningConfig")
+                    f for f in lambdas.get("Functions", []) if f.get("CodeSigningConfig")
                 ]
                 lambda_signing_ok = len(signed_lambdas) > 0
                 lambda_sign_status = (
@@ -3486,14 +3437,8 @@ class SecurityPillarEvaluator:
             except Exception:
                 ecr_sign_status = "Unable to verify ECR signing"
 
-            integrity_mechanisms = sum(
-                [aws_signer_ok, lambda_signing_ok, ecr_signing_ok]
-            )
-            bp04_status = (
-                "COMPLIANT"
-                if integrity_mechanisms >= 2
-                else "NON_COMPLIANT"
-            )
+            integrity_mechanisms = sum([aws_signer_ok, lambda_signing_ok, ecr_signing_ok])
+            bp04_status = "COMPLIANT" if integrity_mechanisms >= 2 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -3555,9 +3500,7 @@ class SecurityPillarEvaluator:
             # Check Auto Scaling
             try:
                 asg_groups = self.connector.client.autoscaling.describe_auto_scaling_groups()
-                auto_scaling_ok = (
-                    len(asg_groups.get("AutoScalingGroups", [])) > 0
-                )
+                auto_scaling_ok = len(asg_groups.get("AutoScalingGroups", [])) > 0
                 asg_status = (
                     f"{len(asg_groups.get('AutoScalingGroups', []))} Auto Scaling Groups"
                     if auto_scaling_ok
@@ -3603,11 +3546,7 @@ class SecurityPillarEvaluator:
                     security_hub_automation_ok,
                 ]
             )
-            bp05_status = (
-                "COMPLIANT"
-                if compute_automation >= 3
-                else "NON_COMPLIANT"
-            )
+            bp05_status = "COMPLIANT" if compute_automation >= 3 else "NON_COMPLIANT"
 
             findings.append(
                 {
@@ -3679,9 +3618,7 @@ class SecurityPillarEvaluator:
         # SEC07-BP02: Aplicar controles de protección de datos basados en sensibilidad
         try:
             s3_buckets = self.connector.get_s3_buckets()
-            unencrypted_buckets = [
-                b for b in s3_buckets if not b.get("encryption_enabled")
-            ]
+            unencrypted_buckets = [b for b in s3_buckets if not b.get("encryption_enabled")]
             if unencrypted_buckets:
                 score -= 20
                 findings.append(
@@ -3692,9 +3629,7 @@ class SecurityPillarEvaluator:
                         "severity": "CRITICAL",
                         "risk": "Unencrypted data can be accessed if bucket is compromised",
                         "remediation": "Enable default encryption for all S3 buckets using SSE-S3 or SSE-KMS",
-                        "evidence": ", ".join(
-                            [b["name"] for b in unencrypted_buckets[:5]]
-                        ),
+                        "evidence": ", ".join([b["name"] for b in unencrypted_buckets[:5]]),
                     }
                 )
             else:
@@ -3724,9 +3659,7 @@ class SecurityPillarEvaluator:
         # SEC07-BP04: Definir gestión escalable del ciclo de vida de datos
         try:
             s3_buckets = self.connector.get_s3_buckets()
-            unversioned_buckets = [
-                b for b in s3_buckets if not b.get("versioning_enabled")
-            ]
+            unversioned_buckets = [b for b in s3_buckets if not b.get("versioning_enabled")]
             if unversioned_buckets:
                 score -= 10
                 findings.append(
@@ -3764,9 +3697,7 @@ class SecurityPillarEvaluator:
         """SEC08: ¿Cómo protege sus datos en reposo? (4 BPs)"""
         findings = []
         score = 100
-        primary_region = (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
 
         # SEC08-BP01: Implementar gestión segura de claves
         try:
@@ -3859,9 +3790,7 @@ class SecurityPillarEvaluator:
         # SEC08-BP04: Hacer cumplir el control de acceso
         try:
             s3_buckets = self.connector.get_s3_buckets()
-            public_buckets = [
-                b for b in s3_buckets if not b.get("public_access_blocked")
-            ]
+            public_buckets = [b for b in s3_buckets if not b.get("public_access_blocked")]
             if public_buckets:
                 score -= 15
                 findings.append(
@@ -3899,9 +3828,7 @@ class SecurityPillarEvaluator:
         """SEC09: ¿Cómo protege sus datos en tránsito? (3 BPs)"""
         findings = []
         score = 100
-        primary_region = (
-            self.connector.regions[0] if self.connector.regions else "us-east-1"
-        )
+        primary_region = self.connector.regions[0] if self.connector.regions else "us-east-1"
 
         # SEC09-BP01: Implementar gestión segura de claves y certificados
         findings.append(
@@ -4249,9 +4176,7 @@ class SecurityPillarEvaluator:
             if result["success"]:
                 evaluated.append(result)
             else:
-                failed.append(
-                    {"bp_id": bp_id, "error": result.get("error", "Unknown error")}
-                )
+                failed.append({"bp_id": bp_id, "error": result.get("error", "Unknown error")})
 
         return {
             "success": len(failed) == 0,
