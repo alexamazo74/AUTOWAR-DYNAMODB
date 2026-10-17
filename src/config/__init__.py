@@ -1,1 +1,0 @@
-"""AutoWAR configuration package."""

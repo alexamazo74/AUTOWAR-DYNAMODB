@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoWAR - Vista de Analista</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .nav-menu {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+        }
+        
+        .nav-header {
+            padding: 20px;
+            background: #1a252f;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .nav-header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .nav-header .subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .nav-items {
+            padding: 10px 0;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+        }
+        
+        .nav-item:hover {
+            background: #34495e;
+        }
+        
+        .nav-item.active {
+            background: #667eea;
+        }
+        
+        .nav-item-icon {
+            font-size: 18px;
+        }
+        
+        .main-wrapper {
+            margin-left: 250px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .question-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .question-item:hover {
+            background: #f5f7fa;
+        }
+        
+        .question-item.active {
+            background: #e8eaf6;
+            border-left-color: #667eea;
+        }
+        
+        .question-id {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+        }
+        
+        .question-title {
+            font-size: 14px;
+            color: #333;
+            margin-top: 4px;
+        }
+        
+        .question-score {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 6px;
+        }
+        
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .question-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .question-header h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .question-meta {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .meta-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 4px;
+        }
+        
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .findings-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .findings-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+            vertical-align: top;
+        }
+        
+        .findings-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .bp-id {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 13px;
+        }
+        
+        .bp-description {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-compliant {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-non-compliant {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .severity-critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .severity-high {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .severity-medium {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .severity-low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .evidence-text {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            color: #495057;
+            max-width: 400px;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <div class="nav-header">
+            <h1>🔒 AutoWAR</h1>
+            <div class="subtitle">AWS Well-Architected</div>
+        </div>
+        <div class="nav-items">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-item-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="analyst.html" class="nav-item active">
+                <span class="nav-item-icon">🔍</span>
+                <span>Vista Analista</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span class="nav-item-icon">📄</span>
+                <span>Reportes</span>
+            </a>
+            <a href="#" class="nav-item" style="opacity: 0.5; pointer-events: none;">
+                <span class="nav-item-icon">⚙️</span>
+                <span>Configuración</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-wrapper">
+        <div class="header">
+            <h1 id="pillarName">Vista de Analista</h1>
+            <div class="subtitle">Análisis detallado de preguntas y Best Practices</div>
+        </div>
+        
+        <div class="container">
+            <div class="sidebar">
+                <h2>Preguntas</h2>
+                <div id="questionsList"></div>
+            </div>
+            
+            <div class="main-content">
+                <div class="question-header">
+                    <h2 id="questionTitle">Selecciona una pregunta</h2>
+                    <div class="question-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Score</span>
+                            <span class="meta-value" id="questionScore">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">BPs Evaluadas</span>
+                            <span class="meta-value" id="bpsEvaluated">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Estado</span>
+                            <span class="meta-value" id="questionStatus">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="findings-table" id="findingsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 180px;">BP ID / Descripción</th>
+                            <th style="width: 100px;">Estado</th>
+                            <th style="width: 100px;">Severidad</th>
+                            <th>Hallazgo</th>
+                            <th>Riesgo</th>
+                            <th>Remediación</th>
+                            <th>Evidencia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="findingsBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                Selecciona una pregunta para ver los detalles
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script src="analyst.js"></script>
+</body>
+</html>

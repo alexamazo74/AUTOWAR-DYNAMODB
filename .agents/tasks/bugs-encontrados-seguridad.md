@@ -1,9 +1,14 @@
 # Bugs reales de producción encontrados — pilar de Seguridad
 
+> **ESTADO: los 4 bugs fueron CORREGIDOS** (2026-10-16). Esta sección documenta los bugs tal como se
+> descubrieron y el fix aplicado a cada uno. Las pruebas que antes los evidenciaban como `xfail` son
+> ahora pruebas de regresión en verde (ver `tests/test_security_bugs.py`), y la suite completa pasa
+> `98 passed, 1 skipped, 0 failed`.
+
 Estos bugs fueron descubiertos al construir la suite de pruebas con un mock de sesión boto3 FIEL
-(clientes reales + proxy que preserva `client.exceptions`). **No se corrigió el código de producción**
-(el objetivo del trabajo es TESTS, no refactor). Cada bug queda evidenciado por un test marcado `xfail`
-con `reason` apuntando a este documento.
+(clientes reales + proxy que preserva `client.exceptions`). Inicialmente NO se corrigió el código
+(el objetivo de la tarea de testing era solo TESTS); una vez validada la suite, se aplicaron los fixes
+propuestos (abajo, en cada bug) y se verificó que la suite queda verde.
 
 Patrón común a los 3 bugs: una variable se asigna **dentro** de un `try` interno; si la **primera**
 llamada AWS de ese `try` lanza `ClientError` (p.ej. `AccessDenied` por permisos parciales de la rol de
@@ -29,17 +34,9 @@ AccessDenied), el `except ClientError` añade un issue a `issues` pero deja `old
 asignar. Como `issues` queda no vacío, el flujo entra en la rama `else`, que lee `old_keys` →
 `UnboundLocalError`.
 
-Fix propuesto (no aplicado): inicializar los contadores antes del `try` interno:
-```python
-old_keys = 0
-unused_users = 0
-no_mfa_console = 0
-try:
-    client.generate_credential_report()
-    ...
-```
+Fix APLICADO: `old_keys`, `unused_users` y `no_mfa_console` se inicializan a 0 antes del `try` interno.
 
-Test que lo evidencia: `tests/test_security_bugs.py::test_sec02_bp05_access_denied_bug` (xfail).
+Test de regresión: `tests/test_security_bugs.py::test_sec02_bp05_access_denied_degrades` (verde).
 
 ---
 
@@ -53,10 +50,10 @@ Causa: si `s3.list_buckets()` lanza `ClientError` (p.ej. AccessDenied), el `exce
 bloque solo añade evidencia, pero `buckets` nunca se asigna. El segundo bloque ("S3 public access block")
 itera `for bucket in buckets[:15]` → `UnboundLocalError`.
 
-Fix propuesto (no aplicado): inicializar `buckets = []` antes del primer `try`, de forma que el segundo
-bloque opere sobre una lista vacía cuando S3 no es accesible.
+Fix APLICADO: `buckets = []` se inicializa antes del primer `try`, de forma que el segundo bloque opera
+sobre una lista vacía cuando S3 no es accesible.
 
-Test que lo evidencia: `tests/test_security_bugs.py::test_sec07_bp02_access_denied_bug` (xfail).
+Test de regresión: `tests/test_security_bugs.py::test_sec07_bp02_access_denied_degrades` (verde).
 
 ---
 
@@ -71,10 +68,10 @@ añade evidencia y **no** añade ningún issue. Con `issues` vacío, el flujo en
 lee `len(cert_list)` → `UnboundLocalError`. (Además, degradar a COMPLIANT cuando ACM no es accesible es un
 problema de criterio secundario: no se puede afirmar cumplimiento sin datos.)
 
-Fix propuesto (no aplicado): inicializar `cert_list = []` antes del `try`, y considerar que ACM inaccesible
-debería producir `PENDING_REVIEW` en lugar de COMPLIANT.
+Fix APLICADO: `cert_list = []` se inicializa antes del `try`, y cuando ACM es inaccesible se añade un issue
+para que la BP NO reporte COMPLIANT sin datos (degrada a PENDING_REVIEW/NON_COMPLIANT).
 
-Test que lo evidencia: `tests/test_security_bugs.py::test_sec09_bp01_access_denied_bug` (xfail).
+Test de regresión: `tests/test_security_bugs.py::test_sec09_bp01_access_denied_degrades` (verde).
 
 ---
 
@@ -93,14 +90,11 @@ campos de texto deben ser no vacíos) y, de hecho, `autowar_common.models.Findin
 
 A diferencia de BUG-1..3, SEC10-BP08 **no** lanza una excepción: devuelve un dict con `description=''`.
 
-Fix propuesto (no aplicado): añadir la clave faltante en `bp_descriptions.py`, por ejemplo:
-```python
-'SEC10-BP08': 'Learn from incidents',
-```
+Fix APLICADO: se añadió la clave `'SEC10-BP08': 'Establish a framework to learn from incidents'` en
+`bp_descriptions.py`.
 
-Test que lo evidencia:
-`tests/test_security_structure.py::test_each_bp_returns_valid_finding_under_access_denied[SEC10-BP08]`
-(xfail, `raises=AssertionError` por la description vacía).
+Test de regresión: `tests/test_security_bugs.py::test_sec10_bp08_has_description` (verde), y la BP se
+valida junto a las otras 62 en `test_each_bp_returns_valid_finding_under_access_denied[SEC10-BP08]`.
 
 ---
 

@@ -13,21 +13,12 @@ real: todas las llamadas AWS fallan con AccessDenied, pero `client.exceptions.<X
 existe (mock fiel), de modo que cada BP cae a su rama de error/pending y devuelve
 un finding válido y completo.
 
-NOTA SOBRE BUGS DE PRODUCCIÓN
------------------------------
-El mock fiel reveló 3 bugs reales (UnboundLocalError ante AccessDenied) en
-SEC02-BP05, SEC07-BP02 y SEC09-BP01. Están documentados en
-`.agents/tasks/bugs-encontrados-seguridad.md` y NO se corrigieron (el objetivo es
-TESTS, no refactor del evaluador). Como `SecurityEvaluator.evaluate()` aborta en la
-primera BP que lanza esa excepción, las pruebas estructurales recorren las 63 BPs
-**individualmente**: las 60 sanas se validan en verde y las 3 con bug se marcan
-`xfail`. Las invariantes de pilar (11 preguntas, 63 BPs, distribuciones) se validan
-reconstruyendo el resultado por-BP, sustituyendo las 3 BPs con bug por el finding
-degradado que el manejador de errores (`_handle_permission_error`) habría producido
-(ese es el comportamiento esperado una vez corregidos los bugs).
+Los 4 bugs de producción que el mock fiel reveló (SEC02-BP05, SEC07-BP02,
+SEC09-BP01, SEC10-BP08) fueron CORREGIDOS; por eso las 63 BPs se validan ahora de
+forma uniforme en verde. La regresión específica de cada bug se cubre además en
+tests/test_security_bugs.py.
 """
 
-import pytest
 from _helpers import (  # noqa: E402 (sys.path lo ajusta conftest)
     EXPECTED_BPS_PER_QUESTION,
     EXPECTED_QUESTIONS,
@@ -36,47 +27,21 @@ from _helpers import (  # noqa: E402 (sys.path lo ajusta conftest)
     VALID_STATUS,
     assert_finding_contract,
 )
+import pytest
 from conftest import iter_bp_invokers
-
-# BPs con bug de producción documentado (ver bugs-encontrados-seguridad.md).
-# BUG-1..3: lanzan UnboundLocalError ante AccessDenied.
-CRASH_BUGGY_BPS = {"SEC02-BP05", "SEC07-BP02", "SEC09-BP01"}
-# BUG-4: devuelven un finding con `description` vacía (clave ausente en el dict).
-EMPTY_DESC_BPS = {"SEC10-BP08"}
-KNOWN_BUGGY_BPS = CRASH_BUGGY_BPS | EMPTY_DESC_BPS
 
 
 def _collect_findings(security_handler, session):
-    """Invoca las 63 BPs individualmente y devuelve [(bp_id, finding_or_None)].
+    """Invoca las 63 BPs individualmente y devuelve [(bp_id, finding)].
 
-    Para las BPs con bug documentado, captura la excepción y sustituye el finding
-    por el que `_handle_permission_error` habría devuelto (status PENDING_REVIEW),
-    que es el comportamiento esperado tras corregir el bug.
+    Tras corregir los bugs, ninguna BP lanza excepción ante AccessDenied: todas
+    devuelven un finding degradado válido.
     """
-    evaluator = security_handler.SecurityEvaluator(session, region="us-east-1")
-    from botocore.exceptions import ClientError
-
     results = []
     for bp_id, invoker in iter_bp_invokers(security_handler, session):
-        try:
-            finding = invoker()
-        except Exception:  # noqa: BLE001
-            # Bug de producción (BUG-1..3): simula la degradación esperada para no
-            # perder la invariante de 63 findings. Debe ser una BP conocida con bug.
-            assert bp_id in CRASH_BUGGY_BPS, (
-                f"{bp_id} lanzó una excepción no documentada en "
-                f"bugs-encontrados-seguridad.md"
-            )
-            fake_error = ClientError(
-                {"Error": {"Code": "AccessDenied", "Message": "bug workaround"}},
-                "operation",
-            )
-            finding = evaluator._handle_permission_error(bp_id, fake_error)
-        results.append((bp_id, finding))
+        results.append((bp_id, invoker()))
     return results
 
-
-# --- Validación por-BP (las 60 sanas en verde, las 3 con bug en xfail) ---
 
 def _bp_ids():
     return [f"{sec}-BP{n:02d}"
@@ -84,34 +49,14 @@ def _bp_ids():
             for n in range(1, count + 1)]
 
 
+# --- Validación por-BP: las 63 ante AccessDenied devuelven finding válido ---
+
 @pytest.mark.parametrize("bp_id", _bp_ids())
 def test_each_bp_returns_valid_finding_under_access_denied(
-    security_handler, denying_session, bp_id, request
+    security_handler, denying_session, bp_id
 ):
-    """Cada BP, ante AccessDenied, devuelve un finding válido (ruta degradada)."""
-    if bp_id in CRASH_BUGGY_BPS:
-        request.applymarker(
-            pytest.mark.xfail(
-                reason=(
-                    f"{bp_id}: bug de producción (UnboundLocalError ante AccessDenied). "
-                    f"Ver .agents/tasks/bugs-encontrados-seguridad.md"
-                ),
-                strict=False,
-                raises=UnboundLocalError,
-            )
-        )
-    elif bp_id in EMPTY_DESC_BPS:
-        request.applymarker(
-            pytest.mark.xfail(
-                reason=(
-                    f"{bp_id}: bug de producción (description vacía, clave ausente en "
-                    f"SECURITY_BP_DESCRIPTIONS). Ver .agents/tasks/bugs-encontrados-seguridad.md"
-                ),
-                strict=False,
-                raises=AssertionError,
-            )
-        )
-
+    """Cada BP, ante AccessDenied, devuelve un finding válido (ruta degradada),
+    sin lanzar excepción."""
     invokers = dict(iter_bp_invokers(security_handler, denying_session))
     finding = invokers[bp_id]()
     assert_finding_contract(finding, expected_bp=bp_id)
@@ -136,7 +81,6 @@ def test_pillar_has_eleven_questions(security_handler, denying_session):
     assert seen_questions == EXPECTED_QUESTIONS, (
         f"Se esperaban 11 preguntas SEC01..SEC11, se obtuvo: {seen_questions}"
     )
-    # Reparto de BPs por pregunta.
     counts = {}
     for bp_id, _finding in results:
         q = bp_id.split("-")[0]
@@ -149,17 +93,6 @@ def test_pillar_has_eleven_questions(security_handler, denying_session):
 def test_every_finding_has_full_contract(security_handler, denying_session):
     results = _collect_findings(security_handler, denying_session)
     for bp_id, finding in results:
-        if bp_id in EMPTY_DESC_BPS:
-            # BUG-4 documentado: description vacía. Se valida (como xfail) en
-            # test_each_bp_returns_valid_finding_under_access_denied[SEC10-BP08].
-            # Aquí comprobamos el resto del contrato salvo la description vacía.
-            assert set(finding.keys()) >= {
-                "bp", "description", "status", "severity",
-                "finding", "evidence", "remediation", "risk",
-            }
-            assert finding["status"] in VALID_STATUS
-            assert finding["severity"] in VALID_SEVERITY
-            continue
         assert_finding_contract(finding, expected_bp=bp_id)
 
 
@@ -180,8 +113,7 @@ def test_distributions_match_finding_counts(security_handler, denying_session):
     for _bp_id, finding in results:
         assert finding["status"] in VALID_STATUS
         assert finding["severity"] in VALID_SEVERITY
-        compliance_key = finding["status"].lower()
-        compliance[compliance_key] += 1
+        compliance[finding["status"].lower()] += 1
         severity[finding["severity"].lower()] += 1
 
     total_comp = sum(compliance.values())

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoWAR - Reportes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .nav-menu {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+        }
+        
+        .nav-header {
+            padding: 20px;
+            background: #1a252f;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .nav-header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .nav-header .subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .nav-items {
+            padding: 10px 0;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-item:hover {
+            background: #34495e;
+        }
+        
+        .nav-item.active {
+            background: #667eea;
+        }
+        
+        .nav-item-icon {
+            font-size: 18px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 32px;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .page-header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: #667eea;
+            color: white;
+            padding: 20px 30px;
+        }
+        
+        .card-header h2 {
+            font-size: 24px;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-text {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .evaluation-details {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .detail-value {
+            color: #333;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .radio-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        
+        .radio-item input[type="radio"] {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .radio-item label {
+            cursor: pointer;
+            margin: 0;
+            flex: 1;
+        }
+        
+        .radio-description {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+            margin-top: 5px;
+        }
+        
+        .btn-primary {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message,
+        .success-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+        }
+        
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <div class="nav-header">
+            <h1>AutoWAR</h1>
+            <div class="subtitle">AWS Well-Architected</div>
+        </div>
+        <div class="nav-items">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-item-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="analyst.html" class="nav-item">
+                <span class="nav-item-icon">🔍</span>
+                <span>Vista Analista</span>
+            </a>
+            <a href="reports.html" class="nav-item active">
+                <span class="nav-item-icon">📄</span>
+                <span>Reportes</span>
+            </a>
+            <a href="#" class="nav-item" style="opacity: 0.5; pointer-events: none;">
+                <span class="nav-item-icon">⚙️</span>
+                <span>Configuración</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Generación de Reportes</h1>
+                <p>Seleccione una evaluación y genere reportes personalizados</p>
+            </div>
+
+            <!-- Reports Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Configuración del Reporte</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Evaluation Selector -->
+                    <div class="form-group">
+                        <label for="evaluation-select">Seleccionar Evaluación:</label>
+                        <select id="evaluation-select" class="form-control">
+                            <option value="">-- Seleccione una evaluación --</option>
+                        </select>
+                        <small class="form-text">Seleccione la evaluación de la cual desea generar el reporte</small>
+                    </div>
+
+                    <!-- Evaluation Details -->
+                    <div id="evaluation-details" class="evaluation-details" style="display: none;">
+                        <div class="detail-row">
+                            <span class="detail-label">Cuenta:</span>
+                            <span id="detail-account" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha:</span>
+                            <span id="detail-date" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Total BPs:</span>
+                            <span id="detail-total-bps" class="detail-value"></span>
+                        </div>
+                    </div>
+
+                    <!-- Pilar Selector -->
+                    <div class="form-group">
+                        <label>Pilares a incluir:</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-security" value="security">
+                                <label for="pilar-security">Seguridad</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-reliability" value="reliability">
+                                <label for="pilar-reliability">Confiabilidad</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-performance" value="performance">
+                                <label for="pilar-performance">Rendimiento</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-cost" value="cost">
+                                <label for="pilar-cost">Costos</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-operational" value="operationalExcellence">
+                                <label for="pilar-operational">Excelencia Operacional</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="pilar-sustainability" value="sustainability">
+                                <label for="pilar-sustainability">Sostenibilidad</label>
+                            </div>
+                        </div>
+                        <small class="form-text">Seleccione al menos un pilar</small>
+                    </div>
+
+                    <!-- Report Type Selector -->
+                    <div class="form-group">
+                        <label>Tipo de Reporte:</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="type-executive" name="reportType" value="executive">
+                                <label for="type-executive">
+                                    <strong>Ejecutivo (DOCX)</strong>
+                                    <span class="radio-description">Reporte orientado a negocio con análisis estratégico</span>
+                                </label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="type-technical" name="reportType" value="technical">
+                                <label for="type-technical">
+                                    <strong>Técnico (XLSX)</strong>
+                                    <span class="radio-description">Reporte detallado con todas las Best Practices</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="form-actions">
+                        <button id="generate-report-btn" class="btn-primary" disabled>
+                            Generar Reporte
+                        </button>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Generando reporte...</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="error-message" class="error-message" style="display: none;"></div>
+
+                    <!-- Success Message -->
+                    <div id="success-message" class="success-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="reports.js"></script>
+</body>
+</html>

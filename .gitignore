@@ -13,8 +13,36 @@ __pycache__/
 cdk.out/
 node_modules/
 .Python
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.vite/
+
 # Runtime logs
 uvicorn*.log
 uvicorn.err
 uvicorn.out
+*.log
 
+# Build artifacts del frontend (Vite)
+web/dist/
+frontend-new/dist/
+
+# Credenciales / config AWS local (nunca versionar)
+.aws/
+**/.aws/
+aws_credentials*
+credentials
+
+# Artefactos temporales / de trabajo del agente (no son codigo fuente)
+.agents/tasks/*.txt
+.agents/tasks/*.json
+.agents/tasks/*.zip
+backend_response.json
+evaluation_results.json
+test_evaluation.json
+msg*.json
+pr_payload.json
+
+# Zips de empaquetado Lambda
+*.zip
