@@ -35,9 +35,7 @@ aws_credentials*
 credentials
 
 # Artefactos temporales / de trabajo del agente (no son codigo fuente)
-.agents/tasks/*.txt
-.agents/tasks/*.json
-.agents/tasks/*.zip
+.agents/tasks/
 backend_response.json
 evaluation_results.json
 test_evaluation.json
