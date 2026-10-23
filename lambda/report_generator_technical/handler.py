@@ -240,7 +240,13 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
             img.height = 164
             ws.add_image(img, 'H1')
         except Exception as e:
-            logger.info(f"Could not embed logo in summary sheet: {e}")
+            # El logo requiere Pillow (PIL) en el layer; si falta, openpyxl no
+            # puede incrustar la imagen. Elevamos a WARNING con traceback para
+            # que el fallo sea visible en CloudWatch, SIN romper la generacion
+            # del reporte (el XLSX se genera igual, solo sin logo).
+            logger.warning(
+                f"Could not embed logo in summary sheet: {e}", exc_info=True
+            )
 
     # Title
     ws['A1'] = 'Reporte Técnico - AWS Well-Architected Review'

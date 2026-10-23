@@ -6,6 +6,7 @@ from aws_cdk import (
     Stack,
     Duration,
     RemovalPolicy,
+    BundlingOptions,
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
@@ -152,12 +153,34 @@ class AutoWARStack(Stack):
             description="AutoWAR common utilities"
         )
 
-        # Lambda Layer (reports - openpyxl, python-docx, matplotlib)
+        # Lambda Layer (reports - openpyxl, python-docx, matplotlib, Pillow).
+        #
+        # Se construye con BundlingOptions sobre la imagen oficial de AWS Lambda
+        # para Python 3.11, de modo que las dependencias con binarios nativos
+        # (Pillow/PIL y numpy, requerido por matplotlib) se compilen para el
+        # runtime de Lambda (manylinux2014_x86_64 / py3.11). Instalar desde
+        # requirements.txt garantiza que lo desplegado coincida siempre con el
+        # contrato de dependencias (ver tests/test_reports_layer_contract.py).
+        #
+        # NOTA: requiere Docker durante `cdk synth`/`cdk deploy`. Los assets de
+        # marca (autowar_assets/) viajan en el propio directorio del layer y se
+        # copian al asset-output junto con las dependencias.
         reports_layer = lambda_.LayerVersion(
             self, "ReportsLayer",
-            code=lambda_.Code.from_asset("../lambda/layers/reports"),
+            code=lambda_.Code.from_asset(
+                "../lambda/layers/reports",
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_11.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output/python "
+                        "--no-cache-dir && "
+                        "cp -R python/autowar_assets /asset-output/python/autowar_assets"
+                    ],
+                ),
+            ),
             compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
-            description="Report generation libraries"
+            description="Report generation libraries (openpyxl, python-docx, matplotlib, Pillow)"
         )
 
         # Lambda: Credential Validator
