@@ -6,6 +6,7 @@ Generates detailed technical reports in XLSX format
 import json
 import logging
 import io
+import os
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -14,6 +15,33 @@ from autowar_common.report_storage import upload_report, generate_signed_url
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+# GFourmis corporate palette (openpyxl hex, no '#')
+GF_ORANGE = 'F06000'  # primary orange - main headers
+GF_RED = 'C01010'     # corporate red - section/question headers
+
+
+def resolve_asset_path(filename):
+    """Resolve a branding asset path with a Lambda-first fallback.
+
+    Tries the Lambda layer mount (/opt/python/autowar_assets/<filename>) first,
+    then falls back to the project-relative path (lambda/layers/reports/python/
+    autowar_assets/<filename>) computed from this handler's location so it also
+    works in local tests. Returns the first existing path or None.
+    """
+    lambda_path = os.path.join('/opt/python', 'autowar_assets', filename)
+    if os.path.exists(lambda_path):
+        return lambda_path
+
+    handler_dir = os.path.dirname(os.path.abspath(__file__))
+    local_path = os.path.abspath(os.path.join(
+        handler_dir, '..', 'layers', 'reports', 'python', 'autowar_assets', filename
+    ))
+    if os.path.exists(local_path):
+        return local_path
+
+    logger.info(f"Branding asset not found: {filename} (tried {lambda_path} and {local_path})")
+    return None
 
 
 def lambda_handler(event, context):
@@ -128,13 +156,26 @@ def generate_technical_report(evaluation_data, selected_pilares, account_id, eva
 def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, evaluation_timestamp, user_info=None):
     """Create summary worksheet with detailed statistics and charts"""
     from openpyxl.chart import BarChart, PieChart, Reference
+    from openpyxl.drawing.image import Image as XLImage
     
     ws = wb.create_sheet("Resumen", 0)
     
+    # GFourmis logo (top-right, over the title area without covering A1:H1 text)
+    logo_path = resolve_asset_path('gfourmis-logo.png')
+    if logo_path:
+        try:
+            img = XLImage(logo_path)
+            # Keep aspect ratio ~2712x2478
+            img.width = 180
+            img.height = 164
+            ws.add_image(img, 'G1')
+        except Exception as e:
+            logger.info(f"Could not embed logo in summary sheet: {e}")
+    
     # Title
     ws['A1'] = 'Reporte Técnico - AWS Well-Architected Review'
-    ws['A1'].font = Font(size=16, bold=True)
-    ws.merge_cells('A1:H1')
+    ws['A1'].font = Font(size=16, bold=True, color=GF_ORANGE)
+    ws.merge_cells('A1:F1')
     
     # Metadata
     ws['A3'] = 'Cuenta AWS:'
@@ -194,7 +235,7 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=row, column=col, value=header)
         cell.font = Font(bold=True, color='FFFFFF')
-        cell.fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+        cell.fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     
     row += 1
@@ -402,7 +443,7 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
         question_title = bps_in_question[0].get('questionTitle', question_id)
         question_cell.value = f'{question_id}: {question_title} - {question_score}%'
         question_cell.font = Font(size=12, bold=True, color='FFFFFF')
-        question_cell.fill = PatternFill(start_color='203864', end_color='203864', fill_type='solid')
+        question_cell.fill = PatternFill(start_color=GF_RED, end_color=GF_RED, fill_type='solid')
         question_cell.alignment = Alignment(horizontal='left', vertical='center')
         
         current_row += 1
@@ -412,10 +453,15 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
         for col, header in enumerate(headers, start=1):
             cell = ws.cell(row=current_row, column=col, value=header)
             cell.font = Font(bold=True, color='FFFFFF')
-            cell.fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         
         current_row += 1
+        
+        # Long-text columns that should wrap and align to the top (Descripción B,
+        # Hallazgo E, Evidencia F, Remediación G, Riesgo H).
+        wrap_cols = {2, 5, 6, 7, 8}
+        wrap_alignment = Alignment(wrap_text=True, vertical='top')
         
         # Add BPs for this question
         for bp in bps_in_question:
@@ -432,9 +478,11 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
             ws.cell(row=current_row, column=7, value=bp.get('remediation', ''))
             ws.cell(row=current_row, column=8, value=bp.get('risk', ''))
             
-            # Apply borders
+            # Apply borders and wrap on long-text columns
             for col in range(1, 9):
                 cell = ws.cell(row=current_row, column=col)
+                if col in wrap_cols:
+                    cell.alignment = wrap_alignment
                 cell.border = Border(
                     left=Side(style='thin'),
                     right=Side(style='thin'),
@@ -457,7 +505,7 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
     ws.column_dimensions['C'].width = 15
     ws.column_dimensions['D'].width = 12
     ws.column_dimensions['E'].width = 50
-    ws.column_dimensions['F'].width = 50
+    ws.column_dimensions['F'].width = 80
     ws.column_dimensions['G'].width = 50
     ws.column_dimensions['H'].width = 50
 
@@ -469,7 +517,7 @@ def add_pilar_summary(ws, bps, start_row):
     ws.merge_cells(f'A{start_row}:H{start_row}')
     title_cell = ws.cell(row=start_row, column=1, value='RESUMEN DEL PILAR')
     title_cell.font = Font(size=14, bold=True, color='FFFFFF')
-    title_cell.fill = PatternFill(start_color='203864', end_color='203864', fill_type='solid')
+    title_cell.fill = PatternFill(start_color=GF_RED, end_color=GF_RED, fill_type='solid')
     title_cell.alignment = Alignment(horizontal='center', vertical='center')
     
     start_row += 2
@@ -521,7 +569,7 @@ def add_pilar_summary(ws, bps, start_row):
     ws.cell(row=start_row, column=5, value='Baja')
     for col in range(1, 6):
         ws.cell(row=start_row, column=col).font = Font(bold=True)
-        ws.cell(row=start_row, column=col).fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+        ws.cell(row=start_row, column=col).fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
         ws.cell(row=start_row, column=col).font = Font(bold=True, color='FFFFFF')
     
     start_row += 1
@@ -547,7 +595,7 @@ def apply_header_style(ws, row, num_cols):
     for col in range(1, num_cols + 1):
         cell = ws.cell(row=row, column=col)
         cell.font = Font(bold=True, color='FFFFFF')
-        cell.fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+        cell.fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
         cell.alignment = Alignment(horizontal='center', vertical='center')
 
 
