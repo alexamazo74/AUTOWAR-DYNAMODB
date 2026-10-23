@@ -207,6 +207,7 @@
         .findings-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             margin-top: 20px;
         }
         
@@ -305,10 +306,10 @@
             padding: 8px;
             border-radius: 4px;
             color: #495057;
-            min-width: 320px;
-            max-width: 460px;
+            width: 100%;
             white-space: normal;
             word-break: break-word;
+            overflow-wrap: anywhere;
         }
         
         .table-scroll {
@@ -377,13 +378,13 @@
                 <table class="findings-table" id="findingsTable">
                     <thead>
                         <tr>
-                            <th style="width: 180px;">BP ID / Descripción</th>
-                            <th style="width: 100px;">Estado</th>
-                            <th style="width: 100px;">Severidad</th>
-                            <th>Hallazgo</th>
-                            <th>Riesgo</th>
-                            <th>Remediación</th>
-                            <th style="min-width: 320px;">Evidencia</th>
+                            <th style="width: 14%;">BP ID / Descripción</th>
+                            <th style="width: 8%;">Estado</th>
+                            <th style="width: 8%;">Severidad</th>
+                            <th style="width: 16%;">Hallazgo</th>
+                            <th style="width: 15%;">Riesgo</th>
+                            <th style="width: 15%;">Remediación</th>
+                            <th style="width: 24%;">Evidencia</th>
                         </tr>
                     </thead>
                     <tbody id="findingsBody">
