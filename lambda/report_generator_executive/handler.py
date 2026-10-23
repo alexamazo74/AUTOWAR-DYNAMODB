@@ -9,6 +9,14 @@ import io
 import os
 from datetime import datetime
 
+# En Lambda el filesystem es de solo lectura salvo /tmp. matplotlib intenta
+# escribir su cache de configuracion en HOME al importarse y falla si no es
+# escribible. Fijamos MPLCONFIGDIR a un directorio escribible y lo creamos
+# ANTES de importar matplotlib. En tests Windows el runner sobreescribe
+# MPLCONFIGDIR con un tmp dir propio, por eso usamos setdefault.
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
+os.makedirs(os.environ['MPLCONFIGDIR'], exist_ok=True)
+
 import matplotlib
 matplotlib.use('Agg')  # headless backend (Lambda has no display)
 import matplotlib.pyplot as plt
@@ -400,6 +408,23 @@ def _fig_to_doc(doc, fig, caption):
     cap_run.font.color.rgb = GF_BLACK
 
 
+def _safe_chart(doc, factory, caption):
+    """Incrusta una grafica de forma tolerante a fallos.
+
+    Invoca factory() para construir la figura; si devuelve una figura la
+    incrusta con su caption. Si la construccion o la incrustacion lanzan una
+    excepcion, se cierran todas las figuras abiertas y se registra el fallo,
+    pero el documento se genera igual SIN esa grafica (nunca revienta el DOCX).
+    """
+    try:
+        fig = factory()
+        if fig is not None:
+            _fig_to_doc(doc, fig, caption)
+    except Exception as e:
+        plt.close('all')
+        logger.info(f'Chart omitido: {e}')
+
+
 # ---------------------------------------------------------------------------
 # Charts (matplotlib)
 # ---------------------------------------------------------------------------
@@ -621,21 +646,26 @@ def add_executive_summary(doc, evaluation_data, selected_pilares):
         doc.add_heading('Tablero Visual', level=2)
         non_compliant_bps = [bp for bp in filtered_bps if bp.get('status') == 'NON_COMPLIANT']
 
-        fig = chart_scores_por_pilar(pillar_scores, selected_pilares)
-        if fig is not None:
-            _fig_to_doc(doc, fig, 'Figura 1. Score de cumplimiento por pilar (mayor es mejor).')
-
-        fig = chart_cumplimiento_global(counts)
-        if fig is not None:
-            _fig_to_doc(doc, fig, 'Figura 2. Distribución global de estados de las mejores prácticas evaluadas.')
-
-        fig = chart_severidad_hallazgos(non_compliant_bps)
-        if fig is not None:
-            _fig_to_doc(doc, fig, 'Figura 3. Hallazgos no conformes agrupados por severidad.')
-
-        fig = chart_ranking_pilares(pillar_scores, selected_pilares)
-        if fig is not None:
-            _fig_to_doc(doc, fig, 'Figura 4. Semáforo de pilares ordenados por criticidad (rojo = acción inmediata).')
+        _safe_chart(
+            doc,
+            lambda: chart_scores_por_pilar(pillar_scores, selected_pilares),
+            'Figura 1. Score de cumplimiento por pilar (mayor es mejor).',
+        )
+        _safe_chart(
+            doc,
+            lambda: chart_cumplimiento_global(counts),
+            'Figura 2. Distribución global de estados de las mejores prácticas evaluadas.',
+        )
+        _safe_chart(
+            doc,
+            lambda: chart_severidad_hallazgos(non_compliant_bps),
+            'Figura 3. Hallazgos no conformes agrupados por severidad.',
+        )
+        _safe_chart(
+            doc,
+            lambda: chart_ranking_pilares(pillar_scores, selected_pilares),
+            'Figura 4. Semáforo de pilares ordenados por criticidad (rojo = acción inmediata).',
+        )
 
     doc.add_paragraph()
     

@@ -207,16 +207,29 @@ class PerformanceEvaluator:
             'severity_distribution': severity_dist
         }
     
+    def _safe_eval(self, bp_id: str, func) -> Dict[str, Any]:
+        """Ejecuta la evaluación de un BP de forma resiliente.
+
+        Si el BP lanza CUALQUIER excepción (incluidas las que no son ClientError,
+        como UnknownServiceError de botocore), se delega a _handle_permission_error
+        para devolver un finding PENDING_REVIEW. Así ningún BP individual tumba el
+        pilar completo.
+        """
+        try:
+            return func(self.session, self._handle_permission_error)
+        except Exception as e:
+            return self._handle_permission_error(bp_id, e)
+
     def _evaluate_perf01(self) -> Dict[str, Any]:
         """PERF01: How do you select appropriate resources? (7 BPs)"""
         findings = [
-            evaluate_perf01_bp01(self.session, self._handle_permission_error),
-            evaluate_perf01_bp02(self.session, self._handle_permission_error),
-            evaluate_perf01_bp03(self.session, self._handle_permission_error),
-            evaluate_perf01_bp04(self.session, self._handle_permission_error),
-            evaluate_perf01_bp05(self.session, self._handle_permission_error),
-            evaluate_perf01_bp06(self.session, self._handle_permission_error),
-            evaluate_perf01_bp07(self.session, self._handle_permission_error),
+            self._safe_eval('PERF01-BP01', evaluate_perf01_bp01),
+            self._safe_eval('PERF01-BP02', evaluate_perf01_bp02),
+            self._safe_eval('PERF01-BP03', evaluate_perf01_bp03),
+            self._safe_eval('PERF01-BP04', evaluate_perf01_bp04),
+            self._safe_eval('PERF01-BP05', evaluate_perf01_bp05),
+            self._safe_eval('PERF01-BP06', evaluate_perf01_bp06),
+            self._safe_eval('PERF01-BP07', evaluate_perf01_bp07),
         ]
         return self._create_question('PERF01', findings,
             'How do you select appropriate resources?', 'Selección de recursos')
@@ -224,12 +237,12 @@ class PerformanceEvaluator:
     def _evaluate_perf02(self) -> Dict[str, Any]:
         """PERF02: How do you select your compute solution? (6 BPs)"""
         findings = [
-            evaluate_perf02_bp01(self.session, self._handle_permission_error),
-            evaluate_perf02_bp02(self.session, self._handle_permission_error),
-            evaluate_perf02_bp03(self.session, self._handle_permission_error),
-            evaluate_perf02_bp04(self.session, self._handle_permission_error),
-            evaluate_perf02_bp05(self.session, self._handle_permission_error),
-            evaluate_perf02_bp06(self.session, self._handle_permission_error),
+            self._safe_eval('PERF02-BP01', evaluate_perf02_bp01),
+            self._safe_eval('PERF02-BP02', evaluate_perf02_bp02),
+            self._safe_eval('PERF02-BP03', evaluate_perf02_bp03),
+            self._safe_eval('PERF02-BP04', evaluate_perf02_bp04),
+            self._safe_eval('PERF02-BP05', evaluate_perf02_bp05),
+            self._safe_eval('PERF02-BP06', evaluate_perf02_bp06),
         ]
         return self._create_question('PERF02', findings,
             'How do you select your compute solution?', 'Solución de cómputo')
@@ -237,11 +250,11 @@ class PerformanceEvaluator:
     def _evaluate_perf03(self) -> Dict[str, Any]:
         """PERF03: How do you store, manage, and access data? (5 BPs)"""
         findings = [
-            evaluate_perf03_bp01(self.session, self._handle_permission_error),
-            evaluate_perf03_bp02(self.session, self._handle_permission_error),
-            evaluate_perf03_bp03(self.session, self._handle_permission_error),
-            evaluate_perf03_bp04(self.session, self._handle_permission_error),
-            evaluate_perf03_bp05(self.session, self._handle_permission_error),
+            self._safe_eval('PERF03-BP01', evaluate_perf03_bp01),
+            self._safe_eval('PERF03-BP02', evaluate_perf03_bp02),
+            self._safe_eval('PERF03-BP03', evaluate_perf03_bp03),
+            self._safe_eval('PERF03-BP04', evaluate_perf03_bp04),
+            self._safe_eval('PERF03-BP05', evaluate_perf03_bp05),
         ]
         return self._create_question('PERF03', findings,
             'How do you store, manage, and access data?', 'Almacenamiento de datos')
@@ -249,13 +262,13 @@ class PerformanceEvaluator:
     def _evaluate_perf04(self) -> Dict[str, Any]:
         """PERF04: How do you select and configure networking resources? (7 BPs)"""
         findings = [
-            evaluate_perf04_bp01(self.session, self._handle_permission_error),
-            evaluate_perf04_bp02(self.session, self._handle_permission_error),
-            evaluate_perf04_bp03(self.session, self._handle_permission_error),
-            evaluate_perf04_bp04(self.session, self._handle_permission_error),
-            evaluate_perf04_bp05(self.session, self._handle_permission_error),
-            evaluate_perf04_bp06(self.session, self._handle_permission_error),
-            evaluate_perf04_bp07(self.session, self._handle_permission_error),
+            self._safe_eval('PERF04-BP01', evaluate_perf04_bp01),
+            self._safe_eval('PERF04-BP02', evaluate_perf04_bp02),
+            self._safe_eval('PERF04-BP03', evaluate_perf04_bp03),
+            self._safe_eval('PERF04-BP04', evaluate_perf04_bp04),
+            self._safe_eval('PERF04-BP05', evaluate_perf04_bp05),
+            self._safe_eval('PERF04-BP06', evaluate_perf04_bp06),
+            self._safe_eval('PERF04-BP07', evaluate_perf04_bp07),
         ]
         return self._create_question('PERF04', findings,
             'How do you select and configure networking resources?', 'Recursos de red')
@@ -263,13 +276,13 @@ class PerformanceEvaluator:
     def _evaluate_perf05(self) -> Dict[str, Any]:
         """PERF05: How do you evolve your workload to take advantage of new releases? (7 BPs)"""
         findings = [
-            evaluate_perf05_bp01(self.session, self._handle_permission_error),
-            evaluate_perf05_bp02(self.session, self._handle_permission_error),
-            evaluate_perf05_bp03(self.session, self._handle_permission_error),
-            evaluate_perf05_bp04(self.session, self._handle_permission_error),
-            evaluate_perf05_bp05(self.session, self._handle_permission_error),
-            evaluate_perf05_bp06(self.session, self._handle_permission_error),
-            evaluate_perf05_bp07(self.session, self._handle_permission_error),
+            self._safe_eval('PERF05-BP01', evaluate_perf05_bp01),
+            self._safe_eval('PERF05-BP02', evaluate_perf05_bp02),
+            self._safe_eval('PERF05-BP03', evaluate_perf05_bp03),
+            self._safe_eval('PERF05-BP04', evaluate_perf05_bp04),
+            self._safe_eval('PERF05-BP05', evaluate_perf05_bp05),
+            self._safe_eval('PERF05-BP06', evaluate_perf05_bp06),
+            self._safe_eval('PERF05-BP07', evaluate_perf05_bp07),
         ]
         return self._create_question('PERF05', findings,
             'How do you evolve your workload to take advantage of new releases?', 'Evolución del workload')

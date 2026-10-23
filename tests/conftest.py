@@ -7,19 +7,40 @@ Ajusta sys.path para poder importar:
   - Los módulos del evaluador de seguridad (lambda/evaluators/security/),
     que usan imports planos como `from all_bp_evaluations import *`.
 
-Mock de sesión boto3 FIEL
---------------------------
+Mock de sesión boto3 FIEL (100% en memoria, sin clientes boto3 reales)
+----------------------------------------------------------------------
 El código de producción usa cláusulas como
 `except client.exceptions.NoSuchEntityException:`. Un mock casero que no expone
 `.exceptions` provoca un `AttributeError` falso-positivo (y así fallaba el
-`_DenyingClient` anterior). Para ser fieles, construimos clientes boto3 REALES
-(con credenciales ficticias y región fija) y los envolvemos en un proxy
-`ScriptedClient` que:
-  - delega `client.exceptions` (y cualquier atributo no-operación) al cliente
-    real, preservando las clases de excepción reales (p.ej.
-    `NoSuchEntityException` del cliente iam);
+`_DenyingClient` anterior).
+
+Durante un tiempo se resolvió construyendo clientes boto3 REALES solo para
+exponer sus `.exceptions`. Eso reintroducía un problema peor: construir y
+ejercitar decenas de clientes boto3 reales por corrida (las 63 BPs del pilar,
+parametrizadas) agota recursos nativos de botocore en Windows y el proceso de
+pytest MUERE sin resumen ni traceback (crash nativo no determinista, siempre
+alrededor de la BP ~30-40). Una suite que crashea no cumple el objetivo del
+usuario (que las pruebas automáticas detecten los bugs sin pruebas funcionales).
+
+Por eso el mock es ahora 100% en memoria, igual que el `_DenyingClient` del
+pilar de performance (ver tests/test_performance_resilience.py): NUNCA se
+construye un cliente boto3 real. El proxy `ScriptedClient`:
+  - expone `client.exceptions.<X>` como una clase de excepción generada al vuelo
+    (subclase de `botocore.exceptions.ClientError`), de modo que
+    `except client.exceptions.NoSuchEntityException:` es un tipo válido y NO
+    provoca AttributeError;
   - intercepta las operaciones de API devolviendo una respuesta guionada o
-    lanzando un `ClientError` guionado (AccessDenied por defecto).
+    lanzando un `ClientError` guionado (AccessDenied por defecto);
+  - ofrece `get_paginator(op)` por robustez (paginador guionado por la misma
+    operación), aunque el pilar de seguridad no usa paginadores.
+
+Nota sobre identidad de clases de excepción: botocore crea una clase
+`NoSuchEntityException` DISTINTA por cada instancia de cliente, así que una
+`NoSuchEntityException` construida por el test (desde su propio cliente) nunca
+fue `is`-igual a la del cliente de producción. El comportamiento observado (y
+verificado) es que esa excepción NO entra en el `except` interno por clase y es
+capturada por el `except ClientError` externo de la BP; el mock en memoria
+preserva exactamente ese comportamiento.
 
 Nunca se invoca una operación real contra AWS: el proxy resuelve todo con el
 "guion" (scripts) o con deny-by-default.
@@ -35,7 +56,6 @@ Fixtures expuestas:
 import os
 import sys
 
-import boto3
 import pytest
 from botocore.exceptions import ClientError
 
@@ -86,35 +106,115 @@ def _fake_aws_env():
                 os.environ[key] = old
 
 
+def _load_security_bp_module():
+    """Carga `all_bp_evaluations` DEL PILAR DE SEGURIDAD y lo deja en sys.modules.
+
+    Tanto security como performance tienen un módulo `all_bp_evaluations`. Otras
+    suites (p.ej. test_performance_resilience) inyectan su propio
+    `sys.modules['all_bp_evaluations']` y, al no restaurarlo, dejaban envenenada
+    la caché: el handler de seguridad hacía `from all_bp_evaluations import *` y
+    recogía el módulo equivocado, provocando un AttributeError
+    (`module 'handler' has no attribute 'SecurityEvaluator'`).
+
+    Esta función (re)carga SIEMPRE el módulo desde SECURITY_DIR y lo fija como
+    `sys.modules['all_bp_evaluations']`, de modo que el import del handler de
+    seguridad sea determinista sin importar el orden de los tests.
+    """
+    import importlib.util
+
+    bp_path = os.path.join(SECURITY_DIR, "all_bp_evaluations.py")
+    spec = importlib.util.spec_from_file_location("all_bp_evaluations", bp_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["all_bp_evaluations"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 @pytest.fixture
 def security_handler():
-    """Importa el módulo handler.py del evaluador de seguridad.
+    """Carga el módulo handler.py DEL PILAR DE SEGURIDAD de forma determinista.
 
-    Se importa dentro de la fixture (no a nivel de módulo) para que el ajuste
-    de sys.path de arriba ya esté aplicado.
+    Tanto security como performance tienen un `handler.py` en su carpeta, y ambas
+    carpetas están en sys.path. Un simple `import handler` resuelve al primero que
+    aparezca en sys.path: cuando la suite de performance inserta su carpeta en
+    sys.path[0], ese `import handler` acababa resolviendo al handler de
+    performance, y la fixture devolvía el módulo equivocado (de ahí el
+    AttributeError: module 'handler' has no attribute 'SecurityEvaluator').
+
+    Para blindar el seam cargamos el handler SIEMPRE desde su ruta explícita en
+    SECURITY_DIR, tras fijar `sys.modules['all_bp_evaluations']` al módulo del
+    pilar de seguridad (el handler hace `from all_bp_evaluations import *`).
     """
-    import importlib
+    import importlib.util
 
-    import handler as security_handler_module  # noqa: WPS433 (import local intencional)
+    _load_security_bp_module()
 
-    importlib.reload(security_handler_module)
-    return security_handler_module
+    handler_path = os.path.join(SECURITY_DIR, "handler.py")
+    spec = importlib.util.spec_from_file_location("handler", handler_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["handler"] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 # ---------------------------------------------------------------------------
-# Mock fiel: clientes boto3 reales + proxy guionado.
+# Mock 100% en memoria: proxy guionado SIN clientes boto3 reales.
 # ---------------------------------------------------------------------------
 
 # Sentinela para "no hay guion para esta operación".
 _UNSET = object()
 
 
-class ScriptedClient:
-    """Proxy sobre un cliente boto3 REAL que guiona sus operaciones.
+class _ScriptedExceptions:
+    """Namespace `client.exceptions` falso, en memoria.
 
-    `scripts` es un dict {operation_name: directiva}, donde `operation_name` es
-    el nombre snake_case de la operación boto3 (p.ej. 'get_account_summary') y
-    la directiva es:
+    Cada atributo (`NoSuchEntityException`, etc.) se resuelve, al vuelo, a una
+    subclase de `botocore.exceptions.ClientError` generada y cacheada por nombre.
+    Así `except client.exceptions.NoSuchEntityException:` es siempre un tipo
+    válido (no provoca AttributeError) sin construir un cliente boto3 real.
+
+    No se busca identidad con la clase real de botocore: una excepción real
+    `NoSuchEntityException` construida por el test tampoco era `is`-igual a la
+    del cliente de producción (botocore crea una clase distinta por instancia de
+    cliente), de modo que ese `except` interno nunca la capturaba por clase y la
+    BP caía a su `except ClientError` externo. Este mock preserva ese mismo
+    comportamiento porque las subclases generadas también heredan de ClientError.
+    """
+
+    def __init__(self):
+        object.__setattr__(self, "_cache", {})
+
+    def __getattr__(self, name):
+        cache = object.__getattribute__(self, "_cache")
+        klass = cache.get(name)
+        if klass is None:
+            klass = type(name, (ClientError,), {})
+            cache[name] = klass
+        return klass
+
+
+class _ScriptedPaginator:
+    """Paginador guionado por la operación subyacente (sin red).
+
+    El pilar de seguridad no usa paginadores, pero se ofrece por robustez para
+    cualquier BP que lo intente: delega en la misma directiva de la operación.
+    """
+
+    def __init__(self, operation_callable):
+        self._operation_callable = operation_callable
+
+    def paginate(self, *args, **kwargs):
+        result = self._operation_callable(*args, **kwargs)
+        return iter([result])
+
+
+class ScriptedClient:
+    """Cliente boto3 falso (100% en memoria) que guiona sus operaciones.
+
+    NUNCA construye un cliente boto3 real: toda operación se resuelve con el
+    "guion" (scripts) o con deny-by-default. `scripts` es un dict
+    {operation_name: directiva}, donde `operation_name` es el nombre snake_case
+    de la operación boto3 (p.ej. 'get_account_summary') y la directiva es:
       - {'response': <dict>}  -> la operación devuelve ese dict tal cual.
       - {'error': ('Code', 'Message')} -> la operación lanza un ClientError con
         ese Code/Message.
@@ -127,27 +227,26 @@ class ScriptedClient:
     "sin permisos / sin datos" sin romper `.exceptions`.
     """
 
-    def __init__(self, real_client, scripts, deny_by_default=True):
+    def __init__(self, scripts, deny_by_default=True):
         # Se usa object.__setattr__ para no colisionar con __getattr__.
-        object.__setattr__(self, "_real_client", real_client)
         object.__setattr__(self, "_scripts", scripts or {})
         object.__setattr__(self, "_deny_by_default", deny_by_default)
+        object.__setattr__(self, "_exceptions", _ScriptedExceptions())
 
     def __getattr__(self, name):
-        real_client = object.__getattribute__(self, "_real_client")
-
-        # Preservar las clases de excepción reales del servicio.
+        # `client.exceptions.<X>` -> namespace de excepciones en memoria.
         if name == "exceptions":
-            return real_client.exceptions
+            return object.__getattribute__(self, "_exceptions")
 
-        # ¿Es una operación de API del servicio? (meta.method_to_api_mapping
-        # contiene las operaciones snake_case disponibles.)
-        method_map = real_client.meta.method_to_api_mapping
-        if name in method_map:
-            return self._make_operation(name)
+        # `client.get_paginator('op')` -> paginador guionado por esa operación.
+        if name == "get_paginator":
+            def _get_paginator(operation_name, *_a, **_k):
+                return _ScriptedPaginator(self._make_operation(operation_name))
 
-        # Cualquier otro atributo (meta, waiters, etc.) se delega al cliente real.
-        return getattr(real_client, name)
+            return _get_paginator
+
+        # Cualquier otro atributo se trata como una operación de API.
+        return self._make_operation(name)
 
     def _make_operation(self, name):
         scripts = object.__getattribute__(self, "_scripts")
@@ -202,44 +301,30 @@ class ScriptedClient:
 class ScriptedSession:
     """Sesión boto3 falsa que entrega `ScriptedClient` por servicio.
 
-    `scripts_by_service` es {service_name: {operation: directiva}}. Los clientes
-    reales se cachean por servicio para reusar sus modelos y `.exceptions`.
+    `scripts_by_service` es {service_name: {operation: directiva}}. Es 100% en
+    memoria: no construye ni cachea clientes boto3 reales (eso agotaba recursos
+    nativos y tumbaba pytest en Windows). Cada `.client(...)` devuelve un
+    `ScriptedClient` ligero con los guiones del servicio pedido.
     """
-
-    # Caché de clase para clientes boto3 reales (compartida entre instancias),
-    # porque construirlos tiene un costo no trivial y son inmutables aquí.
-    _real_client_cache = {}
 
     def __init__(self, scripts_by_service=None, region_name="us-east-1", deny_by_default=True):
         self.scripts_by_service = scripts_by_service or {}
         self.region_name = region_name
         self._deny_by_default = deny_by_default
 
-    @classmethod
-    def _get_real_client(cls, service_name, region_name):
-        key = (service_name, region_name)
-        if key not in cls._real_client_cache:
-            real_session = boto3.Session(region_name=region_name)
-            cls._real_client_cache[key] = real_session.client(service_name)
-        return cls._real_client_cache[key]
-
-    def client(self, service_name, *_args, **kwargs):
-        region = kwargs.get("region_name", self.region_name)
-        real_client = self._get_real_client(service_name, region)
+    def client(self, service_name, *_args, **_kwargs):
         scripts = self.scripts_by_service.get(service_name, {})
-        return ScriptedClient(
-            real_client, scripts, deny_by_default=self._deny_by_default
-        )
+        return ScriptedClient(scripts, deny_by_default=self._deny_by_default)
 
 
 @pytest.fixture
 def denying_session():
     """Sesión boto3 falsa donde toda llamada AWS falla con AccessDenied.
 
-    A diferencia del mock casero anterior, expone `client.exceptions.<X>` real,
-    de modo que las cláusulas `except client.exceptions.NoSuchEntityException`
-    se resuelven sin AttributeError y cada BP cae a su rama de error/pending con
-    un finding válido y completo.
+    Expone `client.exceptions.<X>` en memoria (subclase de ClientError), de modo
+    que las cláusulas `except client.exceptions.NoSuchEntityException` se
+    resuelven sin AttributeError y cada BP cae a su rama de error/pending con un
+    finding válido y completo, sin construir clientes boto3 reales.
     """
     return ScriptedSession(deny_by_default=True)
 
@@ -264,7 +349,7 @@ def iter_bp_invokers(security_handler, session):
     `invoker` es un callable sin argumentos que ejecuta la BP y devuelve el finding.
     El orden sigue el de `handler.evaluate()` por pregunta y número de BP.
     """
-    import all_bp_evaluations as bp_module
+    bp_module = _load_security_bp_module()
 
     evaluator = security_handler.SecurityEvaluator(session, region="us-east-1")
 

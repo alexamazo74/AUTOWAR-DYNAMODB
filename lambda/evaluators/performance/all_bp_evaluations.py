@@ -690,7 +690,7 @@ def _list_vpcs(session) -> List[Dict[str, Any]]:
 
 
 def _list_load_balancers(session) -> List[Dict[str, Any]]:
-    elbv2 = session.client('elasticloadbalancing')
+    elbv2 = session.client('elbv2')
     lbs: List[Dict[str, Any]] = []
     paginator = elbv2.get_paginator('describe_load_balancers')
     for page in paginator.paginate():
@@ -768,7 +768,7 @@ def evaluate_perf04_bp04(session, handle_error_func) -> Dict[str, Any]:
         lbs = _list_load_balancers(session)
         instances = _running_instances(session)
         if lbs:
-            elbv2 = session.client('elasticloadbalancing')
+            elbv2 = session.client('elbv2')
             lbs_with_listeners = 0
             for lb in lbs:
                 try:

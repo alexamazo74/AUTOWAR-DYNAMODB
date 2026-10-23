@@ -305,8 +305,14 @@
             padding: 8px;
             border-radius: 4px;
             color: #495057;
-            max-width: 400px;
+            min-width: 320px;
+            max-width: 460px;
+            white-space: normal;
             word-break: break-word;
+        }
+        
+        .table-scroll {
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -367,6 +373,7 @@
                     </div>
                 </div>
                 
+                <div class="table-scroll">
                 <table class="findings-table" id="findingsTable">
                     <thead>
                         <tr>
@@ -376,7 +383,7 @@
                             <th>Hallazgo</th>
                             <th>Riesgo</th>
                             <th>Remediación</th>
-                            <th>Evidencia</th>
+                            <th style="min-width: 320px;">Evidencia</th>
                         </tr>
                     </thead>
                     <tbody id="findingsBody">
@@ -387,6 +394,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>

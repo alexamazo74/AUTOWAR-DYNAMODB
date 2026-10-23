@@ -350,25 +350,30 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
     row += 2
 
     # Chart 1: Score por Pilar (orange bars, corporate color).
-    chart1 = BarChart()
-    chart1.type = "col"
-    chart1.title = "Score por Pilar (%)"
-    chart1.style = 10
-    chart1.y_axis.title = 'Score (%)'
-    chart1.x_axis.title = 'Pilar'
-    data = Reference(ws, min_col=2, min_row=score_start_row - 1, max_row=score_end_row)
-    cats = Reference(ws, min_col=1, min_row=score_start_row, max_row=score_end_row)
-    chart1.add_data(data, titles_from_data=True)
-    chart1.set_categories(cats)
-    chart1.legend = None
-    chart1.height = 10
-    chart1.width = 20
-    # Apply corporate orange to the single series.
+    # Toda la construccion/incrustacion va en try/except: si una grafica falla,
+    # el XLSX se genera igual con las tablas y sin esa grafica (nunca vacio).
     try:
-        chart1.series[0].graphicalProperties.solidFill = GF_ORANGE
+        chart1 = BarChart()
+        chart1.type = "col"
+        chart1.title = "Score por Pilar (%)"
+        chart1.style = 10
+        chart1.y_axis.title = 'Score (%)'
+        chart1.x_axis.title = 'Pilar'
+        data = Reference(ws, min_col=2, min_row=score_start_row - 1, max_row=score_end_row)
+        cats = Reference(ws, min_col=1, min_row=score_start_row, max_row=score_end_row)
+        chart1.add_data(data, titles_from_data=True)
+        chart1.set_categories(cats)
+        chart1.legend = None
+        chart1.height = 10
+        chart1.width = 20
+        # Apply corporate orange to the single series.
+        try:
+            chart1.series[0].graphicalProperties.solidFill = GF_ORANGE
+        except Exception as e:
+            logger.info(f"Could not set series color on chart1: {e}")
+        ws.add_chart(chart1, f'A{row}')
     except Exception as e:
-        logger.info(f"Could not set series color on chart1: {e}")
-    ws.add_chart(chart1, f'A{row}')
+        logger.info(f"Chart1 omitido: {e}")
 
     # Auxiliary table for the global status pie (4 categories incl. No Aplica).
     status_tbl_row = row
@@ -386,25 +391,28 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
         ws.cell(row=status_tbl_row + i, column=9, value=STATUS_LABELS[status])
         ws.cell(row=status_tbl_row + i, column=10, value=overall_map[status])
 
-    chart2 = PieChart()
-    chart2.title = "Distribución Global de Estados"
-    chart2.style = 10
-    data = Reference(ws, min_col=10, min_row=status_tbl_row, max_row=status_tbl_row + 4)
-    cats = Reference(ws, min_col=9, min_row=status_tbl_row + 1, max_row=status_tbl_row + 4)
-    chart2.add_data(data, titles_from_data=True)
-    chart2.set_categories(cats)
-    chart2.height = 10
-    chart2.width = 13
-    # Per-slice semantic colors: green / red / amber / gray.
     try:
-        serie = chart2.series[0]
-        for idx, status in enumerate(status_order):
-            pt = DataPoint(idx=idx)
-            pt.graphicalProperties.solidFill = STATUS_FILL[status]
-            serie.data_points.append(pt)
+        chart2 = PieChart()
+        chart2.title = "Distribución Global de Estados"
+        chart2.style = 10
+        data = Reference(ws, min_col=10, min_row=status_tbl_row, max_row=status_tbl_row + 4)
+        cats = Reference(ws, min_col=9, min_row=status_tbl_row + 1, max_row=status_tbl_row + 4)
+        chart2.add_data(data, titles_from_data=True)
+        chart2.set_categories(cats)
+        chart2.height = 10
+        chart2.width = 13
+        # Per-slice semantic colors: green / red / amber / gray.
+        try:
+            serie = chart2.series[0]
+            for idx, status in enumerate(status_order):
+                pt = DataPoint(idx=idx)
+                pt.graphicalProperties.solidFill = STATUS_FILL[status]
+                serie.data_points.append(pt)
+        except Exception as e:
+            logger.info(f"Could not set per-point colors on chart2: {e}")
+        ws.add_chart(chart2, f'G{row}')
     except Exception as e:
-        logger.info(f"Could not set per-point colors on chart2: {e}")
-    ws.add_chart(chart2, f'G{row}')
+        logger.info(f"Chart2 omitido: {e}")
 
     # Stacked severity-by-pilar bar chart auxiliary table.
     row += 20
@@ -420,29 +428,32 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
         ws.cell(row=sev_tbl_row + i, column=5, value=low)
     sev_end = sev_tbl_row + len(severity_totals_by_pilar)
 
-    chart3 = BarChart()
-    chart3.type = "col"
-    chart3.grouping = "stacked"
-    chart3.overlap = 100
-    chart3.title = "Severidad por Pilar (Crítica/Alta/Media/Baja)"
-    chart3.style = 11
-    chart3.y_axis.title = 'Cantidad de BPs'
-    chart3.x_axis.title = 'Pilar'
-    data = Reference(ws, min_col=2, min_row=sev_tbl_row, max_col=5, max_row=sev_end)
-    cats = Reference(ws, min_col=1, min_row=sev_tbl_row + 1, max_row=sev_end)
-    chart3.add_data(data, titles_from_data=True)
-    chart3.set_categories(cats)
-    chart3.height = 10
-    chart3.width = 20
-    # Severity series colors: crimson -> red -> amber -> neutral.
-    severity_colors = ['C01010', 'E53935', 'F0A500', '9E9E9E']
     try:
-        for s_idx, serie in enumerate(chart3.series):
-            if s_idx < len(severity_colors):
-                serie.graphicalProperties.solidFill = severity_colors[s_idx]
+        chart3 = BarChart()
+        chart3.type = "col"
+        chart3.grouping = "stacked"
+        chart3.overlap = 100
+        chart3.title = "Severidad por Pilar (Crítica/Alta/Media/Baja)"
+        chart3.style = 11
+        chart3.y_axis.title = 'Cantidad de BPs'
+        chart3.x_axis.title = 'Pilar'
+        data = Reference(ws, min_col=2, min_row=sev_tbl_row, max_col=5, max_row=sev_end)
+        cats = Reference(ws, min_col=1, min_row=sev_tbl_row + 1, max_row=sev_end)
+        chart3.add_data(data, titles_from_data=True)
+        chart3.set_categories(cats)
+        chart3.height = 10
+        chart3.width = 20
+        # Severity series colors: crimson -> red -> amber -> neutral.
+        severity_colors = ['C01010', 'E53935', 'F0A500', '9E9E9E']
+        try:
+            for s_idx, serie in enumerate(chart3.series):
+                if s_idx < len(severity_colors):
+                    serie.graphicalProperties.solidFill = severity_colors[s_idx]
+        except Exception as e:
+            logger.info(f"Could not set series colors on chart3: {e}")
+        ws.add_chart(chart3, f'A{row}')
     except Exception as e:
-        logger.info(f"Could not set series colors on chart3: {e}")
-    ws.add_chart(chart3, f'A{row}')
+        logger.info(f"Chart3 omitido: {e}")
 
     # Column widths.
     ws.column_dimensions['A'].width = 30

@@ -209,6 +209,26 @@ def handle_generate_report(event, cors_headers):
         # Extract result from response body
         result_body = json.loads(response_payload.get('body', '{}'))
         
+        # Si el generador no devolvio una URL firmada el reporte fallo (p.ej.
+        # el generador reviento y devolvio 500 con un mensaje de error). En ese
+        # caso devolvemos un 500 real con el mensaje del generador, en vez de un
+        # 200 con reportUrl null que confunde al frontend.
+        if not result_body.get('signedUrl'):
+            error_message = (
+                result_body.get('message')
+                or result_body.get('error')
+                or 'Generador no devolvió URL'
+            )
+            logger.error(f"Report generator did not return a signedUrl: {error_message}")
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'Failed to generate report',
+                    'message': error_message
+                })
+            }
+        
         return {
             'statusCode': 200,
             'headers': cors_headers,
