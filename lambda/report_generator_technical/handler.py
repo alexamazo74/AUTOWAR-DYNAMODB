@@ -19,6 +19,37 @@ logger.setLevel(logging.INFO)
 # GFourmis corporate palette (openpyxl hex, no '#')
 GF_ORANGE = 'F06000'  # primary orange - main headers
 GF_RED = 'C01010'     # corporate red - section/question headers
+GF_BLACK = '1A1A1A'   # text black
+
+# Semantic status colors (consistent with the executive report).
+# Cumple = green, No cumple = red, Pendiente = amber, No aplica = neutral gray.
+STATUS_FILL = {
+    'COMPLIANT': '2E7D32',
+    'NON_COMPLIANT': 'C01010',
+    'PENDING_REVIEW': 'F0A500',
+    'NOT_APPLICABLE': '9E9E9E',
+}
+
+# Spanish status labels shared across tables/charts.
+STATUS_LABELS = {
+    'COMPLIANT': 'Cumplen',
+    'NON_COMPLIANT': 'No Cumplen',
+    'PENDING_REVIEW': 'Pendientes',
+    'NOT_APPLICABLE': 'No Aplican',
+}
+
+# Scoring weights. NOT_APPLICABLE is intentionally absent: applicable practices
+# only (see compliance_percentage), so it never counts as 0.
+_SCORE_MAP = {'COMPLIANT': 100.0, 'NON_COMPLIANT': 0.0, 'PENDING_REVIEW': 50.0}
+
+PILLAR_NAMES = {
+    'security': 'Seguridad',
+    'reliability': 'Fiabilidad',
+    'performance': 'Rendimiento',
+    'cost': 'Optimización de Costos',
+    'operationalExcellence': 'Excelencia Operacional',
+    'sustainability': 'Sostenibilidad',
+}
 
 
 def resolve_asset_path(filename):
@@ -42,6 +73,35 @@ def resolve_asset_path(filename):
 
     logger.info(f"Branding asset not found: {filename} (tried {lambda_path} and {local_path})")
     return None
+
+
+def compliance_percentage(bps):
+    """Compliance percentage EXCLUDING NOT_APPLICABLE from the denominator.
+
+    NOT_APPLICABLE practices are not counted as 0 (that would be a bug): they
+    are removed from the set of applicable practices before averaging. Returns a
+    float rounded to 1 decimal, or 0 when there are no applicable practices.
+    """
+    applicable = [bp for bp in bps if bp.get('status') != 'NOT_APPLICABLE']
+    if not applicable:
+        return 0.0
+    total = sum(_SCORE_MAP.get(bp.get('status', ''), 0.0) for bp in applicable)
+    return round(total / len(applicable), 1)
+
+
+def count_statuses(bps):
+    """Count best practices by status, returning the 4 categories.
+
+    Returns dict with keys compliant, non_compliant, pending, not_applicable and
+    total (the full count including NOT_APPLICABLE).
+    """
+    return {
+        'compliant': sum(1 for bp in bps if bp.get('status') == 'COMPLIANT'),
+        'non_compliant': sum(1 for bp in bps if bp.get('status') == 'NON_COMPLIANT'),
+        'pending': sum(1 for bp in bps if bp.get('status') == 'PENDING_REVIEW'),
+        'not_applicable': sum(1 for bp in bps if bp.get('status') == 'NOT_APPLICABLE'),
+        'total': len(bps),
+    }
 
 
 def lambda_handler(event, context):
@@ -153,30 +213,40 @@ def generate_technical_report(evaluation_data, selected_pilares, account_id, eva
     return output.read()
 
 
+def _filter_bps(best_practices, pilar):
+    pilar_normalized = pilar.replace('_', '').lower()
+    return [
+        bp for bp in best_practices
+        if bp.get('pilar', '').replace('_', '').lower() == pilar_normalized
+    ]
+
+
 def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, evaluation_timestamp, user_info=None):
     """Create summary worksheet with detailed statistics and charts"""
     from openpyxl.chart import BarChart, PieChart, Reference
+    from openpyxl.chart.series import DataPoint
     from openpyxl.drawing.image import Image as XLImage
-    
+
     ws = wb.create_sheet("Resumen", 0)
-    
-    # GFourmis logo (top-right, over the title area without covering A1:H1 text)
+
+    # GFourmis logo (top-right, over the title area without covering A1:F1 text).
+    # Anchored at H1 so it never overlaps the merged title cells A1:F1.
     logo_path = resolve_asset_path('gfourmis-logo.png')
     if logo_path:
         try:
             img = XLImage(logo_path)
-            # Keep aspect ratio ~2712x2478
+            # Keep aspect ratio ~2712x2478 -> ~180x164 px.
             img.width = 180
             img.height = 164
-            ws.add_image(img, 'G1')
+            ws.add_image(img, 'H1')
         except Exception as e:
             logger.info(f"Could not embed logo in summary sheet: {e}")
-    
+
     # Title
     ws['A1'] = 'Reporte Técnico - AWS Well-Architected Review'
     ws['A1'].font = Font(size=16, bold=True, color=GF_ORANGE)
     ws.merge_cells('A1:F1')
-    
+
     # Metadata
     ws['A3'] = 'Cuenta AWS:'
     ws['B3'] = account_id
@@ -184,209 +254,209 @@ def create_summary_sheet(wb, evaluation_data, selected_pilares, account_id, eval
     ws['B4'] = evaluation_timestamp
     ws['A5'] = 'Fecha de Generación:'
     ws['B5'] = datetime.utcnow().isoformat() + 'Z'
-    
+
     # User information
     if user_info:
         ws['A6'] = 'Usuario:'
         ws['B6'] = f"{user_info.get('user_name', 'Unknown')} ({user_info.get('user_type', 'Unknown')})"
         ws['A7'] = 'User ID:'
         ws['B7'] = user_info.get('user_id', 'Unknown')
-    
+
     # Pillar scores header
     ws['A9'] = 'Scores por Pilar'
-    ws['A9'].font = Font(size=14, bold=True)
-    
+    ws['A9'].font = Font(size=14, bold=True, color=GF_ORANGE)
+
     # Pillar scores table
     row = 10
     ws[f'A{row}'] = 'Pilar'
     ws[f'B{row}'] = 'Score (%)'
     apply_header_style(ws, row, 2)
-    
+
     pillar_scores = evaluation_data.get('pillarScores', {})
-    pillar_names = {
-        'security': 'Seguridad',
-        'reliability': 'Fiabilidad',
-        'performance': 'Rendimiento',
-        'cost': 'Optimización de Costos',
-        'operationalExcellence': 'Excelencia Operacional',
-        'sustainability': 'Sostenibilidad'
-    }
-    
+
     row += 1
     score_start_row = row
     for pilar in selected_pilares:
-        ws[f'A{row}'] = pillar_names.get(pilar, pilar)
+        ws[f'A{row}'] = PILLAR_NAMES.get(pilar, pilar)
         ws[f'B{row}'] = pillar_scores.get(pilar, 0)
         row += 1
     score_end_row = row - 1
-    
+
     # Detailed statistics by pilar
     row += 2
     ws[f'A{row}'] = 'Estadísticas Detalladas por Pilar'
-    ws[f'A{row}'].font = Font(size=14, bold=True)
+    ws[f'A{row}'].font = Font(size=14, bold=True, color=GF_ORANGE)
     row += 1
-    
-    # Headers for detailed stats
-    headers = ['Pilar', 'Total BPs', 'Cumplen', 'No Cumplen', 'Pendientes', 
+
+    # Headers for detailed stats (includes No Aplican as its own category).
+    headers = ['Pilar', 'Total BPs', 'Cumplen', 'No Cumplen', 'Pendientes', 'No Aplican',
                'Cumplen-Crítica', 'Cumplen-Alta', 'Cumplen-Media', 'Cumplen-Baja',
                'No Cumplen-Crítica', 'No Cumplen-Alta', 'No Cumplen-Media', 'No Cumplen-Baja',
-               'Pendientes-Crítica', 'Pendientes-Alta', 'Pendientes-Media', 'Pendientes-Baja']
-    
+               'Pendientes-Crítica', 'Pendientes-Alta', 'Pendientes-Media', 'Pendientes-Baja',
+               'No Aplican-Crítica', 'No Aplican-Alta', 'No Aplican-Media', 'No Aplican-Baja']
+
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=row, column=col, value=header)
         cell.font = Font(bold=True, color='FFFFFF')
         cell.fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    
+
     row += 1
     stats_start_row = row
-    
-    # Calculate statistics for each pilar
+
     best_practices = evaluation_data.get('bestPractices', [])
-    
+
+    # Track totals by severity (all statuses) for the stacked severity chart.
+    severity_totals_by_pilar = []  # list of (label, crit, high, med, low)
+
     for pilar in selected_pilares:
-        pilar_normalized = pilar.replace('_', '').lower()
-        filtered_bps = [
-            bp for bp in best_practices 
-            if bp.get('pilar', '').replace('_', '').lower() == pilar_normalized
-        ]
-        
-        # Calculate counts
-        total_bps = len(filtered_bps)
-        compliant = sum(1 for bp in filtered_bps if bp.get('status') == 'COMPLIANT')
-        non_compliant = sum(1 for bp in filtered_bps if bp.get('status') == 'NON_COMPLIANT')
-        pending = sum(1 for bp in filtered_bps if bp.get('status') == 'PENDING_REVIEW')
-        
-        # Severity breakdown by status
+        filtered_bps = _filter_bps(best_practices, pilar)
+        counts = count_statuses(filtered_bps)
+
         def count_by_status_severity(status, severity):
-            return sum(1 for bp in filtered_bps 
-                      if bp.get('status') == status and bp.get('severity') == severity)
-        
-        # Write data
+            return sum(1 for bp in filtered_bps
+                       if bp.get('status') == status and bp.get('severity') == severity)
+
         col = 1
-        ws.cell(row=row, column=col, value=pillar_names.get(pilar, pilar))
-        col += 1
-        ws.cell(row=row, column=col, value=total_bps)
-        col += 1
-        ws.cell(row=row, column=col, value=compliant)
-        col += 1
-        ws.cell(row=row, column=col, value=non_compliant)
-        col += 1
-        ws.cell(row=row, column=col, value=pending)
-        col += 1
-        
-        # Compliant by severity
-        for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
-            ws.cell(row=row, column=col, value=count_by_status_severity('COMPLIANT', severity))
-            col += 1
-        
-        # Non-compliant by severity
-        for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
-            ws.cell(row=row, column=col, value=count_by_status_severity('NON_COMPLIANT', severity))
-            col += 1
-        
-        # Pending by severity
-        for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
-            ws.cell(row=row, column=col, value=count_by_status_severity('PENDING_REVIEW', severity))
-            col += 1
-        
+        ws.cell(row=row, column=col, value=PILLAR_NAMES.get(pilar, pilar)); col += 1
+        ws.cell(row=row, column=col, value=counts['total']); col += 1
+        ws.cell(row=row, column=col, value=counts['compliant']); col += 1
+        ws.cell(row=row, column=col, value=counts['non_compliant']); col += 1
+        ws.cell(row=row, column=col, value=counts['pending']); col += 1
+        ws.cell(row=row, column=col, value=counts['not_applicable']); col += 1
+
+        # Severity breakdown per status (4 statuses x 4 severities).
+        for status in ['COMPLIANT', 'NON_COMPLIANT', 'PENDING_REVIEW', 'NOT_APPLICABLE']:
+            for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
+                ws.cell(row=row, column=col, value=count_by_status_severity(status, severity))
+                col += 1
+
+        # Severity totals across all statuses, for the stacked severity chart.
+        sev_tot = {s: 0 for s in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']}
+        for bp in filtered_bps:
+            sev = bp.get('severity')
+            if sev in sev_tot:
+                sev_tot[sev] += 1
+        severity_totals_by_pilar.append(
+            (PILLAR_NAMES.get(pilar, pilar), sev_tot['CRITICAL'], sev_tot['HIGH'],
+             sev_tot['MEDIUM'], sev_tot['LOW'])
+        )
+
         row += 1
-    
+
     stats_end_row = row - 1
-    
-    # Add charts
+
+    # ---- Auxiliary tables + charts -------------------------------------------------
     row += 2
-    
-    # Chart 1: Pillar Scores (Bar Chart)
+
+    # Chart 1: Score por Pilar (orange bars, corporate color).
     chart1 = BarChart()
-    chart1.title = "Scores por Pilar (%)"
+    chart1.type = "col"
+    chart1.title = "Score por Pilar (%)"
     chart1.style = 10
     chart1.y_axis.title = 'Score (%)'
     chart1.x_axis.title = 'Pilar'
-    
-    data = Reference(ws, min_col=2, min_row=score_start_row-1, max_row=score_end_row)
+    data = Reference(ws, min_col=2, min_row=score_start_row - 1, max_row=score_end_row)
     cats = Reference(ws, min_col=1, min_row=score_start_row, max_row=score_end_row)
     chart1.add_data(data, titles_from_data=True)
     chart1.set_categories(cats)
+    chart1.legend = None
     chart1.height = 10
     chart1.width = 20
-    
+    # Apply corporate orange to the single series.
+    try:
+        chart1.series[0].graphicalProperties.solidFill = GF_ORANGE
+    except Exception as e:
+        logger.info(f"Could not set series color on chart1: {e}")
     ws.add_chart(chart1, f'A{row}')
-    
-    # Chart 2: Status Distribution (Stacked Bar Chart)
-    chart2 = BarChart()
-    chart2.type = "col"
-    chart2.style = 11
-    chart2.title = "Distribución de Estados por Pilar"
-    chart2.y_axis.title = 'Cantidad de BPs'
-    chart2.x_axis.title = 'Pilar'
-    chart2.grouping = "stacked"
-    chart2.overlap = 100
-    
-    # Data for Cumplen, No Cumplen, Pendientes (columns 3, 4, 5)
-    data = Reference(ws, min_col=3, min_row=stats_start_row-1, max_col=5, max_row=stats_end_row)
-    cats = Reference(ws, min_col=1, min_row=stats_start_row, max_row=stats_end_row)
+
+    # Auxiliary table for the global status pie (4 categories incl. No Aplica).
+    status_tbl_row = row
+    ws.cell(row=status_tbl_row, column=9, value='Estado').font = Font(bold=True)
+    ws.cell(row=status_tbl_row, column=10, value='Cantidad').font = Font(bold=True)
+    status_order = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING_REVIEW', 'NOT_APPLICABLE']
+    overall = count_statuses([bp for p in selected_pilares for bp in _filter_bps(best_practices, p)])
+    overall_map = {
+        'COMPLIANT': overall['compliant'],
+        'NON_COMPLIANT': overall['non_compliant'],
+        'PENDING_REVIEW': overall['pending'],
+        'NOT_APPLICABLE': overall['not_applicable'],
+    }
+    for i, status in enumerate(status_order, start=1):
+        ws.cell(row=status_tbl_row + i, column=9, value=STATUS_LABELS[status])
+        ws.cell(row=status_tbl_row + i, column=10, value=overall_map[status])
+
+    chart2 = PieChart()
+    chart2.title = "Distribución Global de Estados"
+    chart2.style = 10
+    data = Reference(ws, min_col=10, min_row=status_tbl_row, max_row=status_tbl_row + 4)
+    cats = Reference(ws, min_col=9, min_row=status_tbl_row + 1, max_row=status_tbl_row + 4)
     chart2.add_data(data, titles_from_data=True)
     chart2.set_categories(cats)
     chart2.height = 10
-    chart2.width = 20
-    
-    ws.add_chart(chart2, f'L{row}')
-    
-    # Chart 3: Overall Status Distribution (Pie Chart)
-    row += 18
-    chart3 = PieChart()
-    chart3.title = "Distribución Global de Estados"
-    chart3.style = 10
-    
-    # Calculate overall totals
-    overall_row = row
-    ws.cell(row=overall_row, column=1, value='Estado')
-    ws.cell(row=overall_row, column=2, value='Cantidad')
-    ws.cell(row=overall_row, column=1).font = Font(bold=True)
-    ws.cell(row=overall_row, column=2).font = Font(bold=True)
-    
-    overall_row += 1
-    ws.cell(row=overall_row, column=1, value='Cumplen')
-    ws.cell(row=overall_row, column=2, value=f'=SUM(C{stats_start_row}:C{stats_end_row})')
-    overall_row += 1
-    ws.cell(row=overall_row, column=1, value='No Cumplen')
-    ws.cell(row=overall_row, column=2, value=f'=SUM(D{stats_start_row}:D{stats_end_row})')
-    overall_row += 1
-    ws.cell(row=overall_row, column=1, value='Pendientes')
-    ws.cell(row=overall_row, column=2, value=f'=SUM(E{stats_start_row}:E{stats_end_row})')
-    
-    data = Reference(ws, min_col=2, min_row=row, max_row=row+3)
-    cats = Reference(ws, min_col=1, min_row=row+1, max_row=row+3)
+    chart2.width = 13
+    # Per-slice semantic colors: green / red / amber / gray.
+    try:
+        serie = chart2.series[0]
+        for idx, status in enumerate(status_order):
+            pt = DataPoint(idx=idx)
+            pt.graphicalProperties.solidFill = STATUS_FILL[status]
+            serie.data_points.append(pt)
+    except Exception as e:
+        logger.info(f"Could not set per-point colors on chart2: {e}")
+    ws.add_chart(chart2, f'G{row}')
+
+    # Stacked severity-by-pilar bar chart auxiliary table.
+    row += 20
+    sev_tbl_row = row
+    sev_headers = ['Pilar', 'Crítica', 'Alta', 'Media', 'Baja']
+    for c, h in enumerate(sev_headers, start=1):
+        ws.cell(row=sev_tbl_row, column=c, value=h).font = Font(bold=True)
+    for i, (label, crit, high, med, low) in enumerate(severity_totals_by_pilar, start=1):
+        ws.cell(row=sev_tbl_row + i, column=1, value=label)
+        ws.cell(row=sev_tbl_row + i, column=2, value=crit)
+        ws.cell(row=sev_tbl_row + i, column=3, value=high)
+        ws.cell(row=sev_tbl_row + i, column=4, value=med)
+        ws.cell(row=sev_tbl_row + i, column=5, value=low)
+    sev_end = sev_tbl_row + len(severity_totals_by_pilar)
+
+    chart3 = BarChart()
+    chart3.type = "col"
+    chart3.grouping = "stacked"
+    chart3.overlap = 100
+    chart3.title = "Severidad por Pilar (Crítica/Alta/Media/Baja)"
+    chart3.style = 11
+    chart3.y_axis.title = 'Cantidad de BPs'
+    chart3.x_axis.title = 'Pilar'
+    data = Reference(ws, min_col=2, min_row=sev_tbl_row, max_col=5, max_row=sev_end)
+    cats = Reference(ws, min_col=1, min_row=sev_tbl_row + 1, max_row=sev_end)
     chart3.add_data(data, titles_from_data=True)
     chart3.set_categories(cats)
     chart3.height = 10
-    chart3.width = 12
-    
+    chart3.width = 20
+    # Severity series colors: crimson -> red -> amber -> neutral.
+    severity_colors = ['C01010', 'E53935', 'F0A500', '9E9E9E']
+    try:
+        for s_idx, serie in enumerate(chart3.series):
+            if s_idx < len(severity_colors):
+                serie.graphicalProperties.solidFill = severity_colors[s_idx]
+    except Exception as e:
+        logger.info(f"Could not set series colors on chart3: {e}")
     ws.add_chart(chart3, f'A{row}')
-    
-    # Auto-adjust column widths
+
+    # Column widths.
     ws.column_dimensions['A'].width = 30
     ws.column_dimensions['B'].width = 15
-    for col in range(3, 18):
-        ws.column_dimensions[get_column_letter(col)].width = 12
+    for col in range(3, 23):
+        ws.column_dimensions[get_column_letter(col)].width = 13
 
 
 def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=None):
     """Create worksheet for a specific pilar with grouping by question"""
-    
-    pilar_names = {
-        'security': 'Seguridad',
-        'reliability': 'Fiabilidad',
-        'performance': 'Rendimiento',
-        'cost': 'Optimización de Costos',
-        'operationalExcellence': 'Excelencia Operacional',
-        'sustainability': 'Sostenibilidad'
-    }
-    
-    sheet_name = pilar_names.get(pilar, pilar)[:31]  # Excel sheet name limit
+
+    sheet_name = PILLAR_NAMES.get(pilar, pilar)[:31]  # Excel sheet name limit
     ws = wb.create_sheet(sheet_name)
-    
+
     # Add header with account and user info
     current_row = 1
     if account_id or user_info:
@@ -401,84 +471,62 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
         header_cell.font = Font(size=10, italic=True)
         header_cell.alignment = Alignment(horizontal='left')
         current_row += 2
-    
-    # Get best practices for this pilar
-    # Normalize pilar name to handle both camelCase and snake_case
-    pilar_normalized = pilar.replace('_', '').lower()
-    best_practices = evaluation_data.get('bestPractices', [])
-    filtered_bps = [
-        bp for bp in best_practices 
-        if bp.get('pilar', '').replace('_', '').lower() == pilar_normalized
-    ]
-    
+
+    # Get best practices for this pilar (normalize camelCase/snake_case).
+    filtered_bps = _filter_bps(evaluation_data.get('bestPractices', []), pilar)
+
     # Group BPs by question (e.g., SEC01, SEC02, etc.)
     grouped_bps = {}
     for bp in filtered_bps:
         bp_id = bp.get('bpId', '')
-        # Extract question prefix (e.g., "SEC01" from "SEC01-BP01")
         question_id = bp_id.split('-')[0] if '-' in bp_id else bp_id[:5]
-        if question_id not in grouped_bps:
-            grouped_bps[question_id] = []
-        grouped_bps[question_id].append(bp)
-    
-    # Sort question IDs
+        grouped_bps.setdefault(question_id, []).append(bp)
+
     sorted_questions = sorted(grouped_bps.keys())
-    
-    # Process each question group
+
+    # Long-text columns that should wrap and align to the top (Descripción B,
+    # Hallazgo E, Evidencia F, Remediación G, Riesgo H).
+    wrap_cols = {2, 5, 6, 7, 8}
+    wrap_alignment = Alignment(wrap_text=True, vertical='top')
+
     for question_id in sorted_questions:
         bps_in_question = grouped_bps[question_id]
-        
-        # Calculate question score using same formula as evaluator
-        # COMPLIANT=100, PENDING_REVIEW=50, NON_COMPLIANT=0
-        score_map = {'COMPLIANT': 100.0, 'NON_COMPLIANT': 0.0, 'PENDING_REVIEW': 50.0}
-        total_score = sum(score_map.get(bp.get('status', ''), 0.0) for bp in bps_in_question)
-        total_count = len(bps_in_question)
-        question_score = round(total_score / total_count, 1) if total_count > 0 else 0
-        
-        # Question header with percentage
+
+        # Question score EXCLUDING NOT_APPLICABLE from the denominator.
+        question_score = compliance_percentage(bps_in_question)
+
         ws.merge_cells(f'A{current_row}:H{current_row}')
         question_cell = ws.cell(row=current_row, column=1)
-        
-        # Get question title from first BP
         question_title = bps_in_question[0].get('questionTitle', question_id)
         question_cell.value = f'{question_id}: {question_title} - {question_score}%'
         question_cell.font = Font(size=12, bold=True, color='FFFFFF')
         question_cell.fill = PatternFill(start_color=GF_RED, end_color=GF_RED, fill_type='solid')
         question_cell.alignment = Alignment(horizontal='left', vertical='center')
-        
+
         current_row += 1
-        
-        # Column headers for this group
+
         headers = ['BP ID', 'Descripción', 'Estado', 'Severidad', 'Hallazgo', 'Evidencia', 'Remediación', 'Riesgo']
         for col, header in enumerate(headers, start=1):
             cell = ws.cell(row=current_row, column=col, value=header)
             cell.font = Font(bold=True, color='FFFFFF')
             cell.fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        
+
         current_row += 1
-        
-        # Long-text columns that should wrap and align to the top (Descripción B,
-        # Hallazgo E, Evidencia F, Remediación G, Riesgo H).
-        wrap_cols = {2, 5, 6, 7, 8}
-        wrap_alignment = Alignment(wrap_text=True, vertical='top')
-        
-        # Add BPs for this question
+
         for bp in bps_in_question:
             ws.cell(row=current_row, column=1, value=bp.get('bpId', ''))
             ws.cell(row=current_row, column=2, value=bp.get('description', ''))
-            
-            # Status with color coding
+
             status_cell = ws.cell(row=current_row, column=3, value=bp.get('status', ''))
             apply_status_color(status_cell, bp.get('status', ''))
-            
+
             ws.cell(row=current_row, column=4, value=bp.get('severity', ''))
             ws.cell(row=current_row, column=5, value=bp.get('finding', ''))
             ws.cell(row=current_row, column=6, value=bp.get('evidence', ''))
             ws.cell(row=current_row, column=7, value=bp.get('remediation', ''))
             ws.cell(row=current_row, column=8, value=bp.get('risk', ''))
-            
-            # Apply borders and wrap on long-text columns
+
             for col in range(1, 9):
                 cell = ws.cell(row=current_row, column=col)
                 if col in wrap_cols:
@@ -489,104 +537,97 @@ def create_pilar_sheet(wb, evaluation_data, pilar, account_id=None, user_info=No
                     top=Side(style='thin'),
                     bottom=Side(style='thin')
                 )
-            
+
+            # Taller rows so wrapped long-text (Evidencia, etc.) is readable.
+            ws.row_dimensions[current_row].height = 75
+
             current_row += 1
-        
-        # Add spacing between question groups
+
         current_row += 1
-    
+
     # Add summary section at the end
     current_row += 2
     add_pilar_summary(ws, filtered_bps, current_row)
-    
-    # Auto-adjust column widths
+
+    # Column widths. Evidencia (F) is noticeably wider per user feedback.
     ws.column_dimensions['A'].width = 15
-    ws.column_dimensions['B'].width = 40
-    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['B'].width = 45
+    ws.column_dimensions['C'].width = 16
     ws.column_dimensions['D'].width = 12
-    ws.column_dimensions['E'].width = 50
-    ws.column_dimensions['F'].width = 80
-    ws.column_dimensions['G'].width = 50
+    ws.column_dimensions['E'].width = 55
+    ws.column_dimensions['F'].width = 105
+    ws.column_dimensions['G'].width = 55
     ws.column_dimensions['H'].width = 50
 
 
 def add_pilar_summary(ws, bps, start_row):
     """Add summary statistics at the end of pilar sheet"""
-    
+
     # Title
     ws.merge_cells(f'A{start_row}:H{start_row}')
     title_cell = ws.cell(row=start_row, column=1, value='RESUMEN DEL PILAR')
     title_cell.font = Font(size=14, bold=True, color='FFFFFF')
     title_cell.fill = PatternFill(start_color=GF_RED, end_color=GF_RED, fill_type='solid')
     title_cell.alignment = Alignment(horizontal='center', vertical='center')
-    
+
     start_row += 2
-    
-    # Calculate statistics
-    total_bps = len(bps)
-    compliant = sum(1 for bp in bps if bp.get('status') == 'COMPLIANT')
-    non_compliant = sum(1 for bp in bps if bp.get('status') == 'NON_COMPLIANT')
-    pending = sum(1 for bp in bps if bp.get('status') == 'PENDING_REVIEW')
-    
-    # Calculate percentage using same formula as evaluator
-    # COMPLIANT=100, PENDING_REVIEW=50, NON_COMPLIANT=0
-    score_map = {'COMPLIANT': 100.0, 'NON_COMPLIANT': 0.0, 'PENDING_REVIEW': 50.0}
-    total_score = sum(score_map.get(bp.get('status', ''), 0.0) for bp in bps)
-    percentage = round(total_score / total_bps, 1) if total_bps > 0 else 0
-    
-    # Overall statistics
+
+    counts = count_statuses(bps)
+    # % compliance EXCLUDING NOT_APPLICABLE from the denominator.
+    percentage = compliance_percentage(bps)
+
     ws.cell(row=start_row, column=1, value='Total BPs Evaluadas:')
     ws.cell(row=start_row, column=1).font = Font(bold=True)
-    ws.cell(row=start_row, column=2, value=total_bps)
-    
+    ws.cell(row=start_row, column=2, value=counts['total'])
+
     ws.cell(row=start_row + 1, column=1, value='% Cumplimiento:')
     ws.cell(row=start_row + 1, column=1).font = Font(bold=True)
     ws.cell(row=start_row + 1, column=2, value=f'{percentage}%')
-    
+
     ws.cell(row=start_row + 2, column=1, value='BPs CUMPLEN:')
     ws.cell(row=start_row + 2, column=1).font = Font(bold=True)
-    ws.cell(row=start_row + 2, column=2, value=compliant)
-    
+    ws.cell(row=start_row + 2, column=2, value=counts['compliant'])
+
     ws.cell(row=start_row + 3, column=1, value='BPs NO CUMPLEN:')
     ws.cell(row=start_row + 3, column=1).font = Font(bold=True)
-    ws.cell(row=start_row + 3, column=2, value=non_compliant)
-    
+    ws.cell(row=start_row + 3, column=2, value=counts['non_compliant'])
+
     ws.cell(row=start_row + 4, column=1, value='BPs PENDIENTES:')
     ws.cell(row=start_row + 4, column=1).font = Font(bold=True)
-    ws.cell(row=start_row + 4, column=2, value=pending)
-    
+    ws.cell(row=start_row + 4, column=2, value=counts['pending'])
+
+    ws.cell(row=start_row + 5, column=1, value='BPs NO APLICAN:')
+    ws.cell(row=start_row + 5, column=1).font = Font(bold=True)
+    ws.cell(row=start_row + 5, column=2, value=counts['not_applicable'])
+
     # Severity breakdown by status
-    start_row += 6
+    start_row += 7
     ws.cell(row=start_row, column=1, value='DESGLOSE POR SEVERIDAD')
     ws.cell(row=start_row, column=1).font = Font(size=12, bold=True)
     start_row += 1
-    
-    # Headers
+
     ws.cell(row=start_row, column=1, value='Estado')
     ws.cell(row=start_row, column=2, value='Crítica')
     ws.cell(row=start_row, column=3, value='Alta')
     ws.cell(row=start_row, column=4, value='Media')
     ws.cell(row=start_row, column=5, value='Baja')
     for col in range(1, 6):
-        ws.cell(row=start_row, column=col).font = Font(bold=True)
         ws.cell(row=start_row, column=col).fill = PatternFill(start_color=GF_ORANGE, end_color=GF_ORANGE, fill_type='solid')
         ws.cell(row=start_row, column=col).font = Font(bold=True, color='FFFFFF')
-    
+
     start_row += 1
-    
-    # Calculate severity breakdown
-    statuses = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING_REVIEW']
-    status_labels = {'COMPLIANT': 'Cumplen', 'NON_COMPLIANT': 'No Cumplen', 'PENDING_REVIEW': 'Pendientes'}
+
+    statuses = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING_REVIEW', 'NOT_APPLICABLE']
     severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-    
+
     for status in statuses:
-        ws.cell(row=start_row, column=1, value=status_labels.get(status, status))
+        ws.cell(row=start_row, column=1, value=STATUS_LABELS.get(status, status))
         ws.cell(row=start_row, column=1).font = Font(bold=True)
-        
+
         for idx, severity in enumerate(severities, start=2):
             count = sum(1 for bp in bps if bp.get('status') == status and bp.get('severity') == severity)
             ws.cell(row=start_row, column=idx, value=count)
-        
+
         start_row += 1
 
 
@@ -600,7 +641,7 @@ def apply_header_style(ws, row, num_cols):
 
 
 def apply_status_color(cell, status):
-    """Apply color coding based on status"""
+    """Apply color coding based on status (light fills, readable font)."""
     if status == 'COMPLIANT':
         cell.fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
         cell.font = Font(color='006100')
@@ -610,3 +651,7 @@ def apply_status_color(cell, status):
     elif status == 'PENDING_REVIEW':
         cell.fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
         cell.font = Font(color='9C6500')
+    elif status == 'NOT_APPLICABLE':
+        # Neutral gray so "No aplica" is visually distinct and not an error.
+        cell.fill = PatternFill(start_color='E0E0E0', end_color='E0E0E0', fill_type='solid')
+        cell.font = Font(color='616161')

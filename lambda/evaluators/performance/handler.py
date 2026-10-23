@@ -23,6 +23,9 @@ bp_desc_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bp_desc_module)
 PERFORMANCE_BP_DESCRIPTIONS = bp_desc_module.PERFORMANCE_BP_DESCRIPTIONS
 
+# Import all BP evaluations (pillar_dir is inserted into sys.path by unified_handler)
+from all_bp_evaluations import *
+
 
 def lambda_handler(event, context):
     """Main handler for Performance Efficiency pillar evaluation"""
@@ -206,208 +209,96 @@ class PerformanceEvaluator:
     
     def _evaluate_perf01(self) -> Dict[str, Any]:
         """PERF01: How do you select appropriate resources? (7 BPs)"""
-        findings = []
-        
-        # PERF01-BP01: Learn about and understand available services
-        try:
-            ec2 = self.session.client('ec2')
-            instances = ec2.describe_instances()
-            instance_types = set()
-            for r in instances['Reservations']:
-                for i in r['Instances']:
-                    if i['State']['Name'] == 'running':
-                        instance_types.add(i['InstanceType'])
-            
-            if len(instance_types) > 5:
-                findings.append({'bp': 'PERF01-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF01-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'Diverse instance types in use', 'evidence': f'{len(instance_types)} different types',
-                    'remediation': 'Current state compliant', 'risk': 'No risk'})
-            elif len(instance_types) > 0:
-                findings.append({'bp': 'PERF01-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF01-BP01', ''),
-                    'status': 'NON_COMPLIANT', 'severity': 'MEDIUM',
-                    'finding': 'Limited instance type diversity', 'evidence': f'Only {len(instance_types)} types',
-                    'remediation': 'Evaluate workload-specific instance types', 'risk': 'Suboptimal performance'})
-            else:
-                findings.append({'bp': 'PERF01-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF01-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'No EC2 instances', 'evidence': 'No compute resources to evaluate',
-                    'remediation': 'N/A', 'risk': 'Not applicable'})
-        except Exception as e:
-            findings.append({'bp': 'PERF01-BP01',
-                'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF01-BP01', ''),
-                'status': 'COMPLIANT', 'severity': 'LOW',
-                'finding': 'Unable to evaluate', 'evidence': str(e),
-                'remediation': 'Verify permissions', 'risk': 'Unable to determine'})
-        
-        # PERF01-BP02 to BP07: Additional evaluations
-        for i in range(2, 8):
-            findings.append(self._create_pending(f'PERF01-BP{i:02d}'))
-        
+        findings = [
+            evaluate_perf01_bp01(self.session, self._handle_permission_error),
+            evaluate_perf01_bp02(self.session, self._handle_permission_error),
+            evaluate_perf01_bp03(self.session, self._handle_permission_error),
+            evaluate_perf01_bp04(self.session, self._handle_permission_error),
+            evaluate_perf01_bp05(self.session, self._handle_permission_error),
+            evaluate_perf01_bp06(self.session, self._handle_permission_error),
+            evaluate_perf01_bp07(self.session, self._handle_permission_error),
+        ]
         return self._create_question('PERF01', findings,
             'How do you select appropriate resources?', 'Selección de recursos')
 
-    
     def _evaluate_perf02(self) -> Dict[str, Any]:
         """PERF02: How do you select your compute solution? (6 BPs)"""
-        findings = []
-        
-        # PERF02-BP01: Evaluate available compute options
-        try:
-            ec2 = self.session.client('ec2')
-            lambda_client = self.session.client('lambda')
-            
-            instances = ec2.describe_instances()
-            functions = lambda_client.list_functions()
-            
-            has_ec2 = any(r['Instances'] for r in instances['Reservations'])
-            has_lambda = len(functions.get('Functions', [])) > 0
-            
-            if has_ec2 and has_lambda:
-                findings.append({'bp': 'PERF02-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF02-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'Multiple compute options in use', 'evidence': 'EC2 and Lambda detected',
-                    'remediation': 'Current state compliant', 'risk': 'No risk'})
-            elif has_ec2 or has_lambda:
-                findings.append({'bp': 'PERF02-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF02-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'MEDIUM',
-                    'finding': 'Single compute option', 'evidence': 'EC2 only' if has_ec2 else 'Lambda only',
-                    'remediation': 'Consider additional compute options', 'risk': 'Limited flexibility'})
-            else:
-                findings.append({'bp': 'PERF02-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF02-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'No compute resources', 'evidence': 'No EC2 or Lambda',
-                    'remediation': 'N/A', 'risk': 'Not applicable'})
-        except Exception as e:
-            findings.append({'bp': 'PERF02-BP01',
-                'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF02-BP01', ''),
-                'status': 'COMPLIANT', 'severity': 'LOW',
-                'finding': 'Unable to evaluate', 'evidence': str(e),
-                'remediation': 'Verify permissions', 'risk': 'Unable to determine'})
-        
-        for i in range(2, 7):
-            findings.append(self._create_pending(f'PERF02-BP{i:02d}'))
-        
+        findings = [
+            evaluate_perf02_bp01(self.session, self._handle_permission_error),
+            evaluate_perf02_bp02(self.session, self._handle_permission_error),
+            evaluate_perf02_bp03(self.session, self._handle_permission_error),
+            evaluate_perf02_bp04(self.session, self._handle_permission_error),
+            evaluate_perf02_bp05(self.session, self._handle_permission_error),
+            evaluate_perf02_bp06(self.session, self._handle_permission_error),
+        ]
         return self._create_question('PERF02', findings,
             'How do you select your compute solution?', 'Solución de cómputo')
     
     def _evaluate_perf03(self) -> Dict[str, Any]:
         """PERF03: How do you store, manage, and access data? (5 BPs)"""
-        findings = []
-        
-        # PERF03-BP01: Use purpose-built data stores
-        try:
-            s3 = self.session.client('s3')
-            dynamodb = self.session.client('dynamodb')
-            rds = self.session.client('rds')
-            
-            buckets = s3.list_buckets().get('Buckets', [])
-            tables = dynamodb.list_tables().get('TableNames', [])
-            databases = rds.describe_db_instances().get('DBInstances', [])
-            
-            data_stores = []
-            if buckets: data_stores.append('S3')
-            if tables: data_stores.append('DynamoDB')
-            if databases: data_stores.append('RDS')
-            
-            if len(data_stores) >= 2:
-                findings.append({'bp': 'PERF03-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF03-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'Multiple data store types', 'evidence': f'Using: {", ".join(data_stores)}',
-                    'remediation': 'Current state compliant', 'risk': 'No risk'})
-            elif len(data_stores) == 1:
-                findings.append({'bp': 'PERF03-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF03-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'MEDIUM',
-                    'finding': 'Single data store type', 'evidence': f'Only {data_stores[0]}',
-                    'remediation': 'Consider purpose-built databases', 'risk': 'Suboptimal performance'})
-            else:
-                findings.append({'bp': 'PERF03-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF03-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'No data stores', 'evidence': 'No storage resources',
-                    'remediation': 'N/A', 'risk': 'Not applicable'})
-        except Exception as e:
-            findings.append({'bp': 'PERF03-BP01',
-                'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF03-BP01', ''),
-                'status': 'COMPLIANT', 'severity': 'LOW',
-                'finding': 'Unable to evaluate', 'evidence': str(e),
-                'remediation': 'Verify permissions', 'risk': 'Unable to determine'})
-        
-        for i in range(2, 6):
-            findings.append(self._create_pending(f'PERF03-BP{i:02d}'))
-        
+        findings = [
+            evaluate_perf03_bp01(self.session, self._handle_permission_error),
+            evaluate_perf03_bp02(self.session, self._handle_permission_error),
+            evaluate_perf03_bp03(self.session, self._handle_permission_error),
+            evaluate_perf03_bp04(self.session, self._handle_permission_error),
+            evaluate_perf03_bp05(self.session, self._handle_permission_error),
+        ]
         return self._create_question('PERF03', findings,
             'How do you store, manage, and access data?', 'Almacenamiento de datos')
     
     def _evaluate_perf04(self) -> Dict[str, Any]:
         """PERF04: How do you select and configure networking resources? (7 BPs)"""
-        findings = []
-        
-        # PERF04-BP01: Understand networking requirements
-        try:
-            ec2 = self.session.client('ec2')
-            vpcs = ec2.describe_vpcs().get('Vpcs', [])
-            
-            if len(vpcs) > 0:
-                findings.append({'bp': 'PERF04-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF04-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'VPC configured', 'evidence': f'{len(vpcs)} VPC(s) found',
-                    'remediation': 'Current state compliant', 'risk': 'No risk'})
-            else:
-                findings.append({'bp': 'PERF04-BP01',
-                    'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF04-BP01', ''),
-                    'status': 'COMPLIANT', 'severity': 'LOW',
-                    'finding': 'No VPCs', 'evidence': 'No networking resources',
-                    'remediation': 'N/A', 'risk': 'Not applicable'})
-        except Exception as e:
-            findings.append({'bp': 'PERF04-BP01',
-                'description': PERFORMANCE_BP_DESCRIPTIONS.get('PERF04-BP01', ''),
-                'status': 'COMPLIANT', 'severity': 'LOW',
-                'finding': 'Unable to evaluate', 'evidence': str(e),
-                'remediation': 'Verify permissions', 'risk': 'Unable to determine'})
-        
-        for i in range(2, 8):
-            findings.append(self._create_pending(f'PERF04-BP{i:02d}'))
-        
+        findings = [
+            evaluate_perf04_bp01(self.session, self._handle_permission_error),
+            evaluate_perf04_bp02(self.session, self._handle_permission_error),
+            evaluate_perf04_bp03(self.session, self._handle_permission_error),
+            evaluate_perf04_bp04(self.session, self._handle_permission_error),
+            evaluate_perf04_bp05(self.session, self._handle_permission_error),
+            evaluate_perf04_bp06(self.session, self._handle_permission_error),
+            evaluate_perf04_bp07(self.session, self._handle_permission_error),
+        ]
         return self._create_question('PERF04', findings,
             'How do you select and configure networking resources?', 'Recursos de red')
     
     def _evaluate_perf05(self) -> Dict[str, Any]:
         """PERF05: How do you evolve your workload to take advantage of new releases? (7 BPs)"""
-        findings = []
-        
-        for i in range(1, 8):
-            findings.append(self._create_pending(f'PERF05-BP{i:02d}'))
-        
+        findings = [
+            evaluate_perf05_bp01(self.session, self._handle_permission_error),
+            evaluate_perf05_bp02(self.session, self._handle_permission_error),
+            evaluate_perf05_bp03(self.session, self._handle_permission_error),
+            evaluate_perf05_bp04(self.session, self._handle_permission_error),
+            evaluate_perf05_bp05(self.session, self._handle_permission_error),
+            evaluate_perf05_bp06(self.session, self._handle_permission_error),
+            evaluate_perf05_bp07(self.session, self._handle_permission_error),
+        ]
         return self._create_question('PERF05', findings,
             'How do you evolve your workload to take advantage of new releases?', 'Evolución del workload')
     
-    def _create_pending(self, bp_id: str) -> Dict[str, Any]:
+    def _handle_permission_error(self, bp_id: str, error: ClientError) -> Dict[str, Any]:
+        """Maneja errores de permisos/excepciones de AWS devolviendo PENDING_REVIEW (nunca COMPLIANT)."""
+        try:
+            error_code = error.response['Error']['Code']
+            error_message = error.response['Error']['Message']
+        except (AttributeError, KeyError, TypeError):
+            error_code = 'UnknownError'
+            error_message = str(error)
+        
         return {
             'bp': bp_id,
-            'description': PERFORMANCE_BP_DESCRIPTIONS.get(bp_id, 'Manual review required'),
+            'description': PERFORMANCE_BP_DESCRIPTIONS.get(bp_id, ''),
             'status': 'PENDING_REVIEW',
             'severity': 'MEDIUM',
-            'finding': 'Manual review required',
-            'evidence': f'{bp_id} requires architecture review',
-            'remediation': 'Review AWS Well-Architected documentation',
-            'risk': 'Unable to determine'
+            'finding': 'No se pudo evaluar automáticamente (permisos insuficientes)',
+            'evidence': f'Access Denied: {error_code} - {error_message}',
+            'remediation': 'Verificar permisos de solo lectura para el servicio correspondiente',
+            'risk': 'No se pudo determinar el cumplimiento'
         }
     
     def _create_question(self, question_id: str, findings: List[Dict],
                         title_en: str, title_es: str) -> Dict[str, Any]:
         score = self._calculate_question_score(findings)
-        status = 'COMPLIANT' if all(f['status'] == 'COMPLIANT' for f in findings) else \
-                 'NON_COMPLIANT' if any(f['status'] == 'NON_COMPLIANT' for f in findings) else 'PENDING_REVIEW'
+        status = self._determine_question_status(findings)
+        applicable_bps = sum(1 for f in findings if f['status'] != 'NOT_APPLICABLE')
         
         return {
             'question_id': question_id,
@@ -415,26 +306,45 @@ class PerformanceEvaluator:
             'description': {'es': title_es, 'en': title_en},
             'score': score,
             'bps_evaluated': len(findings),
+            'applicable_bps': applicable_bps,
             'status': status,
             'findings': findings
         }
     
+    def _determine_question_status(self, findings: List[Dict]) -> str:
+        """Estado de la pregunta excluyendo NOT_APPLICABLE del juicio."""
+        applicable = [f for f in findings if f['status'] != 'NOT_APPLICABLE']
+        if not applicable:
+            # Todas NOT_APPLICABLE (o sin findings)
+            return 'NOT_APPLICABLE' if findings else 'COMPLIANT'
+        if any(f['status'] == 'NON_COMPLIANT' for f in applicable):
+            return 'NON_COMPLIANT'
+        if all(f['status'] == 'COMPLIANT' for f in applicable):
+            return 'COMPLIANT'
+        return 'PENDING_REVIEW'
+    
     def _calculate_question_score(self, findings: List[Dict]) -> float:
-        if not findings:
-            return 0.0
+        """Promedia solo los BPs aplicables; NOT_APPLICABLE se excluye del cálculo."""
         score_map = {'COMPLIANT': 100.0, 'NON_COMPLIANT': 0.0, 'PENDING_REVIEW': 50.0}
-        total = sum(score_map.get(f['status'], 0.0) for f in findings)
-        return round(total / len(findings), 2)
+        applicable = [f for f in findings if f['status'] != 'NOT_APPLICABLE']
+        if not applicable:
+            # Sin BPs aplicables (todas NA) -> no penalizar
+            return 100.0
+        total = sum(score_map.get(f['status'], 0.0) for f in applicable)
+        return round(total / len(applicable), 2)
     
     def _calculate_pillar_score(self, questions: List[Dict]) -> float:
+        """Promedio ponderado por BPs aplicables (excluye NOT_APPLICABLE del peso)."""
         if not questions:
             return 0.0
-        total_weighted = sum(q['score'] * q['bps_evaluated'] for q in questions)
-        total_bps = sum(q['bps_evaluated'] for q in questions)
-        return round(total_weighted / total_bps if total_bps > 0 else 0.0, 2)
+        total_weighted = sum(q['score'] * q.get('applicable_bps', q['bps_evaluated']) for q in questions)
+        total_applicable = sum(q.get('applicable_bps', q['bps_evaluated']) for q in questions)
+        if total_applicable == 0:
+            return 100.0
+        return round(total_weighted / total_applicable, 2)
     
     def _calculate_distributions(self, questions: List[Dict]) -> tuple:
-        compliance_dist = {'compliant': 0, 'non_compliant': 0, 'pending_review': 0}
+        compliance_dist = {'compliant': 0, 'non_compliant': 0, 'pending_review': 0, 'not_applicable': 0}
         severity_dist = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
         
         for q in questions:
@@ -444,6 +354,8 @@ class PerformanceEvaluator:
                     compliance_dist['compliant'] += 1
                 elif status == 'non_compliant':
                     compliance_dist['non_compliant'] += 1
+                elif status == 'not_applicable':
+                    compliance_dist['not_applicable'] += 1
                 else:
                     compliance_dist['pending_review'] += 1
                 

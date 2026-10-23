@@ -523,6 +523,8 @@ class AutoWARStack(Stack):
                     # CloudWatch - for monitoring checks
                     "cloudwatch:DescribeAlarms",
                     "cloudwatch:GetMetricStatistics",
+                    "cloudwatch:GetMetricData",
+                    "cloudwatch:ListDashboards",
                     "logs:DescribeLogGroups",
                     
                     # Config - for compliance checks
@@ -572,9 +574,23 @@ class AutoWARStack(Stack):
                     # ELB - for load balancer checks
                     "elasticloadbalancing:DescribeLoadBalancers",
                     "elasticloadbalancing:DescribeTargetGroups",
+                    "elasticloadbalancing:DescribeListeners",
                     
-                    # Auto Scaling - for reliability checks
+                    # Auto Scaling - for reliability/performance checks
                     "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribePolicies",
+                    "application-autoscaling:DescribeScalableTargets",
+                    
+                    # ElastiCache - for performance (caching) checks
+                    "elasticache:DescribeCacheClusters",
+                    "elasticache:DescribeReplicationGroups",
+                    
+                    # CloudFront - for performance (edge/CDN) checks
+                    "cloudfront:ListDistributions",
+                    "cloudfront:GetDistribution",
+                    
+                    # EC2 (VPN) - for performance (hybrid connectivity) checks
+                    "ec2:DescribeVpnConnections",
                     
                     # Route53 - for DNS checks
                     "route53:ListHostedZones",
