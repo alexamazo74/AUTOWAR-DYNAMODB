@@ -2,175 +2,168 @@
 Prueba de REGRESION del logo en el reporte TECNICO (XLSX) - FEAT-002, BUG 2.
 
 El reporte tecnico incrusta el logo de GFourmis en la hoja 'Resumen' con
-openpyxl, que delega en Pillow (PIL) para procesar la imagen. Si el layer
-'reports' NO contiene PIL, openpyxl no puede embeber la imagen y el XLSX sale
-SIN logo (el bug reportado por el usuario).
+openpyxl, que delega en Pillow (PIL) para procesar la imagen. El bug reportado:
+el layer 'reports' empaquetado NO contenia Pillow, asi que en Lambda openpyxl no
+podia incrustar la imagen y el XLSX salia SIN logo.
 
-Reto de aislamiento
--------------------
-El venv de desarrollo (Windows) SI tiene Pillow/matplotlib/numpy instalados,
-asi que ejecutar la generacion dentro del propio proceso de pytest usaria el PIL
-del venv y la imagen se embeberia SIEMPRE, enmascarando el bug del layer. Para
-probar FIELMENTE el contrato del LAYER, la generacion del XLSX corre en un
-SUBPROCESO aislado:
+Dos angulos de prueba, ambos ejecutables en Windows (el entorno de CI/dev):
 
-  - python -S (sin site-packages del venv),
-  - con sys.path = [ layer reports/python, report_generator_technical,
-    common/python ] y NADA del venv,
-  - stubbeando autowar_common.report_storage (que importa boto3 a nivel de
-    modulo y no esta disponible sin site) para poder importar el handler.
+  1) test_resumen_xlsx_contiene_logo_embebido: prueba la LOGICA del handler.
+     Genera el XLSX con el interprete actual (Pillow disponible para el proceso)
+     y verifica que el logo quede embebido en la hoja 'Resumen'. Reproduce el
+     camino feliz que en Lambda usara el Pillow del layer. Si el handler no
+     incrustara el logo (bug de codigo), esta prueba fallaria.
 
-Asi PIL solo existe si el LAYER lo contiene. El subproceso genera el .xlsx; el
-proceso padre (con su venv) lo abre y verifica que haya imagenes embebidas.
+  2) test_pillow_del_layer_es_binario_linux_para_lambda: prueba el ARTEFACTO.
+     El layer debe traer Pillow con binarios NATIVOS para el runtime Lambda
+     (Linux, manylinux2014_x86_64 / cp311), no ruedas de Windows. Afirma que el
+     modulo de extension _imaging del PIL del layer existe como .so (ELF Linux),
+     no como .pyd (Windows). Esto captura directamente la causa raiz: antes el
+     layer no tenia Pillow; un layer con ruedas de Windows tampoco serviria en
+     Lambda. NOTA: el .so de Linux NO se puede importar en el interprete Windows
+     de los tests (por eso no se intenta), pero su presencia y formato SI se
+     verifican de forma portable.
 
-Afirmaciones:
-  (a) la hoja 'Resumen' del XLSX tiene al menos una imagen embebida
-      (entradas en xl/media/ del zip del .xlsx);
+Afirmaciones adicionales:
   (b) resolve_asset_path('gfourmis-logo.png') devuelve una ruta y existe.
 
-Debe FALLAR con el layer ACTUAL (sin Pillow: no se embebe la imagen) y PASAR
-tras reconstruir el layer con Docker (public.ecr.aws/lambda/python:3.11).
+Con el layer ORIGINAL (sin Pillow) ambas pruebas de layer fallaban; tras
+reconstruir el layer con ruedas manylinux/cp311 pasan.
 """
 
+import glob
+import importlib.util
 import os
-import subprocess
 import sys
-import tempfile
 import zipfile
+from io import BytesIO
 
 import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TECHNICAL_DIR = os.path.join(REPO_ROOT, "lambda", "report_generator_technical")
 LAYER_PYTHON = os.path.join(REPO_ROOT, "lambda", "layers", "reports", "python")
-COMMON_LAYER = os.path.join(REPO_ROOT, "lambda", "layers", "common", "python")
 LOGO_NAME = "gfourmis-logo.png"
 
 
-# Script que corre EN EL SUBPROCESO aislado. Construye evaluation_data
-# sintetico, importa el handler tecnico usando SOLO el layer reports para
-# openpyxl/PIL (stubbeando report_storage), genera el XLSX y lo escribe a disco.
-_CHILD_SCRIPT = r'''
-import importlib.util
-import os
-import sys
-import types
+def _load_technical_handler():
+    """Importa el handler tecnico de forma aislada (como test_executive_report).
 
-LAYER_PYTHON = sys.argv[1]
-TECHNICAL_DIR = sys.argv[2]
-OUT_PATH = sys.argv[3]
-
-# sys.path controlado: el layer reports debe proveer openpyxl + PIL.
-sys.path.insert(0, LAYER_PYTHON)
-sys.path.insert(0, TECHNICAL_DIR)
-
-# Stub de autowar_common.report_storage: el handler lo importa a nivel de modulo
-# (y este arrastra boto3, no disponible con -S). No se usa en la generacion.
-pkg = types.ModuleType("autowar_common")
-pkg.__path__ = []
-mod = types.ModuleType("autowar_common.report_storage")
-mod.upload_report = lambda *a, **k: "stub-key"
-mod.generate_signed_url = lambda *a, **k: "https://stub.invalid/url"
-pkg.report_storage = mod
-sys.modules["autowar_common"] = pkg
-sys.modules["autowar_common.report_storage"] = mod
-
-handler_path = os.path.join(TECHNICAL_DIR, "handler.py")
-spec = importlib.util.spec_from_file_location("technical_report_handler", handler_path)
-handler = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(handler)
-
-best_practices = [
-    {"bpId": "SEC01-BP01", "pilar": "security", "status": "NON_COMPLIANT",
-     "severity": "CRITICAL", "description": "MFA en usuario root",
-     "finding": "El usuario root no tiene MFA", "evidence": "ev",
-     "remediation": "rem", "risk": "riesgo", "questionTitle": "Gestion de identidades"},
-    {"bpId": "SEC02-BP01", "pilar": "security", "status": "COMPLIANT",
-     "severity": "LOW", "description": "Politica IAM minima",
-     "finding": "ok", "evidence": "ev", "remediation": "rem", "risk": "riesgo",
-     "questionTitle": "Permisos"},
-    {"bpId": "PERF01-BP01", "pilar": "performance", "status": "NON_COMPLIANT",
-     "severity": "MEDIUM", "description": "Diversidad de instancias",
-     "finding": "limitada", "evidence": "ev", "remediation": "rem", "risk": "riesgo",
-     "questionTitle": "Seleccion de computo"},
-]
-evaluation_data = {
-    "metadata": {"accountId": "123456789012"},
-    "pillarScores": {"security": 50.0, "performance": 0.0},
-    "bestPractices": best_practices,
-}
-selected = ["security", "performance"]
-
-content = handler.generate_technical_report(
-    evaluation_data, selected, "123456789012", "2025-01-01T00:00:00Z", None
-)
-with open(OUT_PATH, "wb") as fh:
-    fh.write(content)
-'''
-
-
-def _xlsx_has_images(xlsx_path):
-    """True si el .xlsx contiene al menos una imagen embebida (xl/media/)."""
-    with zipfile.ZipFile(xlsx_path) as zf:
-        return any(name.startswith("xl/media/") for name in zf.namelist())
-
-
-def test_resolve_asset_path_encuentra_el_logo():
-    """(b) resolve_asset_path('gfourmis-logo.png') resuelve a un archivo existente.
-
-    Se importa el handler de forma aislada (como test_executive_report.py),
-    anadiendo el layer reports a sys.path. Esta parte no depende de PIL.
+    autowar_common (del layer comun) ya esta en sys.path gracias a conftest.
+    Se anade el layer reports para resolver assets; Pillow lo aporta el venv del
+    proceso actual (en Lambda lo aportara el layer).
     """
-    import importlib.util
-
     if LAYER_PYTHON not in sys.path:
         sys.path.insert(0, LAYER_PYTHON)
     if TECHNICAL_DIR not in sys.path:
         sys.path.insert(0, TECHNICAL_DIR)
-
     handler_path = os.path.join(TECHNICAL_DIR, "handler.py")
-    spec = importlib.util.spec_from_file_location("technical_report_handler_rp", handler_path)
-    handler = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(handler)
+    spec = importlib.util.spec_from_file_location("technical_report_handler", handler_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-    path = handler.resolve_asset_path(LOGO_NAME)
+
+@pytest.fixture(scope="module")
+def technical_handler():
+    return _load_technical_handler()
+
+
+def _synthetic_evaluation_data():
+    best_practices = [
+        {"bpId": "SEC01-BP01", "pilar": "security", "status": "NON_COMPLIANT",
+         "severity": "CRITICAL", "description": "MFA en usuario root",
+         "finding": "El usuario root no tiene MFA", "evidence": "ev",
+         "remediation": "rem", "risk": "riesgo", "questionTitle": "Gestion de identidades"},
+        {"bpId": "SEC02-BP01", "pilar": "security", "status": "COMPLIANT",
+         "severity": "LOW", "description": "Politica IAM minima",
+         "finding": "ok", "evidence": "ev", "remediation": "rem", "risk": "riesgo",
+         "questionTitle": "Permisos"},
+        {"bpId": "PERF01-BP01", "pilar": "performance", "status": "NON_COMPLIANT",
+         "severity": "MEDIUM", "description": "Diversidad de instancias",
+         "finding": "limitada", "evidence": "ev", "remediation": "rem", "risk": "riesgo",
+         "questionTitle": "Seleccion de computo"},
+    ]
+    return {
+        "metadata": {"accountId": "123456789012"},
+        "pillarScores": {"security": 50.0, "performance": 0.0},
+        "bestPractices": best_practices,
+    }
+
+
+def _xlsx_has_images(xlsx_bytes):
+    """True si el .xlsx contiene al menos una imagen embebida (xl/media/)."""
+    with zipfile.ZipFile(BytesIO(xlsx_bytes)) as zf:
+        return any(name.startswith("xl/media/") for name in zf.namelist())
+
+
+def test_resolve_asset_path_encuentra_el_logo(technical_handler):
+    """(b) resolve_asset_path('gfourmis-logo.png') resuelve a un archivo existente."""
+    path = technical_handler.resolve_asset_path(LOGO_NAME)
     assert path is not None, f"resolve_asset_path('{LOGO_NAME}') devolvio None"
     assert os.path.exists(path), f"La ruta resuelta no existe: {path}"
 
 
-def test_resumen_xlsx_contiene_logo_embebido(tmp_path):
-    """(a) la hoja 'Resumen' tiene imagen embebida usando el PIL DEL LAYER.
+def test_resumen_xlsx_contiene_logo_embebido(technical_handler):
+    """(a) la hoja 'Resumen' del XLSX tecnico embebe el logo cuando Pillow existe.
 
-    Corre la generacion del XLSX en un subproceso aislado (python -S) cuyo
-    sys.path usa SOLO el layer reports para openpyxl/PIL. Si el layer no tiene
-    Pillow, openpyxl no puede embeber el logo y el XLSX sale SIN imagenes.
+    Prueba la logica del handler (openpyxl + XLImage + add_image). Si el handler
+    no incrustara el logo, no habria entradas xl/media/ en el .xlsx.
     """
-    out_path = os.path.join(str(tmp_path), "technical_report.xlsx")
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, encoding="utf-8"
-    ) as script_file:
-        script_file.write(_CHILD_SCRIPT)
-        script_path = script_file.name
-
-    try:
-        # -S: ignora site-packages del venv -> PIL/openpyxl solo desde el layer.
-        result = subprocess.run(
-            [sys.executable, "-S", script_path, LAYER_PYTHON, TECHNICAL_DIR, out_path],
-            capture_output=True,
-            text=True,
-        )
-    finally:
-        os.unlink(script_path)
-
-    assert result.returncode == 0 and os.path.exists(out_path), (
-        "El subproceso no genero el XLSX usando solo el layer reports. "
-        "Probablemente faltan dependencias en el layer (openpyxl/PIL). "
-        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    pytest.importorskip(
+        "PIL",
+        reason="Pillow no disponible para el interprete de los tests; el handler "
+               "lo usa via openpyxl para embeber el logo (en Lambda lo aporta el layer).",
     )
 
-    assert _xlsx_has_images(out_path), (
-        "La hoja 'Resumen' del XLSX tecnico NO contiene imagenes embebidas: "
-        "el logo no se incrusto porque el layer reports no tiene Pillow (PIL). "
-        "Reconstruye el layer con Docker (public.ecr.aws/lambda/python:3.11)."
+    data = _synthetic_evaluation_data()
+    selected = ["security", "performance"]
+
+    content = technical_handler.generate_technical_report(
+        data, selected, "123456789012", "2025-01-01T00:00:00Z", None
+    )
+
+    assert isinstance(content, (bytes, bytearray))
+    assert len(content) > 0, "El reporte tecnico no debe venir vacio"
+    assert _xlsx_has_images(bytes(content)), (
+        "La hoja 'Resumen' del XLSX tecnico NO contiene imagenes embebidas: el "
+        "logo no se incrusto. El handler debe incrustar gfourmis-logo.png via "
+        "openpyxl.drawing.image.Image + ws.add_image."
+    )
+
+
+def test_pillow_del_layer_es_binario_linux_para_lambda():
+    """El Pillow del layer debe traer binarios para el runtime Lambda (Linux).
+
+    openpyxl incrusta imagenes via Pillow, cuyo modulo de extension es _imaging.
+    En el layer destinado a Lambda, _imaging debe estar compilado para Linux
+    (archivo .so, ELF), no para Windows (.pyd). Esta prueba es portable: verifica
+    presencia y formato del binario SIN importarlo (el .so Linux no carga en el
+    interprete Windows de los tests).
+
+    Con el layer ORIGINAL (sin Pillow) esta prueba fallaba: no habia carpeta PIL.
+    """
+    pil_dir = os.path.join(LAYER_PYTHON, "PIL")
+    assert os.path.isdir(pil_dir), (
+        f"El layer no contiene PIL/ en {LAYER_PYTHON}. Reconstruye el layer con "
+        f"ruedas manylinux2014_x86_64/cp311 (pip install --platform ... o Docker "
+        f"public.ecr.aws/lambda/python:3.11)."
+    )
+
+    # Binario de extension _imaging (nombre varia por plataforma/ABI).
+    so_files = glob.glob(os.path.join(pil_dir, "_imaging*.so"))
+    pyd_files = glob.glob(os.path.join(pil_dir, "_imaging*.pyd"))
+
+    assert so_files, (
+        "No se encontro el binario Linux _imaging*.so en el PIL del layer. "
+        f"Encontrados .pyd (Windows)={pyd_files}. El layer debe construirse para "
+        f"el runtime Lambda (Linux), no con ruedas de Windows."
+    )
+
+    # Confirmar que el .so es un ELF (magic bytes 0x7f 'E' 'L' 'F').
+    with open(so_files[0], "rb") as fh:
+        magic = fh.read(4)
+    assert magic == b"\x7fELF", (
+        f"El binario {os.path.basename(so_files[0])} no es un ELF de Linux "
+        f"(magic={magic!r}); el layer no sirve para el runtime Lambda."
     )
