@@ -1,0 +1,13 @@
+# Config de black para el CI (paso advisory / no bloqueante). Se usa line-length 100
+# en el workflow. Aquí se excluyen las dependencias vendorizadas del layer de reports
+# (numpy, matplotlib, PIL, openpyxl, python-docx...) para que black NO intente analizar
+# código de terceros y el paso no se vuelva lento ni ruidoso.
+[tool.black]
+line-length = 100
+force-exclude = '''
+/(
+    lambda/layers/[^/]+/python
+  | cdk-new/cdk\.out
+  | \.venv
+)/
+'''

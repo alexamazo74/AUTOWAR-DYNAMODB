@@ -1,0 +1,41 @@
+# ruff.toml — config mínima para el CI. Excluye dependencias vendorizadas del layer
+# y fija ancho de línea 100. No habilita E501 (ancho) como error para no romper
+# el código heredado de lambda/.
+line-length = 100
+
+extend-exclude = [
+    "lambda/layers/*/python",   # numpy, matplotlib, PIL, docx, openpyxl vendorizados
+    "cdk-new/cdk.out",
+    ".venv",
+]
+
+[lint]
+# Conjunto conservador: errores de pyflakes + errores de sintaxis/pycodestyle.
+select = ["E", "F", "W"]
+
+# Reglas ignoradas: son hallazgos de ESTILO preexistentes en código heredado de
+# lambda/ (handlers escritos antes de introducir el CI). El objetivo de este paso es
+# dejar el CI verde SIN reformateo masivo ni cambios de lógica; por eso se silencian
+# los códigos cosméticos/heredados en vez de reescribir los handlers. Si en el futuro
+# se formatea el código, pueden retirarse de esta lista.
+ignore = [
+    "E501",  # línea demasiado larga (código heredado con líneas > 100)
+    "W293",  # línea en blanco con espacios (1180 ocurrencias heredadas)
+    "W291",  # espacios al final de línea
+    "E402",  # import no al inicio del módulo (handlers con sys.path antes de imports)
+    "E701",  # múltiples sentencias en una línea (dos puntos)
+    "E702",  # múltiples sentencias en una línea (punto y coma)
+    "E722",  # except desnudo (patrón heredado en handlers)
+    "E712",  # comparación con True/False
+    "E741",  # nombre de variable ambiguo
+    "F401",  # import no usado (código heredado)
+    "F403",  # import star (from all_bp_evaluations import *)
+    "F405",  # nombre posiblemente de un import star (consecuencia de F403)
+    "F541",  # f-string sin placeholders
+    "F811",  # redefinición sin uso previo
+    "F841",  # variable local asignada y no usada
+]
+
+[lint.per-file-ignores]
+# El import * es intencional en los handlers de evaluadores (cargan todas las BPs).
+"lambda/evaluators/*/handler.py" = ["F403", "F405"]
