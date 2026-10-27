@@ -132,7 +132,7 @@ Ordenes de magnitud (escenario base, us-east-1):
   (dentro de capa gratis Essentials), creciendo con los MAU.
 
 Estimacion en la calculadora de AWS (To-Be, 200 analisis/mes, modelo Sonnet):
-`https://calculator.aws/#/estimate?id=a2ab4d09438706b2e4a1ebaf9c3cf5d1a462ab8a`
+`https://calculator.aws/#/estimate?id=8748b8884c260d78b625d6ce3fbf631f45f8e552`
 
 Nota de modelado: en la calculadora, Bedrock se parametriza por tasa (requests/min x horas/dia)
 con tokens por request; se ajustaron los tokens por request para que el total mensual de tokens
